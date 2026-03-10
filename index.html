@@ -293,12 +293,29 @@ async function fetchCSV(url, stepId) {
   const el = document.getElementById(stepId);
   el.classList.add('active');
   el.textContent = el.textContent.replace('⬜','⏳');
-  const res = await fetch(url);
-  if(!res.ok) throw new Error('HTTP '+res.status+' fetching '+stepId);
-  const text = await res.text();
-  el.classList.remove('active'); el.classList.add('done');
-  el.textContent = el.textContent.replace('⏳','✅');
-  return parseCSV(text);
+
+  // Try direct fetch first, then fall back to CORS proxies
+  const proxies = [
+    u => u,  // direct
+    u => `https://corsproxy.io/?${encodeURIComponent(u)}`,
+    u => `https://api.allorigins.win/raw?url=${encodeURIComponent(u)}`,
+    u => `https://cors-anywhere.herokuapp.com/${u}`,
+  ];
+
+  let lastErr;
+  for (const proxy of proxies) {
+    try {
+      const res = await fetch(proxy(url), { cache: 'no-store' });
+      if (!res.ok) throw new Error('HTTP ' + res.status);
+      const text = await res.text();
+      if (!text || text.trim().length < 10) throw new Error('Empty response');
+      el.classList.remove('active'); el.classList.add('done');
+      el.textContent = el.textContent.replace('⏳','✅');
+      return parseCSV(text);
+    } catch(e) { lastErr = e; }
+  }
+  el.textContent = el.textContent.replace('⏳','❌');
+  throw new Error('All fetch attempts failed: ' + lastErr.message);
 }
 
 // ── REALIZED P&L ──────────────────────────────────────────────────────────────
@@ -506,8 +523,7 @@ async function loadAll(){
     const b=document.getElementById('errorBanner');
     b.style.display='block';
     b.innerHTML=`⚠️ <strong>Failed to load data:</strong> ${err.message}<br>
-      This dashboard must be hosted on <strong>GitHub Pages</strong> — browsers block cross-origin requests from local files.<br>
-      Push <code>index.html</code> to your repo and visit <code>https://yourusername.github.io</code>`;
+      <small>Check browser console (F12) for details. Make sure your Google Sheet is published: File → Share → Publish to web → CSV.</small>`;
   }
 }
 
