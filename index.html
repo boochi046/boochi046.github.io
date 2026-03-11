@@ -606,27 +606,41 @@ function parseCSV(text) {
 }
 
 // ── FETCH ─────────────────────────────────────────────────────────────────────
-const PROXIES=[
-  u=>`https://corsproxy.io/?${encodeURIComponent(u)}`,
-  u=>`https://api.allorigins.win/raw?url=${encodeURIComponent(u)}`,
-];
+async function fetchWithProxies(url) {
+  const proxies = [
+    u => u,  // direct first
+    u => `https://corsproxy.io/?${encodeURIComponent(u)}`,
+    u => `https://api.allorigins.win/raw?url=${encodeURIComponent(u)}`,
+    u => `https://thingproxy.freeboard.io/fetch/${u}`,
+    u => `https://cors.sh/?${u}`,
+  ];
+  let lastErr;
+  for (const proxy of proxies) {
+    try {
+      const res = await fetch(proxy(url), { cache: 'no-store', mode: 'cors' });
+      if (!res.ok) throw new Error('HTTP ' + res.status);
+      const text = await res.text();
+      if (!text || text.trim().length < 10) throw new Error('Empty response');
+      // Reject HTML error pages masquerading as success
+      if (text.trim().startsWith('<!DOCTYPE') || text.trim().startsWith('<html')) throw new Error('Got HTML instead of CSV');
+      return text;
+    } catch(e) { lastErr = e; }
+  }
+  throw new Error(lastErr?.message || 'All proxies failed');
+}
+
 async function fetchCSV(url, stepId) {
   const el=document.getElementById(stepId);
   el.classList.add('active'); el.textContent=el.textContent.replace('⬜','⏳');
-  let lastErr;
-  for(const proxy of PROXIES){
-    try{
-      const res=await fetch(proxy(url),{cache:'no-store'});
-      if(!res.ok) throw new Error('HTTP '+res.status);
-      const text=await res.text();
-      if(!text||text.trim().length<10) throw new Error('Empty');
-      el.classList.remove('active'); el.classList.add('done');
-      el.textContent=el.textContent.replace('⏳','✅');
-      return parseCSV(text);
-    }catch(e){lastErr=e;}
+  try {
+    const text = await fetchWithProxies(url);
+    el.classList.remove('active'); el.classList.add('done');
+    el.textContent=el.textContent.replace('⏳','✅');
+    return parseCSV(text);
+  } catch(e) {
+    el.textContent=el.textContent.replace('⏳','❌');
+    throw e;
   }
-  el.textContent=el.textContent.replace('⏳','❌');
-  throw new Error('Fetch failed: '+lastErr.message);
 }
 
 // ── REALIZED P&L ──────────────────────────────────────────────────────────────
