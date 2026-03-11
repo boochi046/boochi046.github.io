@@ -1,0 +1,403 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Futures Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:#0a0e17; --surface:#111827; --border:#1e2d45;
+    --accent:#00e5ff; --accent2:#7c3aed; --green:#00c896; --red:#ff4757;
+    --yellow:#ffd32a; --text:#e2e8f0; --muted:#64748b;
+    --font-head:'Syne',sans-serif; --font-mono:'DM Mono',monospace;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;}
+  body{background:var(--bg);color:var(--text);font-family:var(--font-mono);min-height:100vh;overflow-x:hidden;}
+  body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
+    background-image:linear-gradient(rgba(0,229,255,0.03) 1px,transparent 1px),linear-gradient(90deg,rgba(0,229,255,0.03) 1px,transparent 1px);
+    background-size:40px 40px;}
+  .wrapper{position:relative;z-index:1;max-width:1400px;margin:0 auto;padding:2rem;}
+
+  /* NAV */
+  nav{display:flex;align-items:center;gap:0;margin-bottom:2rem;border-bottom:1px solid var(--border);padding-bottom:0;}
+  .nav-logo{font-family:var(--font-head);font-size:1.4rem;font-weight:800;letter-spacing:-0.03em;
+    background:linear-gradient(135deg,var(--accent),var(--accent2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;
+    margin-right:2rem;padding-bottom:1rem;}
+  .nav-link{padding:0.7rem 1rem;font-size:0.72rem;color:var(--muted);text-decoration:none;
+    border-bottom:2px solid transparent;transition:all 0.2s;text-transform:uppercase;letter-spacing:0.05em;font-family:var(--font-mono);}
+  .nav-link:hover{color:var(--text);}
+  .nav-link.active{color:var(--accent);border-bottom-color:var(--accent);}
+
+  /* HEADER */
+  .page-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:1.5rem;}
+  .page-title{font-family:var(--font-head);font-size:1.5rem;font-weight:800;letter-spacing:-0.02em;}
+  .page-title span{color:var(--muted);font-weight:400;}
+  .header-right{display:flex;align-items:center;gap:1rem;font-size:0.72rem;color:var(--muted);}
+  .live-tag{display:inline-flex;align-items:center;gap:0.4rem;background:rgba(0,200,150,0.1);
+    border:1px solid rgba(0,200,150,0.3);color:var(--green);padding:0.2rem 0.7rem;border-radius:100px;font-size:0.7rem;}
+  .live-dot{width:6px;height:6px;background:var(--green);border-radius:50%;animation:pulse 2s infinite;}
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:0.3}}
+  .refresh-btn{background:rgba(0,229,255,0.08);border:1px solid rgba(0,229,255,0.2);color:var(--accent);
+    padding:0.3rem 0.8rem;border-radius:6px;font-size:0.7rem;cursor:pointer;font-family:var(--font-mono);transition:all 0.2s;}
+  .refresh-btn:hover{background:rgba(0,229,255,0.15);}
+  #lastUpdated{font-size:0.68rem;}
+
+  /* MARKET MOOD BAR */
+  .mood-bar{background:var(--surface);border:1px solid var(--border);border-radius:12px;
+    padding:1rem 1.5rem;margin-bottom:1.5rem;display:flex;align-items:center;gap:2rem;flex-wrap:wrap;}
+  .mood-label{font-size:0.68rem;color:var(--muted);text-transform:uppercase;letter-spacing:0.1em;}
+  .mood-value{font-family:var(--font-head);font-size:1.1rem;font-weight:700;}
+  .mood-item{display:flex;flex-direction:column;gap:0.2rem;}
+  .mood-divider{width:1px;height:36px;background:var(--border);}
+
+  /* SECTION */
+  .section-title{font-family:var(--font-head);font-size:0.75rem;font-weight:700;text-transform:uppercase;
+    letter-spacing:0.12em;color:var(--muted);margin-bottom:0.8rem;display:flex;align-items:center;gap:0.6rem;}
+  .section-title::after{content:'';flex:1;height:1px;background:var(--border);}
+
+  /* FUTURES GRID */
+  .futures-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:0.8rem;margin-bottom:2rem;}
+  .futures-card{background:var(--surface);border:1px solid var(--border);border-radius:10px;
+    padding:1rem 1.2rem;cursor:pointer;transition:all 0.2s;position:relative;overflow:hidden;}
+  .futures-card:hover{border-color:var(--accent);transform:translateY(-1px);}
+  .futures-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;opacity:0.7;}
+  .futures-card.up::before{background:var(--green);}
+  .futures-card.down::before{background:var(--red);}
+  .futures-card.flat::before{background:var(--muted);}
+  .fc-name{font-size:0.7rem;color:var(--muted);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:0.4rem;}
+  .fc-price{font-family:var(--font-head);font-size:1.25rem;font-weight:700;letter-spacing:-0.02em;margin-bottom:0.3rem;}
+  .fc-change{font-size:0.75rem;display:flex;gap:0.5rem;}
+  .fc-change .abs{opacity:0.8;}
+  .fc-tag{position:absolute;top:0.6rem;right:0.8rem;font-size:0.6rem;
+    background:rgba(124,58,237,0.2);border:1px solid rgba(124,58,237,0.3);color:#a78bfa;
+    padding:0.1rem 0.4rem;border-radius:3px;}
+  .up{color:var(--green);}
+  .down{color:var(--red);}
+  .flat{color:var(--muted);}
+
+  /* MINI CHART BAR */
+  .spark{height:3px;background:var(--border);border-radius:2px;margin-top:0.5rem;overflow:hidden;}
+  .spark-fill{height:100%;border-radius:2px;transition:width 0.8s ease;}
+
+  /* LOADING SKELETON */
+  .skeleton{background:linear-gradient(90deg,var(--surface) 25%,var(--surface2) 50%,var(--surface) 75%);
+    background-size:200% 100%;animation:shimmer 1.5s infinite;border-radius:4px;height:1rem;}
+  @keyframes shimmer{0%{background-position:200% 0}100%{background-position:-200% 0}}
+
+  /* TABLE for detailed view */
+  .detail-table{width:100%;border-collapse:collapse;font-size:0.78rem;margin-bottom:2rem;}
+  .detail-table thead th{padding:0.6rem 1rem;text-align:right;font-size:0.65rem;color:var(--muted);
+    text-transform:uppercase;letter-spacing:0.08em;border-bottom:1px solid var(--border);}
+  .detail-table thead th:first-child{text-align:left;}
+  .detail-table tbody tr{border-bottom:1px solid rgba(30,45,69,0.4);transition:background 0.15s;}
+  .detail-table tbody tr:hover{background:rgba(0,229,255,0.03);}
+  .detail-table td{padding:0.6rem 1rem;text-align:right;}
+  .detail-table td:first-child{text-align:left;}
+  .sym-badge{display:inline-block;background:rgba(124,58,237,0.15);border:1px solid rgba(124,58,237,0.3);
+    color:#a78bfa;padding:0.1rem 0.4rem;border-radius:4px;font-size:0.7rem;margin-right:0.4rem;}
+  .card-wrap{background:var(--surface);border:1px solid var(--border);border-radius:12px;overflow:hidden;margin-bottom:1.5rem;}
+  .card-hdr{padding:0.9rem 1.2rem;border-bottom:1px solid var(--border);font-family:var(--font-head);
+    font-size:0.8rem;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:var(--muted);
+    display:flex;justify-content:space-between;align-items:center;}
+  .note{font-size:0.68rem;color:var(--muted);padding:0.7rem 1.2rem;border-top:1px solid var(--border);text-align:center;}
+
+  @media(max-width:640px){.futures-grid{grid-template-columns:repeat(2,1fr)}.wrapper{padding:1rem}.mood-bar{gap:1rem}}
+</style>
+</head>
+<body>
+<div class="wrapper">
+
+  <nav>
+    <div class="nav-logo">PORTFOLIO</div>
+    <a href="index.html" class="nav-link">Dashboard</a>
+    <a href="futures.html" class="nav-link active">Futures</a>
+  </nav>
+
+  <div class="page-header">
+    <div class="page-title">Market Futures <span>/ Live</span></div>
+    <div class="header-right">
+      <div class="live-tag"><span class="live-dot"></span> 15-min delayed</div>
+      <span id="lastUpdated">—</span>
+      <button class="refresh-btn" onclick="loadFutures()">↻ Refresh</button>
+    </div>
+  </div>
+
+  <!-- Market Mood -->
+  <div class="mood-bar" id="moodBar">
+    <div class="mood-item"><div class="mood-label">S&P 500</div><div class="mood-value" id="mood-sp500">—</div></div>
+    <div class="mood-divider"></div>
+    <div class="mood-item"><div class="mood-label">Nasdaq</div><div class="mood-value" id="mood-nasdaq">—</div></div>
+    <div class="mood-divider"></div>
+    <div class="mood-item"><div class="mood-label">Dow Jones</div><div class="mood-value" id="mood-dow">—</div></div>
+    <div class="mood-divider"></div>
+    <div class="mood-item"><div class="mood-label">Russell 2000</div><div class="mood-value" id="mood-rut">—</div></div>
+    <div class="mood-divider"></div>
+    <div class="mood-item"><div class="mood-label">VIX</div><div class="mood-value" id="mood-vix">—</div></div>
+    <div class="mood-divider"></div>
+    <div class="mood-item"><div class="mood-label">10Y Yield</div><div class="mood-value" id="mood-10y">—</div></div>
+    <div class="mood-divider"></div>
+    <div class="mood-item"><div class="mood-label">DXY</div><div class="mood-value" id="mood-dxy">—</div></div>
+  </div>
+
+  <!-- Indices -->
+  <div class="section-title">📈 Equity Indices</div>
+  <div class="futures-grid" id="grid-indices"></div>
+
+  <!-- Commodities -->
+  <div class="section-title">🛢️ Commodities</div>
+  <div class="futures-grid" id="grid-commodities"></div>
+
+  <!-- Bonds & Rates -->
+  <div class="section-title">🏦 Bonds & Rates</div>
+  <div class="futures-grid" id="grid-bonds"></div>
+
+  <!-- Forex -->
+  <div class="section-title">💱 Forex</div>
+  <div class="futures-grid" id="grid-forex"></div>
+
+  <!-- Crypto -->
+  <div class="section-title">₿ Crypto</div>
+  <div class="futures-grid" id="grid-crypto"></div>
+
+  <!-- Detail Table -->
+  <div class="card-wrap">
+    <div class="card-hdr">
+      <span>All Futures — Full Detail</span>
+      <span id="tableCount" style="font-size:0.7rem;color:var(--accent)">—</span>
+    </div>
+    <div style="overflow-x:auto">
+      <table class="detail-table">
+        <thead><tr>
+          <th>Name</th><th>Symbol</th><th>Price</th>
+          <th>Change</th><th>Change %</th><th>Open</th><th>High</th><th>Low</th><th>Prev Close</th>
+        </tr></thead>
+        <tbody id="detailBody"></tbody>
+      </table>
+    </div>
+    <div class="note">Prices delayed ~15 minutes via Yahoo Finance · Auto-refreshes every 5 minutes</div>
+  </div>
+
+</div>
+
+<script>
+// ── FUTURES DEFINITIONS ───────────────────────────────────────────────────────
+const FUTURES = {
+  indices: [
+    {sym:'ES=F',  name:'S&P 500 Futures',     tag:'CME'},
+    {sym:'NQ=F',  name:'Nasdaq 100 Futures',   tag:'CME'},
+    {sym:'YM=F',  name:'Dow Jones Futures',    tag:'CME'},
+    {sym:'RTY=F', name:'Russell 2000 Futures', tag:'CME'},
+    {sym:'VIX',   name:'CBOE Volatility',      tag:'INDEX'},
+    {sym:'^GSPC', name:'S&P 500',              tag:'INDEX'},
+    {sym:'^IXIC', name:'Nasdaq Composite',     tag:'INDEX'},
+    {sym:'^DJI',  name:'Dow Jones',            tag:'INDEX'},
+  ],
+  commodities: [
+    {sym:'CL=F',  name:'Crude Oil (WTI)',      tag:'NYMEX'},
+    {sym:'BZ=F',  name:'Brent Crude',          tag:'ICE'},
+    {sym:'NG=F',  name:'Natural Gas',          tag:'NYMEX'},
+    {sym:'GC=F',  name:'Gold',                 tag:'COMEX'},
+    {sym:'SI=F',  name:'Silver',               tag:'COMEX'},
+    {sym:'HG=F',  name:'Copper',               tag:'COMEX'},
+    {sym:'ZW=F',  name:'Wheat',                tag:'CBOT'},
+    {sym:'ZC=F',  name:'Corn',                 tag:'CBOT'},
+  ],
+  bonds: [
+    {sym:'ZN=F',  name:'10-Year T-Note',       tag:'CBOT'},
+    {sym:'ZB=F',  name:'30-Year T-Bond',       tag:'CBOT'},
+    {sym:'ZT=F',  name:'2-Year T-Note',        tag:'CBOT'},
+    {sym:'^TNX',  name:'10Y Yield',            tag:'INDEX'},
+    {sym:'^TYX',  name:'30Y Yield',            tag:'INDEX'},
+    {sym:'^IRX',  name:'13-Week T-Bill',       tag:'INDEX'},
+  ],
+  forex: [
+    {sym:'EURUSD=X', name:'EUR / USD',         tag:'FX'},
+    {sym:'GBPUSD=X', name:'GBP / USD',         tag:'FX'},
+    {sym:'JPY=X',    name:'USD / JPY',         tag:'FX'},
+    {sym:'DX-Y.NYB', name:'US Dollar Index',   tag:'DXY'},
+    {sym:'AUDUSD=X', name:'AUD / USD',         tag:'FX'},
+    {sym:'USDCAD=X', name:'USD / CAD',         tag:'FX'},
+    {sym:'USDCHF=X', name:'USD / CHF',         tag:'FX'},
+    {sym:'USDCNY=X', name:'USD / CNY',         tag:'FX'},
+  ],
+  crypto: [
+    {sym:'BTC-USD',  name:'Bitcoin',           tag:'CRYPTO'},
+    {sym:'ETH-USD',  name:'Ethereum',          tag:'CRYPTO'},
+    {sym:'SOL-USD',  name:'Solana',            tag:'CRYPTO'},
+    {sym:'BNB-USD',  name:'BNB',               tag:'CRYPTO'},
+    {sym:'XRP-USD',  name:'XRP',               tag:'CRYPTO'},
+    {sym:'DOGE-USD', name:'Dogecoin',          tag:'CRYPTO'},
+  ],
+};
+
+// mood bar symbol mapping
+const MOOD_MAP = {
+  'mood-sp500':  'ES=F',
+  'mood-nasdaq': 'NQ=F',
+  'mood-dow':    'YM=F',
+  'mood-rut':    'RTY=F',
+  'mood-vix':    'VIX',
+  'mood-10y':    '^TNX',
+  'mood-dxy':    'DX-Y.NYB',
+};
+
+// ── YAHOO FINANCE PROXY FETCH ─────────────────────────────────────────────────
+const PROXIES = [
+  u => `https://corsproxy.io/?${encodeURIComponent(u)}`,
+  u => `https://api.allorigins.win/raw?url=${encodeURIComponent(u)}`,
+];
+
+async function yahooFetch(symbols) {
+  const syms = symbols.join(',');
+  const url = `https://query1.finance.yahoo.com/v8/finance/spark?symbols=${encodeURIComponent(syms)}&range=1d&interval=5m`;
+  const url2 = `https://query1.finance.yahoo.com/v7/finance/quote?symbols=${encodeURIComponent(syms)}&fields=regularMarketPrice,regularMarketChange,regularMarketChangePercent,regularMarketOpen,regularMarketDayHigh,regularMarketDayLow,regularMarketPreviousClose,shortName`;
+
+  for (const proxy of PROXIES) {
+    try {
+      const res = await fetch(proxy(url2), { cache: 'no-store' });
+      if (!res.ok) continue;
+      const data = await res.json();
+      const results = data?.quoteResponse?.result || [];
+      if (results.length === 0) continue;
+      return results;
+    } catch(e) { continue; }
+  }
+  return [];
+}
+
+// ── FORMAT HELPERS ────────────────────────────────────────────────────────────
+function fmtPrice(p, sym) {
+  if (p === null || p === undefined || isNaN(p)) return '—';
+  if (sym && (sym.includes('=X') || sym === 'DX-Y.NYB')) return p.toFixed(4);
+  if (p > 10000) return p.toLocaleString('en-US', {maximumFractionDigits:0});
+  if (p > 100)   return p.toLocaleString('en-US', {minimumFractionDigits:2,maximumFractionDigits:2});
+  return p.toFixed(4);
+}
+function fmtChg(c) {
+  if (c === null || isNaN(c)) return '—';
+  return (c >= 0 ? '+' : '') + c.toFixed(2);
+}
+function fmtPct(p) {
+  if (p === null || isNaN(p)) return '—';
+  return (p >= 0 ? '+' : '') + p.toFixed(2) + '%';
+}
+function dirClass(v) { return v > 0 ? 'up' : v < 0 ? 'down' : 'flat'; }
+
+// ── RENDER GRID ───────────────────────────────────────────────────────────────
+function renderGrid(containerId, items, quoteMap) {
+  const container = document.getElementById(containerId);
+  container.innerHTML = '';
+  items.forEach(item => {
+    const q = quoteMap[item.sym];
+    const price = q?.regularMarketPrice;
+    const chg   = q?.regularMarketChange;
+    const pct   = q?.regularMarketChangePercent;
+    const dir   = chg > 0 ? 'up' : chg < 0 ? 'down' : 'flat';
+    const pctAbs = Math.min(Math.abs(pct || 0), 10); // cap at 10% for bar width
+    const barW  = (pctAbs / 10 * 100).toFixed(1);
+    const barColor = dir === 'up' ? 'var(--green)' : dir === 'down' ? 'var(--red)' : 'var(--muted)';
+
+    container.innerHTML += `
+      <div class="futures-card ${dir}">
+        <div class="fc-tag">${item.tag}</div>
+        <div class="fc-name">${item.name}</div>
+        <div class="fc-price ${dir}">${fmtPrice(price, item.sym)}</div>
+        <div class="fc-change">
+          <span class="${dir}">${fmtPct(pct)}</span>
+          <span class="abs ${dir}">${fmtChg(chg)}</span>
+        </div>
+        <div class="spark"><div class="spark-fill" style="width:${barW}%;background:${barColor}"></div></div>
+      </div>`;
+  });
+}
+
+// ── RENDER DETAIL TABLE ───────────────────────────────────────────────────────
+function renderTable(allItems, quoteMap) {
+  const tbody = document.getElementById('detailBody');
+  tbody.innerHTML = '';
+  let count = 0;
+  allItems.forEach(item => {
+    const q = quoteMap[item.sym];
+    if (!q) return;
+    count++;
+    const chg = q.regularMarketChange, pct = q.regularMarketChangePercent;
+    const dir = chg > 0 ? 'up' : chg < 0 ? 'down' : 'flat';
+    tbody.innerHTML += `<tr>
+      <td>${item.name}</td>
+      <td><span class="sym-badge">${item.sym.replace('=F','').replace('=X','').replace('-USD','')}</span></td>
+      <td><strong>${fmtPrice(q.regularMarketPrice, item.sym)}</strong></td>
+      <td class="${dir}">${fmtChg(chg)}</td>
+      <td class="${dir}">${fmtPct(pct)}</td>
+      <td class="flat">${fmtPrice(q.regularMarketOpen, item.sym)}</td>
+      <td class="up">${fmtPrice(q.regularMarketDayHigh, item.sym)}</td>
+      <td class="down">${fmtPrice(q.regularMarketDayLow, item.sym)}</td>
+      <td class="flat">${fmtPrice(q.regularMarketPreviousClose, item.sym)}</td>
+    </tr>`;
+  });
+  document.getElementById('tableCount').textContent = count + ' instruments';
+}
+
+// ── UPDATE MOOD BAR ───────────────────────────────────────────────────────────
+function updateMood(quoteMap) {
+  Object.entries(MOOD_MAP).forEach(([elId, sym]) => {
+    const q = quoteMap[sym];
+    const el = document.getElementById(elId);
+    if (!q || !el) return;
+    const pct = q.regularMarketChangePercent;
+    const dir = pct > 0 ? 'up' : pct < 0 ? 'down' : 'flat';
+    el.className = 'mood-value ' + dir;
+    el.textContent = fmtPrice(q.regularMarketPrice, sym) + '  ' + fmtPct(pct);
+  });
+}
+
+// ── MAIN LOAD ─────────────────────────────────────────────────────────────────
+async function loadFutures() {
+  document.getElementById('lastUpdated').textContent = 'Loading…';
+
+  // Collect all symbols
+  const allItems = [
+    ...FUTURES.indices,
+    ...FUTURES.commodities,
+    ...FUTURES.bonds,
+    ...FUTURES.forex,
+    ...FUTURES.crypto,
+  ];
+  const allSyms = [...new Set(allItems.map(i => i.sym))];
+
+  // Fetch in batches of 20 (Yahoo limit)
+  const batches = [];
+  for (let i = 0; i < allSyms.length; i += 20) batches.push(allSyms.slice(i, i+20));
+
+  const quoteMap = {};
+  await Promise.all(batches.map(async batch => {
+    const results = await yahooFetch(batch);
+    results.forEach(q => { quoteMap[q.symbol] = q; });
+  }));
+
+  // Render everything
+  renderGrid('grid-indices',     FUTURES.indices,     quoteMap);
+  renderGrid('grid-commodities', FUTURES.commodities, quoteMap);
+  renderGrid('grid-bonds',       FUTURES.bonds,       quoteMap);
+  renderGrid('grid-forex',       FUTURES.forex,       quoteMap);
+  renderGrid('grid-crypto',      FUTURES.crypto,      quoteMap);
+  updateMood(quoteMap);
+  renderTable(allItems, quoteMap);
+
+  document.getElementById('lastUpdated').textContent = 'Updated: ' + new Date().toLocaleTimeString();
+}
+
+// Boot
+loadFutures();
+setInterval(loadFutures, 5 * 60 * 1000);
+
+// Also update nav link to portfolio
+document.addEventListener('DOMContentLoaded', () => {
+  const path = window.location.pathname;
+  document.querySelectorAll('.nav-link').forEach(l => {
+    l.classList.toggle('active', l.getAttribute('href') === (path.split('/').pop() || 'index.html'));
+  });
+});
+</script>
+</body>
+</html>
