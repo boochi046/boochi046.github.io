@@ -240,6 +240,12 @@ td:first-child{text-align:left;}
 .news-tag{background:rgba(59,130,246,.1);border:1px solid rgba(59,130,246,.2);color:var(--accent);padding:.03rem .3rem;border-radius:3px;font-size:.58rem;}
 .data-note{text-align:center;font-size:.62rem;color:var(--muted);padding:.65rem;border-top:1px solid var(--border);font-family:'JetBrains Mono',monospace;}
 
+
+.sort-icon{font-size:.6rem;color:var(--muted);margin-left:2px;transition:color .15s;}
+.sort-icon.asc{color:var(--accent);}
+.sort-icon.desc{color:var(--accent);}
+thead th:hover .sort-icon{color:var(--text);}
+
 /* ── SHARPE CARD ── */
 .sharpe-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:1rem 1.1rem;margin-bottom:1rem;}
 .sharpe-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:.75rem;margin-top:.75rem;}
@@ -423,10 +429,18 @@ td:first-child{text-align:left;}
         </div>
         <div class="scroll" style="max-height:420px">
           <table>
-            <thead><tr>
-              <th>Stock</th><th>Units</th><th>Avg Cost</th><th>Live</th>
-              <th>Mkt Val</th><th>Unreal P&amp;L</th>
-              <th>Today %</th><th>1M %</th><th>3M %</th><th>6M %</th><th>Total %</th>
+            <thead><tr id="holdingsHead">
+              <th onclick="sortHoldings('name')" style="cursor:pointer;user-select:none">Stock <span class="sort-icon" data-col="name">↕</span></th>
+              <th onclick="sortHoldings('units')" style="cursor:pointer;user-select:none">Units <span class="sort-icon" data-col="units">↕</span></th>
+              <th onclick="sortHoldings('avg')" style="cursor:pointer;user-select:none">Avg Cost <span class="sort-icon" data-col="avg">↕</span></th>
+              <th onclick="sortHoldings('live')" style="cursor:pointer;user-select:none">Live <span class="sort-icon" data-col="live">↕</span></th>
+              <th onclick="sortHoldings('mkt')" style="cursor:pointer;user-select:none">Mkt Val <span class="sort-icon" data-col="mkt">↕</span></th>
+              <th onclick="sortHoldings('pnl')" style="cursor:pointer;user-select:none">Unreal P&amp;L <span class="sort-icon" data-col="pnl">↕</span></th>
+              <th onclick="sortHoldings('retToday')" style="cursor:pointer;user-select:none">Today % <span class="sort-icon" data-col="retToday">↕</span></th>
+              <th onclick="sortHoldings('ret1m')" style="cursor:pointer;user-select:none">1M % <span class="sort-icon" data-col="ret1m">↕</span></th>
+              <th onclick="sortHoldings('ret3m')" style="cursor:pointer;user-select:none">3M % <span class="sort-icon" data-col="ret3m">↕</span></th>
+              <th onclick="sortHoldings('ret6m')" style="cursor:pointer;user-select:none">6M % <span class="sort-icon" data-col="ret6m">↕</span></th>
+              <th onclick="sortHoldings('retTotal')" style="cursor:pointer;user-select:none">Total % <span class="sort-icon" data-col="retTotal">↕</span></th>
             </tr></thead>
             <tbody id="holdingsBody"></tbody>
           </table>
@@ -707,12 +721,43 @@ function renderPerfChart(buyRows,view){
     <div class="ps"><div class="ps-label">Avg/Month</div><div class="ps-val">$${Math.round(totalC/months).toLocaleString()}</div></div>`;
 }
 
+
+// ── SORT ──────────────────────────────────────────────────────────────────────
+let sortCol='retTotal', sortDir=-1; // default: best total return first
+function sortHoldings(col){
+  if(sortCol===col){sortDir*=-1;}else{sortCol=col;sortDir=-1;}
+  // Update icons
+  document.querySelectorAll('.sort-icon').forEach(el=>{
+    el.className='sort-icon';
+    el.textContent='↕';
+  });
+  const icon=document.querySelector(`.sort-icon[data-col="${col}"]`);
+  if(icon){icon.className='sort-icon '+(sortDir===-1?'desc':'asc');icon.textContent=sortDir===-1?'↓':'↑';}
+  renderHoldings(curFilter);
+}
+
 // ── HOLDINGS TABLE ────────────────────────────────────────────────────────────
 let allHoldings=[],curFilter='all';
 function renderHoldings(filter){
   curFilter=filter;
   const tbody=document.getElementById('holdingsBody');tbody.innerHTML='';
-  const list=filter==='all'?allHoldings:allHoldings.filter(h=>h.sector===filter);
+  let list=filter==='all'?[...allHoldings]:allHoldings.filter(h=>h.sector===filter);
+  // Sort
+  list.sort((a,b)=>{
+    let av,bv;
+    if(sortCol==='name'){av=a.ticker;bv=b.ticker;return sortDir*(av<bv?-1:av>bv?1:0);}
+    if(sortCol==='units'){av=a.units;bv=b.units;}
+    else if(sortCol==='avg'){av=a.avg;bv=b.avg;}
+    else if(sortCol==='live'){av=a.live||0;bv=b.live||0;}
+    else if(sortCol==='mkt'){av=a.live?a.live*a.units:0;bv=b.live?b.live*b.units:0;}
+    else if(sortCol==='pnl'){av=a.live?a.live*a.units-a.cost:-Infinity;bv=b.live?b.live*b.units-b.cost:-Infinity;}
+    else if(sortCol==='retToday'){av=a.retToday??-Infinity;bv=b.retToday??-Infinity;}
+    else if(sortCol==='ret1m'){av=a.ret1m??-Infinity;bv=b.ret1m??-Infinity;}
+    else if(sortCol==='ret3m'){av=a.ret3m??-Infinity;bv=b.ret3m??-Infinity;}
+    else if(sortCol==='ret6m'){av=a.ret6m??-Infinity;bv=b.ret6m??-Infinity;}
+    else{av=a.retTotal??-Infinity;bv=b.retTotal??-Infinity;}
+    return sortDir*(av-bv);
+  });
   list.forEach(h=>{
     const mkt=h.live?h.live*h.units:null;
     const pnl=mkt!==null?mkt-h.cost:null;
