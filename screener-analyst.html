@@ -310,17 +310,20 @@ const PROXIES = [
 function timeout(ms){ return new Promise((_,r)=>setTimeout(()=>r(new Error('timeout')),ms)); }
 async function fetchSheet(url){
   if(!url) return null;
+  const proxyNames=['corsproxy','allorigins','thingproxy','codetabs'];
   const order=[...Array(PROXIES.length).keys()].map(i=>(i+bestProxy)%PROXIES.length);
   for(const pi of order){
     try{
-      const res=await Promise.race([fetch(PROXIES[pi](url),{cache:'no-store'}),timeout(12000)]);
-      if(!res.ok) continue;
+      const res=await Promise.race([fetch(PROXIES[pi](url),{cache:'no-store'}),timeout(14000)]);
+      if(!res.ok){dbg('❌ '+proxyNames[pi]+': HTTP '+res.status);continue;}
       const text=await res.text();
-      if(!text||text.length<30||text.trim().startsWith('<')||!text.includes(',')) continue;
+      if(!text||text.length<500){dbg('❌ '+proxyNames[pi]+': too small ('+text.length+' chars)');continue;}
+      if(text.trim().startsWith('<')){dbg('❌ '+proxyNames[pi]+': got HTML not CSV');continue;}
+      if(!text.includes(',')){dbg('❌ '+proxyNames[pi]+': not CSV (no commas)');continue;}
       bestProxy=pi;
-      dbg(`✅ ${['corsproxy','allorigins','thingproxy','codetabs'][pi]}: ${text.length} chars`);
+      dbg('✅ '+proxyNames[pi]+': '+text.length+' chars, ~'+text.split('\n').length+' rows');
       return parseCSV(text);
-    }catch(e){ dbg(`❌ ${['corsproxy','allorigins','thingproxy','codetabs'][pi]}: ${e.message}`); continue; }
+    }catch(e){dbg('❌ '+proxyNames[pi]+': '+e.message);continue;}
   }
   return null;
 }
@@ -471,7 +474,9 @@ function runStrategy(ticker,series,pctData,mainData){
     const vpci=(!isNaN(vpc)&&!isNaN(vpr)&&!isNaN(vm2)&&s50[i]>0)?(vpc/s50[i])*vpr*vm2:NaN;
     const pR=!isNaN(roc)&&roc>0&&roc<20;
     const pV=!isNaN(vmi)&&vmi>=1.05;
-    const pP=!isNaN(vpci)&&vpci>0&&vpci<1.5;
+    // VPCI: if volume unavailable (all zeros), VWMA=SMA so vpci≈0 — treat as N/A and skip this filter
+    const hasVol=V.some(v=>v>0);
+    const pP=!hasVol?true:(!isNaN(vpci)&&vpci>0&&vpci<1.5);
     const pPr=cl<50;
     if(!(pR&&pV&&pP&&pPr)) continue;
     // pct returns
@@ -621,7 +626,9 @@ async function runScreener(){
 
   try{
     // Sequential fetch — one at a time
-    const closeP =await load('close');
+    dbg('Fetching close from: '+SHEETS.close.slice(0,80));
+  const closeP =await load('close');
+  dbg('close result: '+(closeP?closeP.rows.length+' rows, '+closeP.headers.length+' cols':'FAILED'));
     const openP  =await load('open');
     const highP  =await load('high');
     const lowP   =await load('low');
@@ -631,7 +638,7 @@ async function runScreener(){
 
     if(!closeP){
       document.getElementById('errBox').style.display='block';
-      document.getElementById('errBox').innerHTML='❌ <strong>Could not fetch close prices.</strong> Check debug log. Must be on GitHub Pages.';
+      document.getElementById('errBox').innerHTML='❌ <strong>Could not fetch close prices.</strong> The close sheet returned too little data or failed. Check debug log below — look for the ❌ lines.';
       document.getElementById('loadCard').style.display='none';
       document.getElementById('resultsCard').style.display='block';
       document.getElementById('sampleCard').style.display='block';
@@ -644,6 +651,8 @@ async function runScreener(){
 
     msg('Parsing sheets…');
     const cMap=parseWide(closeP);
+    dbg('cMap tickers: '+Object.keys(cMap).length+' | headers[0]: '+closeP.headers[0]+' | headers[1]: '+closeP.headers[1]);
+    if(closeP.rows.length>0) dbg('closeP row[0] keys: '+Object.keys(closeP.rows[0]).slice(0,6).join(', '));
     const oMap=parseWide(openP||closeP);
     const hMap=parseWide(highP||closeP);
     const lMap=parseWide(lowP||closeP);
@@ -701,10 +710,10 @@ async function runScreener(){
         const vmiV=(!isNaN(mA[i2])&&!isNaN(rA[i2]))?1+(mA[i2]-rA[i2])/100:NaN;
         const vpc=vw50[i2]-s50[i2],vpr=vw10[i2]/s10[i2],vm2=vs10[i2]/vs50[i2];
         const vpciV=s50[i2]>0?(vpc/s50[i2])*vpr*vm2:NaN;
-        sampleRows.push({ticker,bars:n2,price:C[i2],roc:rocV,rsiV:rA[i2],mfiV:mA[i2],vmi:vmiV,vpci:vpciV,
+        const hasV2=V2.some(v=>v>0); sampleRows.push({ticker,bars:n2,price:C[i2],roc:rocV,rsiV:rA[i2],mfiV:mA[i2],vmi:vmiV,vpci:vpciV,hasVol:hasV2,
           passROC:!isNaN(rocV)&&rocV>0&&rocV<20,passVMI:!isNaN(vmiV)&&vmiV>=1.05,passVPCI:!isNaN(vpciV)&&vpciV>0&&vpciV<1.5,
           d0:series[0]?.date,dn:series[n2-1]?.date});
-        dbg(`${ticker}: n=${n2} roc=${isNaN(rocV)?'NaN':rocV.toFixed(2)} vmi=${isNaN(vmiV)?'NaN':vmiV.toFixed(3)} vpci=${isNaN(vpciV)?'NaN':vpciV.toFixed(4)} price=${C[i2]?.toFixed(2)}`);
+        dbg(ticker+': n='+n2+' roc='+(isNaN(rocV)?'NaN':rocV.toFixed(2))+' vmi='+(isNaN(vmiV)?'NaN':vmiV.toFixed(3))+' price='+C[i2].toFixed(2)+' dates=['+series[0].date+'..'+series[n2-1].date+']');
       }
 
       const sigs=runStrategy(ticker,series,pctLookup[ticker]||null,mainLookup[ticker]||null);
