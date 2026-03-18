@@ -251,6 +251,15 @@ td:first-child{text-align:left;padding-left:1.1rem;}
     Price&lt;$50 &nbsp;|&nbsp;
     <span style="color:var(--accent)">Period returns from % change sheet · Analyst targets from main sheet</span>
   </div>
+
+  <!-- DEBUG PANEL -->
+  <div id="debugPanel" style="margin-top:.85rem;background:var(--surface);border:1px solid var(--border2);border-radius:11px;overflow:hidden;">
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:.65rem 1rem;border-bottom:1px solid var(--border);cursor:pointer" onclick="toggleDebug()">
+      <span style="font-size:.68rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.1em">🔧 Debug Info</span>
+      <span style="font-size:.65rem;color:var(--muted);font-family:var(--mono)" id="debugToggleLabel">▼ show</span>
+    </div>
+    <div id="debugContent" style="display:none;padding:.85rem 1rem;font-size:.65rem;font-family:var(--mono);color:var(--text2);line-height:1.8;max-height:400px;overflow-y:auto;white-space:pre-wrap" id="debugLog">No data yet.</div>
+  </div>
 </div>
 
 </div><!-- /wrapper -->
@@ -331,12 +340,15 @@ async function fetchSheet(url) {
   for(const p of PROXIES){
     try{
       const res=await fetch(p(url),{cache:'no-store'});
-      if(!res.ok) continue;
+      if(!res.ok){ console.log('[fetch] HTTP',res.status,'from',p(url).slice(0,80)); continue; }
       const text=await res.text();
-      if(!text||text.length<20||text.trim().startsWith('<')) continue;
+      if(!text||text.length<20){ console.log('[fetch] Empty response'); continue; }
+      if(text.trim().startsWith('<')){ console.log('[fetch] Got HTML not CSV, first 100:', text.slice(0,100)); continue; }
+      console.log('[fetch] OK, length:', text.length, '| first 150:', text.slice(0,150));
       return parseCSV(text);
-    }catch(e){continue;}
+    }catch(e){ console.log('[fetch] Error:', e.message); continue; }
   }
+  console.log('[fetch] ALL PROXIES FAILED for', url.slice(0,80));
   return null;
 }
 
@@ -348,18 +360,30 @@ async function fetchSheet(url) {
 function parseWide(parsed) {
   if(!parsed) return {};
   const {headers, rows} = parsed;
-  // First col is ticker, rest are dates
-  const tickerCol = headers[0]; // e.g. "Ticker" or "Symbol"
-  const dates = headers.slice(1); // date strings
-  const map = {}; // ticker -> [{date, value}]
-  rows.forEach(row=>{
-    const ticker = (row[tickerCol]||'').trim().toUpperCase();
-    if(!ticker) return;
-    map[ticker] = dates.map(d=>({
-      date: d,
-      val: parseFloat((row[d]||'').replace(/[$,%]/g,'')) || null
-    })).filter(x=>x.val!==null&&!isNaN(x.val));
+  if(!headers.length || !rows.length) return {};
+
+  // First col is ticker identifier — find it regardless of name
+  const tickerCol = headers[0];
+  // All other columns are date/value columns
+  const dateCols = headers.slice(1).filter(h => h && h.trim() !== '');
+
+  console.log('[parseWide] tickerCol:', tickerCol, '| dateCols count:', dateCols.length, '| first few:', dateCols.slice(0,5));
+
+  const map = {};
+  rows.forEach(row => {
+    const ticker = (row[tickerCol] || '').trim().toUpperCase().replace(/['"]/g,'');
+    if (!ticker || ticker === tickerCol.toUpperCase()) return;
+    const series = [];
+    dateCols.forEach(d => {
+      const raw = (row[d] || '').toString().trim().replace(/[$, ]/g,'');
+      if (raw === '' || raw === '-' || raw === 'N/A') return;
+      const val = parseFloat(raw);
+      if (!isNaN(val) && val !== 0) series.push({ date: d, val });
+    });
+    if (series.length > 0) map[ticker] = series;
   });
+
+  console.log('[parseWide] tickers found:', Object.keys(map).length, '| sample:', Object.keys(map).slice(0,5));
   return map;
 }
 
@@ -444,7 +468,7 @@ function mergeSeries(ticker, closeMap, openMap, highMap, lowMap, volMap) {
 // COMPUTE STRATEGY FOR ONE TICKER
 // ═══════════════════════════════════════════════════════════════════
 function computeStrategy(ticker, series, pctRow, mainRow, wlKey) {
-  if(!series||series.length<55) return [];
+  if(!series||series.length<14) return []; // need at least 14 for RSI/MFI
 
   const C=series.map(x=>x.c);
   const H=series.map(x=>x.h);
@@ -466,7 +490,7 @@ function computeStrategy(ticker, series, pctRow, mainRow, wlKey) {
 
   for(let daysAgo=0;daysAgo<=3;daysAgo++){
     const i=n-1-daysAgo;
-    if(i<50) continue;
+    if(i<13) continue; // need at least 14 bars for RSI/MFI
 
     const close   = C[i];
     const prevClose = i>0?C[i-1]:null;
@@ -626,8 +650,23 @@ function srt(col){
 // ═══════════════════════════════════════════════════════════════════
 // MAIN RUNNER
 // ═══════════════════════════════════════════════════════════════════
+// Debug helpers
+let debugLines = [];
+function dbg(msg){ debugLines.push(msg); }
+function flushDebug(){
+  const el = document.getElementById('debugContent');
+  if(el) el.textContent = debugLines.join('\n');
+}
+function toggleDebug(){
+  const c = document.getElementById('debugContent');
+  const l = document.getElementById('debugToggleLabel');
+  if(c.style.display==='none'){c.style.display='block';l.textContent='▲ hide';}
+  else{c.style.display='none';l.textContent='▼ show';}
+}
+
 async function runAll(){
   allSignals=[];
+  debugLines=[];
   document.getElementById('loadingWrap').style.display='flex';
   document.getElementById('resultsWrap').style.display='none';
   document.getElementById('errBanner').style.display='none';
@@ -653,6 +692,7 @@ async function runAll(){
   async function fetchStep(url, id){
     if(!url){
       stepEls[id].textContent=stepEls[id].textContent.replace('⬜','⚪');
+      dbg(`[SKIP] ${id} — no URL`);
       return null;
     }
     stepEls[id].className='ls active';
@@ -660,6 +700,17 @@ async function runAll(){
     const res=await fetchSheet(url);
     stepEls[id].className=res?'ls done':'ls';
     stepEls[id].textContent=stepEls[id].textContent.replace('⏳',res?'✅':'❌');
+    if(res){
+      dbg(`[OK] ${id} → ${res.rows.length} rows, ${res.headers.length} cols`);
+      dbg(`     Headers[0..5]: ${res.headers.slice(0,6).join(' | ')}`);
+      if(res.rows.length>0){
+        const firstRow = res.rows[0];
+        const firstKey = res.headers[0];
+        dbg(`     Row[0] ticker: "${firstRow[firstKey]}" | cols with data: ${Object.values(firstRow).filter(v=>v&&v!=='').length}`);
+      }
+    } else {
+      dbg(`[FAIL] ${id} — all proxies failed`);
+    }
     return res;
   }
 
@@ -712,17 +763,28 @@ async function runAll(){
 
       const tickers=Object.keys(closeMap);
       totalTickers+=tickers.length;
-      if(closeMap[tickers[0]]) totalDates=Math.max(totalDates, closeMap[tickers[0]].length);
+      if(tickers.length>0 && closeMap[tickers[0]]) totalDates=Math.max(totalDates, closeMap[tickers[0]].length);
+
+      dbg(`[${wl.name}] closeMap tickers: ${tickers.length} — ${tickers.slice(0,8).join(', ')}${tickers.length>8?'…':''}`);
+      dbg(`[${wl.name}] openMap: ${Object.keys(openMap).length} | highMap: ${Object.keys(highMap).length} | lowMap: ${Object.keys(lowMap).length} | volMap: ${Object.keys(volMap).length}`);
+      dbg(`[${wl.name}] pctLookup: ${Object.keys(pctLookup).length} tickers | mainLookup: ${Object.keys(mainLookup).length} tickers`);
+      if(tickers.length>0){
+        const t0=tickers[0];
+        dbg(`[${wl.name}] Sample "${t0}": close series length=${closeMap[t0]?.length||0}, first val=${closeMap[t0]?.[0]?.val}, last val=${closeMap[t0]?.[closeMap[t0].length-1]?.val}`);
+      }
 
       document.getElementById('loadMsg').textContent=`Computing indicators for ${wl.name} (${tickers.length} tickers)…`;
 
       // Run strategy per ticker
+      let hitCount=0;
       tickers.forEach(ticker=>{
         const series=mergeSeries(ticker,closeMap,openMap,highMap,lowMap,volMap);
-        if(!series) return;
+        if(!series){ dbg(`[${wl.name}] ${ticker}: merge returned null (too short?)`); return; }
         const sigs=computeStrategy(ticker,series,pctLookup[ticker]||null,mainLookup[ticker]||null,wk);
+        if(sigs.length>0){ hitCount++; dbg(`[${wl.name}] ✅ ${ticker}: ${sigs.length} signal(s)`); }
         allSignals.push(...sigs);
       });
+      dbg(`[${wl.name}] Strategy hits: ${hitCount}/${tickers.length} tickers`);
     }
 
     // Update stats
@@ -734,6 +796,7 @@ async function runAll(){
 
     document.getElementById('loadingWrap').style.display='none';
     document.getElementById('resultsWrap').style.display='block';
+    flushDebug();
     renderTable();
 
   }catch(err){
