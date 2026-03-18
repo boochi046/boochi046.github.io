@@ -437,30 +437,52 @@ function mfi(H,L,C,V,p=14){
 // MERGE OHLCV FOR A TICKER
 // Aligns dates across 5 separate wide sheets
 // ═══════════════════════════════════════════════════════════════════
+function parseAnyDate(str) {
+  if(!str) return null;
+  let d = new Date(str);
+  if(!isNaN(d)) return d;
+  const p = str.split(/[\/\-\.]/);
+  if(p.length===3) {
+    const yr = p[2].length===4?parseInt(p[2]):parseInt('20'+p[2]);
+    d = new Date(yr, parseInt(p[1])-1, parseInt(p[0]));
+    if(!isNaN(d)) return d;
+    d = new Date(yr, parseInt(p[0])-1, parseInt(p[1]));
+    if(!isNaN(d)) return d;
+  }
+  // Excel serial
+  const n = parseFloat(str);
+  if(!isNaN(n)&&n>40000&&n<60000) return new Date((n-25569)*86400*1000);
+  return null;
+}
+
 function mergeSeries(ticker, closeMap, openMap, highMap, lowMap, volMap) {
   const cArr = closeMap[ticker]||[];
-  if(cArr.length < 55) return null;
+  if(cArr.length < 14) return null;
 
-  // Use close dates as anchor; try to align others
-  const oMap = {};
-  (openMap[ticker]||[]).forEach(x=>oMap[x.date]=x.val);
-  const hMap = {};
-  (highMap[ticker]||[]).forEach(x=>hMap[x.date]=x.val);
-  const lMap2 = {};
-  (lowMap[ticker]||[]).forEach(x=>lMap2[x.date]=x.val);
-  const vMap = {};
-  (volMap[ticker]||[]).forEach(x=>vMap[x.date]=x.val);
+  const oMap={}; (openMap[ticker]||[]).forEach(x=>oMap[x.date]=x.val);
+  const hMap={}; (highMap[ticker]||[]).forEach(x=>hMap[x.date]=x.val);
+  const lMap2={}; (lowMap[ticker]||[]).forEach(x=>lMap2[x.date]=x.val);
+  const vMap={}; (volMap[ticker]||[]).forEach(x=>vMap[x.date]=x.val);
 
-  // Build aligned arrays (use close as reference)
-  const aligned = cArr.map(({date,val:c})=>({
-    date,
-    c,
-    o: oMap[date]||c,       // fallback to close if missing
+  let aligned = cArr.map(({date,val:c})=>({
+    date, c,
+    o: oMap[date]||c,
     h: hMap[date]||c,
     l: lMap2[date]||c,
     v: vMap[date]||1,
   })).filter(x=>x.c>0);
 
+  // CRITICAL: sort oldest→newest for correct indicator computation
+  const withDates = aligned.map(x=>({...x, parsed:parseAnyDate(x.date)}));
+  const allParsed = withDates.every(x=>x.parsed!==null);
+  if(allParsed) {
+    withDates.sort((a,b)=>a.parsed-b.parsed);
+    aligned = withDates;
+  } else {
+    // Dates unparseable — check if numeric cols are newest-first and reverse
+    const first=parseFloat(aligned[0]?.date), last=parseFloat(aligned[aligned.length-1]?.date);
+    if(!isNaN(first)&&!isNaN(last)&&first>last) aligned.reverse();
+  }
   return aligned;
 }
 
@@ -476,21 +498,24 @@ function computeStrategy(ticker, series, pctRow, mainRow, wlKey) {
   const V=series.map(x=>x.v);
   const n=C.length;
 
-  // Full indicator arrays
-  const rsiA  = rsi(C,14);
-  const mfiA  = mfi(H,L,C,V,14);
-  const sma50 = sma(C,50);
-  const sma10 = sma(C,10);
-  const vw50  = vwma(C,V,50);
-  const vw10  = vwma(C,V,10);
-  const vs10  = sma(V,10);
-  const vs50  = sma(V,50);
+  // Adaptive periods — use full 50/10 if enough data, else scale down
+  const longP  = n >= 50 ? 50 : Math.max(20, n - 4);
+  const shortP = n >= 10 ? 10 : Math.max(5, Math.floor(n * 0.15));
+
+  const rsiA  = rsi(C, 14);
+  const mfiA  = mfi(H, L, C, V, 14);
+  const sma50 = sma(C, longP);
+  const sma10 = sma(C, shortP);
+  const vw50  = vwma(C, V, longP);
+  const vw10  = vwma(C, V, shortP);
+  const vs10  = sma(V, shortP);
+  const vs50  = sma(V, longP);
 
   const signals=[];
 
   for(let daysAgo=0;daysAgo<=3;daysAgo++){
     const i=n-1-daysAgo;
-    if(i<13) continue; // need at least 14 bars for RSI/MFI
+    if(i<13||isNaN(sma50[i])) continue; // need longP bars for VPCI
 
     const close   = C[i];
     const prevClose = i>0?C[i-1]:null;
@@ -775,11 +800,30 @@ async function runAll(){
 
       document.getElementById('loadMsg').textContent=`Computing indicators for ${wl.name} (${tickers.length} tickers)…`;
 
-      // Run strategy per ticker
+      // Run strategy per ticker — log first 3 tickers for debugging
       let hitCount=0;
-      tickers.forEach(ticker=>{
+      tickers.forEach((ticker,ti)=>{
         const series=mergeSeries(ticker,closeMap,openMap,highMap,lowMap,volMap);
-        if(!series){ dbg(`[${wl.name}] ${ticker}: merge returned null (too short?)`); return; }
+        if(!series){ if(ti<3) dbg(`[${wl.name}] ${ticker}: series null (len=${closeMap[ticker]?.length})`); return; }
+
+        // Debug first 3 tickers: show raw indicator values
+        if(ti<3) {
+          const C=series.map(x=>x.c), H=series.map(x=>x.h), L=series.map(x=>x.l), V=series.map(x=>x.v);
+          const n=C.length;
+          const i=n-1;
+          const rsiA=rsi(C,14), mfiA=mfi(H,L,C,V,14);
+          const s50=sma(C,50),s10=sma(C,10),vw50=vwma(C,V,50),vw10=vwma(C,V,10),vs10=sma(V,10),vs50=sma(V,50);
+          const rocV=(i>=7&&C[i-7]>0)?((C[i]/C[i-7])-1)*100:NaN;
+          const vmiV=(!isNaN(mfiA[i])&&!isNaN(rsiA[i]))?1+(mfiA[i]-rsiA[i])/100:NaN;
+          const vpc=vw50[i]-s50[i], vpr=vw10[i]/s10[i], vm=vs10[i]/vs50[i];
+          const vpciV=(vpc/s50[i])*vpr*vm;
+          dbg(`[${wl.name}] ${ticker} (n=${n}): close[last]=${C[i]?.toFixed(2)} date=${series[i]?.date}`);
+          dbg(`  ROC(7)=${isNaN(rocV)?'NaN':rocV.toFixed(3)} | VMI=${isNaN(vmiV)?'NaN':vmiV.toFixed(3)} | VPCI=${isNaN(vpciV)?'NaN':vpciV.toFixed(4)}`);
+          dbg(`  RSI=${isNaN(rsiA[i])?'NaN':rsiA[i].toFixed(2)} | MFI=${isNaN(mfiA[i])?'NaN':mfiA[i].toFixed(2)} | SMA50=${isNaN(s50[i])?'NaN':s50[i].toFixed(2)}`);
+          dbg(`  passROC=${!isNaN(rocV)&&rocV>0&&rocV<20} | passVMI=${!isNaN(vmiV)&&vmiV>=1.05} | passVPCI=${!isNaN(vpciV)&&vpciV>0&&vpciV<1.5} | price<50=${C[i]<50}`);
+          dbg(`  dates[0]=${series[0]?.date} dates[-1]=${series[n-1]?.date}`);
+        }
+
         const sigs=computeStrategy(ticker,series,pctLookup[ticker]||null,mainLookup[ticker]||null,wk);
         if(sigs.length>0){ hitCount++; dbg(`[${wl.name}] ✅ ${ticker}: ${sigs.length} signal(s)`); }
         allSignals.push(...sigs);
