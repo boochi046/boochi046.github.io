@@ -1,4 +1,5 @@
 <!DOCTYPE html>
+
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -22,48 +23,48 @@ body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
 .wrapper{position:relative;z-index:1;max-width:1500px;margin:0 auto;padding:1.5rem 2rem;}
 
 /* NAV */
-nav{display:flex;align-items:center;margin-bottom:1.5rem;border-bottom:1px solid var(--border);padding-bottom:0;}
+nav{display:flex;align-items:center;margin-bottom:1.5rem;border-bottom:1px solid var(–border);padding-bottom:0;}
 .nav-brand{font-size:1.1rem;font-weight:700;letter-spacing:-.03em;
-  background:linear-gradient(135deg,var(--accent),var(--accent2));
-  -webkit-background-clip:text;-webkit-text-fill-color:transparent;
-  margin-right:2.5rem;padding-bottom:.9rem;}
-.nav-link{padding:.65rem 1.1rem;font-size:.75rem;font-weight:500;color:var(--muted);
-  text-decoration:none;border-bottom:2px solid transparent;transition:all .2s;letter-spacing:.03em;}
-.nav-link:hover{color:var(--text);}
-.nav-link.active{color:var(--accent);border-bottom-color:var(--accent);}
+background:linear-gradient(135deg,var(–accent),var(–accent2));
+-webkit-background-clip:text;-webkit-text-fill-color:transparent;
+margin-right:2.5rem;padding-bottom:.9rem;}
+.nav-link{padding:.65rem 1.1rem;font-size:.75rem;font-weight:500;color:var(–muted);
+text-decoration:none;border-bottom:2px solid transparent;transition:all .2s;letter-spacing:.03em;}
+.nav-link:hover{color:var(–text);}
+.nav-link.active{color:var(–accent);border-bottom-color:var(–accent);}
 
 /* HEADER */
 .page-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:1.5rem;}
 .page-title{font-size:1.4rem;font-weight:700;letter-spacing:-.03em;}
-.page-title span{color:var(--muted);font-weight:400;}
+.page-title span{color:var(–muted);font-weight:400;}
 .live-tag{display:inline-flex;align-items:center;gap:.35rem;background:rgba(16,185,129,.1);
-  border:1px solid rgba(16,185,129,.25);color:var(--green);
-  padding:.22rem .65rem;border-radius:100px;font-size:.65rem;font-family:var(--mono);}
-.live-dot{width:5px;height:5px;background:var(--green);border-radius:50%;animation:pulse 2s infinite;}
+border:1px solid rgba(16,185,129,.25);color:var(–green);
+padding:.22rem .65rem;border-radius:100px;font-size:.65rem;font-family:var(–mono);}
+.live-dot{width:5px;height:5px;background:var(–green);border-radius:50%;animation:pulse 2s infinite;}
 @keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
 
 /* SECTION LABEL */
 .section-label{
-  display:flex;align-items:center;gap:.75rem;
-  font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:.12em;color:var(--muted);
-  margin:1.5rem 0 .75rem;
+display:flex;align-items:center;gap:.75rem;
+font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:.12em;color:var(–muted);
+margin:1.5rem 0 .75rem;
 }
-.section-label::after{content:'';flex:1;height:1px;background:var(--border);}
+.section-label::after{content:’’;flex:1;height:1px;background:var(–border);}
 
 /* WIDGET CARD */
 .widget-card{
-  background:var(--surface);border:1px solid var(--border);border-radius:14px;
-  overflow:hidden;margin-bottom:1.25rem;
+background:var(–surface);border:1px solid var(–border);border-radius:14px;
+overflow:hidden;margin-bottom:1.25rem;
 }
 .widget-card-hdr{
-  padding:.75rem 1.2rem;border-bottom:1px solid var(--border);
-  display:flex;align-items:center;justify-content:space-between;
+padding:.75rem 1.2rem;border-bottom:1px solid var(–border);
+display:flex;align-items:center;justify-content:space-between;
 }
-.widget-card-title{font-size:.72rem;font-weight:600;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);}
+.widget-card-title{font-size:.72rem;font-weight:600;text-transform:uppercase;letter-spacing:.08em;color:var(–muted);}
 .widget-body{padding:0;background:#131722;border-radius:0 0 14px 14px;overflow:hidden;}
 
 /* TICKER TAPE */
-.tape-wrap{background:var(--surface);border:1px solid var(--border);border-radius:14px;overflow:hidden;margin-bottom:1.25rem;}
+.tape-wrap{background:var(–surface);border:1px solid var(–border);border-radius:14px;overflow:hidden;margin-bottom:1.25rem;}
 
 /* TWO COL */
 .two-col{display:grid;grid-template-columns:1fr 1fr;gap:1.25rem;margin-bottom:1.25rem;}
@@ -74,25 +75,31 @@ iframe{display:block;border:none;width:100%;}
 
 @media(max-width:900px){.two-col,.three-col{grid-template-columns:1fr;}}
 </style>
+
 </head>
 <body>
 <div class="wrapper">
 
   <!-- NAV -->
+
   <nav>
     <div class="nav-brand">◈ PORTFOLIO</div>
     <a href="index.html" class="nav-link">Dashboard</a>
     <a href="futures.html" class="nav-link active">Futures</a>
-    <a href="screener.html" class="nav-link">Screener</a>
+    <a href="screener-analyst.html" class="nav-link">Top Analyst</a>
+    <a href="screener-score.html" class="nav-link">Top Score</a>
+    <a href="screener-penny.html" class="nav-link">Penny</a>
   </nav>
 
   <!-- HEADER -->
+
   <div class="page-header">
     <div class="page-title">Market Futures <span>/ Live</span></div>
     <div class="live-tag"><span class="live-dot"></span> Real-time via TradingView</div>
   </div>
 
   <!-- TICKER TAPE -->
+
   <div class="tape-wrap">
     <div class="tradingview-widget-container">
       <div class="tradingview-widget-container__widget"></div>
@@ -123,6 +130,7 @@ iframe{display:block;border:none;width:100%;}
   </div>
 
   <!-- MARKET OVERVIEW -->
+
   <div class="section-label">📊 Market Overview</div>
   <div class="widget-card">
     <div class="widget-card-hdr">
@@ -216,185 +224,196 @@ iframe{display:block;border:none;width:100%;}
   </div>
 
   <!-- ECONOMIC CALENDAR + HEAT MAP -->
+
   <div class="two-col">
 
-    <!-- HEAT MAP -->
-    <div class="widget-card">
-      <div class="widget-card-hdr"><span class="widget-card-title">📈 S&P 500 Heat Map</span></div>
-      <div class="widget-body">
-        <div class="tradingview-widget-container">
-          <div class="tradingview-widget-container__widget"></div>
-          <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-stock-heatmap.js" async>
-          {
-            "exchanges": [],
-            "dataSource": "SPX500",
-            "grouping": "sector",
-            "blockSize": "market_cap_basic",
-            "blockColor": "change",
-            "locale": "en",
-            "symbolUrl": "",
-            "colorTheme": "dark",
-            "hasTopBar": false,
-            "isDataSetEnabled": false,
-            "isZoomEnabled": true,
-            "hasSymbolTooltip": true,
-            "isMonoSize": false,
-            "width": "100%",
-            "height": "400"
-          }
-          </script>
-        </div>
-      </div>
+```
+<!-- HEAT MAP -->
+<div class="widget-card">
+  <div class="widget-card-hdr"><span class="widget-card-title">📈 S&P 500 Heat Map</span></div>
+  <div class="widget-body">
+    <div class="tradingview-widget-container">
+      <div class="tradingview-widget-container__widget"></div>
+      <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-stock-heatmap.js" async>
+      {
+        "exchanges": [],
+        "dataSource": "SPX500",
+        "grouping": "sector",
+        "blockSize": "market_cap_basic",
+        "blockColor": "change",
+        "locale": "en",
+        "symbolUrl": "",
+        "colorTheme": "dark",
+        "hasTopBar": false,
+        "isDataSetEnabled": false,
+        "isZoomEnabled": true,
+        "hasSymbolTooltip": true,
+        "isMonoSize": false,
+        "width": "100%",
+        "height": "400"
+      }
+      </script>
     </div>
+  </div>
+</div>
 
-    <!-- ECONOMIC CALENDAR -->
-    <div class="widget-card">
-      <div class="widget-card-hdr"><span class="widget-card-title">📅 Economic Calendar</span></div>
-      <div class="widget-body">
-        <div class="tradingview-widget-container">
-          <div class="tradingview-widget-container__widget"></div>
-          <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-events.js" async>
-          {
-            "colorTheme": "dark",
-            "isTransparent": false,
-            "width": "100%",
-            "height": "400",
-            "locale": "en",
-            "importanceFilter": "0,1",
-            "countryFilter": "us,eu,gb,jp,cn,ca,au"
-          }
-          </script>
-        </div>
-      </div>
+<!-- ECONOMIC CALENDAR -->
+<div class="widget-card">
+  <div class="widget-card-hdr"><span class="widget-card-title">📅 Economic Calendar</span></div>
+  <div class="widget-body">
+    <div class="tradingview-widget-container">
+      <div class="tradingview-widget-container__widget"></div>
+      <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-events.js" async>
+      {
+        "colorTheme": "dark",
+        "isTransparent": false,
+        "width": "100%",
+        "height": "400",
+        "locale": "en",
+        "importanceFilter": "0,1",
+        "countryFilter": "us,eu,gb,jp,cn,ca,au"
+      }
+      </script>
     </div>
+  </div>
+</div>
+```
 
   </div>
 
   <!-- FOREX RATES + CRYPTO -->
+
   <div class="two-col">
 
-    <div class="widget-card">
-      <div class="widget-card-hdr"><span class="widget-card-title">💱 Forex Cross Rates</span></div>
-      <div class="widget-body">
-        <div class="tradingview-widget-container">
-          <div class="tradingview-widget-container__widget"></div>
-          <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-forex-cross-rates.js" async>
-          {
-            "width": "100%",
-            "height": "400",
-            "currencies": ["EUR","USD","JPY","GBP","CHF","AUD","CAD","NZD"],
-            "isTransparent": false,
-            "colorTheme": "dark",
-            "locale": "en",
-            "backgroundColor": "#131722"
-          }
-          </script>
-        </div>
-      </div>
+```
+<div class="widget-card">
+  <div class="widget-card-hdr"><span class="widget-card-title">💱 Forex Cross Rates</span></div>
+  <div class="widget-body">
+    <div class="tradingview-widget-container">
+      <div class="tradingview-widget-container__widget"></div>
+      <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-forex-cross-rates.js" async>
+      {
+        "width": "100%",
+        "height": "400",
+        "currencies": ["EUR","USD","JPY","GBP","CHF","AUD","CAD","NZD"],
+        "isTransparent": false,
+        "colorTheme": "dark",
+        "locale": "en",
+        "backgroundColor": "#131722"
+      }
+      </script>
     </div>
+  </div>
+</div>
 
-    <div class="widget-card">
-      <div class="widget-card-hdr"><span class="widget-card-title">₿ Crypto Market</span></div>
-      <div class="widget-body">
-        <div class="tradingview-widget-container">
-          <div class="tradingview-widget-container__widget"></div>
-          <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-screener.js" async>
-          {
-            "width": "100%",
-            "height": "400",
-            "defaultColumn": "overview",
-            "screener_type": "crypto_mkt",
-            "displayCurrency": "USD",
-            "colorTheme": "dark",
-            "locale": "en",
-            "isTransparent": false
-          }
-          </script>
-        </div>
-      </div>
+<div class="widget-card">
+  <div class="widget-card-hdr"><span class="widget-card-title">₿ Crypto Market</span></div>
+  <div class="widget-body">
+    <div class="tradingview-widget-container">
+      <div class="tradingview-widget-container__widget"></div>
+      <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-screener.js" async>
+      {
+        "width": "100%",
+        "height": "400",
+        "defaultColumn": "overview",
+        "screener_type": "crypto_mkt",
+        "displayCurrency": "USD",
+        "colorTheme": "dark",
+        "locale": "en",
+        "isTransparent": false
+      }
+      </script>
     </div>
+  </div>
+</div>
+```
 
   </div>
 
   <!-- MINI CHARTS ROW: Key futures -->
+
   <div class="section-label">📉 Key Futures Charts</div>
   <div class="three-col">
 
-    <div class="widget-card">
-      <div class="widget-card-hdr"><span class="widget-card-title">S&P 500 Futures</span></div>
-      <div class="widget-body">
-        <div class="tradingview-widget-container">
-          <div class="tradingview-widget-container__widget"></div>
-          <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-mini-symbol-overview.js" async>
-          {"symbol":"CME_MINI:ES1!","width":"100%","height":"220","locale":"en","dateRange":"3M","colorTheme":"dark","isTransparent":false,"autosize":true,"largeChartUrl":""}
-          </script>
-        </div>
-      </div>
+```
+<div class="widget-card">
+  <div class="widget-card-hdr"><span class="widget-card-title">S&P 500 Futures</span></div>
+  <div class="widget-body">
+    <div class="tradingview-widget-container">
+      <div class="tradingview-widget-container__widget"></div>
+      <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-mini-symbol-overview.js" async>
+      {"symbol":"CME_MINI:ES1!","width":"100%","height":"220","locale":"en","dateRange":"3M","colorTheme":"dark","isTransparent":false,"autosize":true,"largeChartUrl":""}
+      </script>
     </div>
+  </div>
+</div>
 
-    <div class="widget-card">
-      <div class="widget-card-hdr"><span class="widget-card-title">Gold Futures</span></div>
-      <div class="widget-body">
-        <div class="tradingview-widget-container">
-          <div class="tradingview-widget-container__widget"></div>
-          <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-mini-symbol-overview.js" async>
-          {"symbol":"COMEX:GC1!","width":"100%","height":"220","locale":"en","dateRange":"3M","colorTheme":"dark","isTransparent":false,"autosize":true,"largeChartUrl":""}
-          </script>
-        </div>
-      </div>
+<div class="widget-card">
+  <div class="widget-card-hdr"><span class="widget-card-title">Gold Futures</span></div>
+  <div class="widget-body">
+    <div class="tradingview-widget-container">
+      <div class="tradingview-widget-container__widget"></div>
+      <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-mini-symbol-overview.js" async>
+      {"symbol":"COMEX:GC1!","width":"100%","height":"220","locale":"en","dateRange":"3M","colorTheme":"dark","isTransparent":false,"autosize":true,"largeChartUrl":""}
+      </script>
     </div>
+  </div>
+</div>
 
-    <div class="widget-card">
-      <div class="widget-card-hdr"><span class="widget-card-title">Crude Oil Futures</span></div>
-      <div class="widget-body">
-        <div class="tradingview-widget-container">
-          <div class="tradingview-widget-container__widget"></div>
-          <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-mini-symbol-overview.js" async>
-          {"symbol":"NYMEX:CL1!","width":"100%","height":"220","locale":"en","dateRange":"3M","colorTheme":"dark","isTransparent":false,"autosize":true,"largeChartUrl":""}
-          </script>
-        </div>
-      </div>
+<div class="widget-card">
+  <div class="widget-card-hdr"><span class="widget-card-title">Crude Oil Futures</span></div>
+  <div class="widget-body">
+    <div class="tradingview-widget-container">
+      <div class="tradingview-widget-container__widget"></div>
+      <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-mini-symbol-overview.js" async>
+      {"symbol":"NYMEX:CL1!","width":"100%","height":"220","locale":"en","dateRange":"3M","colorTheme":"dark","isTransparent":false,"autosize":true,"largeChartUrl":""}
+      </script>
     </div>
+  </div>
+</div>
+```
 
   </div>
 
   <div class="three-col">
 
-    <div class="widget-card">
-      <div class="widget-card-hdr"><span class="widget-card-title">Bitcoin</span></div>
-      <div class="widget-body">
-        <div class="tradingview-widget-container">
-          <div class="tradingview-widget-container__widget"></div>
-          <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-mini-symbol-overview.js" async>
-          {"symbol":"BITSTAMP:BTCUSD","width":"100%","height":"220","locale":"en","dateRange":"3M","colorTheme":"dark","isTransparent":false,"autosize":true,"largeChartUrl":""}
-          </script>
-        </div>
-      </div>
+```
+<div class="widget-card">
+  <div class="widget-card-hdr"><span class="widget-card-title">Bitcoin</span></div>
+  <div class="widget-body">
+    <div class="tradingview-widget-container">
+      <div class="tradingview-widget-container__widget"></div>
+      <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-mini-symbol-overview.js" async>
+      {"symbol":"BITSTAMP:BTCUSD","width":"100%","height":"220","locale":"en","dateRange":"3M","colorTheme":"dark","isTransparent":false,"autosize":true,"largeChartUrl":""}
+      </script>
     </div>
+  </div>
+</div>
 
-    <div class="widget-card">
-      <div class="widget-card-hdr"><span class="widget-card-title">10Y Treasury Yield</span></div>
-      <div class="widget-body">
-        <div class="tradingview-widget-container">
-          <div class="tradingview-widget-container__widget"></div>
-          <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-mini-symbol-overview.js" async>
-          {"symbol":"TVC:US10Y","width":"100%","height":"220","locale":"en","dateRange":"3M","colorTheme":"dark","isTransparent":false,"autosize":true,"largeChartUrl":""}
-          </script>
-        </div>
-      </div>
+<div class="widget-card">
+  <div class="widget-card-hdr"><span class="widget-card-title">10Y Treasury Yield</span></div>
+  <div class="widget-body">
+    <div class="tradingview-widget-container">
+      <div class="tradingview-widget-container__widget"></div>
+      <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-mini-symbol-overview.js" async>
+      {"symbol":"TVC:US10Y","width":"100%","height":"220","locale":"en","dateRange":"3M","colorTheme":"dark","isTransparent":false,"autosize":true,"largeChartUrl":""}
+      </script>
     </div>
+  </div>
+</div>
 
-    <div class="widget-card">
-      <div class="widget-card-hdr"><span class="widget-card-title">EUR/USD</span></div>
-      <div class="widget-body">
-        <div class="tradingview-widget-container">
-          <div class="tradingview-widget-container__widget"></div>
-          <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-mini-symbol-overview.js" async>
-          {"symbol":"FX:EURUSD","width":"100%","height":"220","locale":"en","dateRange":"3M","colorTheme":"dark","isTransparent":false,"autosize":true,"largeChartUrl":""}
-          </script>
-        </div>
-      </div>
+<div class="widget-card">
+  <div class="widget-card-hdr"><span class="widget-card-title">EUR/USD</span></div>
+  <div class="widget-body">
+    <div class="tradingview-widget-container">
+      <div class="tradingview-widget-container__widget"></div>
+      <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-mini-symbol-overview.js" async>
+      {"symbol":"FX:EURUSD","width":"100%","height":"220","locale":"en","dateRange":"3M","colorTheme":"dark","isTransparent":false,"autosize":true,"largeChartUrl":""}
+      </script>
     </div>
+  </div>
+</div>
+```
 
   </div>
 
