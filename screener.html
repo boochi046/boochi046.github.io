@@ -197,6 +197,32 @@ td:first-child{text-align:left;padding-left:1.1rem;}
   </div>
 </div>
 
+<!-- SAMPLE INDICATOR TABLE — always visible -->
+<div id="sampleWrap" style="margin-bottom:1rem;background:var(--surface);border:1px solid var(--border2);border-radius:12px;overflow:hidden;">
+  <div style="padding:.65rem 1.1rem;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;">
+    <span style="font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--muted)">🔬 Sample Indicator Values (first 10 tickers)</span>
+    <span style="font-size:.62rem;color:var(--muted);font-family:var(--mono)">Green = pass · Red = fail</span>
+  </div>
+  <div style="overflow-x:auto;">
+    <table id="sampleTable" style="width:100%;border-collapse:collapse;font-size:.68rem;">
+      <thead><tr style="border-bottom:1px solid var(--border);">
+        <th style="padding:.45rem .8rem;text-align:left;color:var(--muted);font-size:.58rem;text-transform:uppercase;letter-spacing:.08em;">Ticker</th>
+        <th style="padding:.45rem .8rem;text-align:left;color:var(--muted);font-size:.58rem;text-transform:uppercase;letter-spacing:.08em;">List</th>
+        <th style="padding:.45rem .8rem;text-align:right;color:var(--muted);font-size:.58rem;text-transform:uppercase;letter-spacing:.08em;">Price</th>
+        <th style="padding:.45rem .8rem;text-align:right;color:var(--muted);font-size:.58rem;text-transform:uppercase;letter-spacing:.08em;">Bars</th>
+        <th style="padding:.45rem .8rem;text-align:right;color:var(--muted);font-size:.58rem;text-transform:uppercase;letter-spacing:.08em;">ROC(7) [0-20]</th>
+        <th style="padding:.45rem .8rem;text-align:right;color:var(--muted);font-size:.58rem;text-transform:uppercase;letter-spacing:.08em;">RSI(14)</th>
+        <th style="padding:.45rem .8rem;text-align:right;color:var(--muted);font-size:.58rem;text-transform:uppercase;letter-spacing:.08em;">MFI(14)</th>
+        <th style="padding:.45rem .8rem;text-align:right;color:var(--muted);font-size:.58rem;text-transform:uppercase;letter-spacing:.08em;">VMI [≥1.05]</th>
+        <th style="padding:.45rem .8rem;text-align:right;color:var(--muted);font-size:.58rem;text-transform:uppercase;letter-spacing:.08em;">VPCI [0-1.5]</th>
+        <th style="padding:.45rem .8rem;text-align:right;color:var(--muted);font-size:.58rem;text-transform:uppercase;letter-spacing:.08em;">P&lt;$50</th>
+        <th style="padding:.45rem .8rem;text-align:right;color:var(--muted);font-size:.58rem;text-transform:uppercase;letter-spacing:.08em;">Date Range</th>
+      </tr></thead>
+      <tbody id="sampleBody"><tr><td colspan="11" style="padding:1rem;text-align:center;color:var(--muted);font-family:var(--mono);font-size:.68rem;">Loading…</td></tr></tbody>
+    </table>
+  </div>
+</div>
+
 <!-- DAY FILTER -->
 <div class="day-tabs">
   <button class="day-tab active" onclick="setDay(0,this)">Today</button>
@@ -362,28 +388,69 @@ function parseWide(parsed) {
   const {headers, rows} = parsed;
   if(!headers.length || !rows.length) return {};
 
-  // First col is ticker identifier — find it regardless of name
-  const tickerCol = headers[0];
-  // All other columns are date/value columns
-  const dateCols = headers.slice(1).filter(h => h && h.trim() !== '');
+  // Detect orientation:
+  // COLUMN-ticker format: headers = [DateCol, TICKER1, TICKER2, ...]
+  //   → rows are dates, columns are tickers
+  // ROW-ticker format: headers = [TickerCol, Date1, Date2, ...]
+  //   → rows are tickers, columns are dates
 
-  console.log('[parseWide] tickerCol:', tickerCol, '| dateCols count:', dateCols.length, '| first few:', dateCols.slice(0,5));
+  const firstHeader = headers[0].trim();
+  const secondHeader = (headers[1]||'').trim().toUpperCase();
+  const firstRowFirstCol = (rows[0]?.[headers[0]]||'').trim().toUpperCase();
+
+  // Detect if first data column looks like a ticker (short, uppercase letters)
+  // vs a date (contains digits, slashes, dashes)
+  const looksLikeTicker = h => /^[A-Z]{1,6}$/.test(h.trim().toUpperCase());
+  const looksLikeDate   = h => /[\d\-\/\.]/.test(h) || h.length > 6;
+
+  // If second header looks like a ticker → COLUMN-ticker format (transposed)
+  // i.e. headers = [Date, GUTS, ACET, OKUR...]  rows = one per date
+  const isTransposed = looksLikeTicker(secondHeader) && !looksLikeDate(secondHeader);
 
   const map = {};
-  rows.forEach(row => {
-    const ticker = (row[tickerCol] || '').trim().toUpperCase().replace(/['"]/g,'');
-    if (!ticker || ticker === tickerCol.toUpperCase()) return;
-    const series = [];
-    dateCols.forEach(d => {
-      const raw = (row[d] || '').toString().trim().replace(/[$, ]/g,'');
-      if (raw === '' || raw === '-' || raw === 'N/A') return;
-      const val = parseFloat(raw);
-      if (!isNaN(val) && val !== 0) series.push({ date: d, val });
-    });
-    if (series.length > 0) map[ticker] = series;
-  });
 
-  console.log('[parseWide] tickers found:', Object.keys(map).length, '| sample:', Object.keys(map).slice(0,5));
+  if(isTransposed) {
+    // Transposed: rows = dates, columns = tickers
+    // headers[0] = date column name, headers[1..] = ticker symbols
+    const dateCol = headers[0];
+    const tickerCols = headers.slice(1).filter(h => h && h.trim());
+
+    tickerCols.forEach(ticker => {
+      const t = ticker.trim().toUpperCase();
+      const series = [];
+      rows.forEach(row => {
+        const date = (row[dateCol]||'').trim();
+        if(!date) return;
+        const raw = (row[ticker]||'').toString().trim().replace(/[$, ]/g,'');
+        if(raw===''||raw==='-'||raw==='N/A'||raw==='0') return;
+        const val = parseFloat(raw);
+        if(!isNaN(val) && val > 0) series.push({date, val});
+      });
+      if(series.length > 0) map[t] = series;
+    });
+  } else {
+    // Row-ticker: rows = tickers, columns = dates
+    const tickerCol = headers[0];
+    const dateCols  = headers.slice(1).filter(h => h && h.trim());
+    rows.forEach(row => {
+      const ticker = (row[tickerCol]||'').trim().toUpperCase().replace(/['"]/g,'');
+      if(!ticker) return;
+      const series = [];
+      dateCols.forEach(d => {
+        const raw = (row[d]||'').toString().trim().replace(/[$, ]/g,'');
+        if(raw===''||raw==='-'||raw==='N/A'||raw==='0') return;
+        const val = parseFloat(raw);
+        if(!isNaN(val) && val > 0) series.push({date: d, val});
+      });
+      if(series.length > 0) map[ticker] = series;
+    });
+  }
+
+  dbg && dbg(`[parseWide] isTransposed=${isTransposed} | tickers=${Object.keys(map).length} | sample: ${Object.keys(map).slice(0,5).join(', ')}`);
+  if(Object.keys(map).length > 0) {
+    const t0 = Object.keys(map)[0];
+    dbg && dbg(`  Sample "${t0}": ${map[t0].length} bars | first=${map[t0][0]?.date}:${map[t0][0]?.val} | last=${map[t0][map[t0].length-1]?.date}:${map[t0][map[t0].length-1]?.val}`);
+  }
   return map;
 }
 
@@ -542,19 +609,20 @@ function computeStrategy(ticker, series, pctRow, mainRow, wlKey) {
     const passPrice = close<50;
     if(!(passROC&&passVMI&&passVPCI&&passPrice)) continue;
 
-    // Period returns from % change sheet (columns: 1M, 3M, 6M or similar)
+    // Period returns from % change sheet
     let ret1m=null,ret3m=null,ret6m=null;
     if(pctRow){
+      // pctRow is now {1M: val, 3M: val, 6M: val} keyed by normalised period
       const find=(...keys)=>{
         for(const k of keys){
-          const v=pctRow[k];
-          if(v!==undefined&&v!==''){const n=parseFloat(String(v).replace('%',''));if(!isNaN(n))return n;}
+          const v=pctRow[k.trim().toUpperCase().replace(/\s+/g,'')];
+          if(v!==undefined&&!isNaN(v)) return v;
         }
         return null;
       };
-      ret1m=find('1M','1M %','1M%','1 Month','1m','1M Return','1M Chg');
-      ret3m=find('3M','3M %','3M%','3 Month','3m','3M Return','3M Chg');
-      ret6m=find('6M','6M %','6M%','6 Month','6m','6M Return','6M Chg');
+      ret1m=find('1M','1MONTH','1MRETURN','1M%','1MCHG');
+      ret3m=find('3M','3MONTH','3MRETURN','3M%','3MCHG');
+      ret6m=find('6M','6MONTH','6MRETURN','6M%','6MCHG');
     }
 
     // Analyst target from main sheet
@@ -562,13 +630,24 @@ function computeStrategy(ticker, series, pctRow, mainRow, wlKey) {
     if(mainRow){
       const find=(...keys)=>{
         for(const k of keys){
-          const v=mainRow[k];
+          // Try exact key
+          let v=mainRow[k];
+          if(v===undefined||v===''){
+            // Try case-insensitive partial match
+            const kl=k.toLowerCase();
+            const match=Object.keys(mainRow).find(mk=>mk.toLowerCase().includes(kl));
+            if(match) v=mainRow[match];
+          }
           if(v!==undefined&&v!==''){const n=parseFloat(String(v).replace(/[$,%]/g,''));if(!isNaN(n))return n;}
         }
         return null;
       };
-      target=find('Target','Price Target','Analyst Target','Target Price','Analyst Price Target','PT','analyst_target');
-      if(target&&close>0) targetUpside=(target-close)/close*100;
+      // Try to get analyst price target (absolute $)
+      target=find('Top Analysts' Price Target','Price Target','Analyst Target','Target Price','PT','Target','Best Price Target');
+      // Try to get upside % directly
+      const upsideDirect=find('Top Analysts' Price Target - upside/downside','upside','upside/downside','Upside','Best Price Target Upside');
+      if(upsideDirect!==null) targetUpside=upsideDirect;
+      else if(target&&close>0) targetUpside=(target-close)/close*100;
     }
 
     signals.push({
@@ -675,6 +754,30 @@ function srt(col){
 // ═══════════════════════════════════════════════════════════════════
 // MAIN RUNNER
 // ═══════════════════════════════════════════════════════════════════
+function renderSampleTable(){
+  const rows = window._sampleRows || [];
+  const tbody = document.getElementById('sampleBody');
+  if(!tbody) return;
+  if(!rows.length){ tbody.innerHTML='<tr><td colspan="11" style="padding:1rem;text-align:center;color:var(--muted);font-family:var(--mono);font-size:.68rem">No data yet</td></tr>'; return; }
+  const pC = (v,pass) => {
+    const ok = pass ? 'color:var(--green)' : 'color:var(--red)';
+    return `<span style="font-family:var(--mono);font-size:.67rem;${ok}">${isNaN(v)||v==null?'NaN':typeof v==='number'?v.toFixed(3):v}</span>`;
+  };
+  tbody.innerHTML = rows.map(r=>`<tr style="border-bottom:1px solid rgba(26,45,71,.4)">
+    <td style="padding:.4rem .8rem;text-align:left"><span style="background:rgba(124,58,237,.15);border:1px solid rgba(124,58,237,.3);color:#a78bfa;padding:.06rem .4rem;border-radius:4px;font-size:.64rem;font-weight:700;font-family:var(--mono)">${r.ticker}</span></td>
+    <td style="padding:.4rem .8rem;text-align:left;font-size:.63rem;color:${r.wlColor}">${r.wlName}</td>
+    <td style="padding:.4rem .8rem;text-align:right;font-family:var(--mono);font-size:.67rem">$${r.price?.toFixed(2)||'—'}</td>
+    <td style="padding:.4rem .8rem;text-align:right;font-family:var(--mono);font-size:.67rem;color:var(--muted)">${r.bars}</td>
+    <td style="padding:.4rem .8rem;text-align:right">${pC(r.roc,r.passROC)}</td>
+    <td style="padding:.4rem .8rem;text-align:right;font-family:var(--mono);font-size:.67rem;color:var(--muted)">${isNaN(r.rsi)?'NaN':r.rsi?.toFixed(2)}</td>
+    <td style="padding:.4rem .8rem;text-align:right;font-family:var(--mono);font-size:.67rem;color:var(--muted)">${isNaN(r.mfi)?'NaN':r.mfi?.toFixed(2)}</td>
+    <td style="padding:.4rem .8rem;text-align:right">${pC(r.vmi,r.passVMI)}</td>
+    <td style="padding:.4rem .8rem;text-align:right">${pC(r.vpci,r.passVPCI)}</td>
+    <td style="padding:.4rem .8rem;text-align:right">${pC(r.price,r.passPrice)}</td>
+    <td style="padding:.4rem .8rem;text-align:right;font-family:var(--mono);font-size:.6rem;color:var(--muted)">${r.dateFirst||'?'} → ${r.dateLast||'?'}</td>
+  </tr>`).join('');
+}
+
 // Debug helpers
 let debugLines = [];
 function dbg(msg){ debugLines.push(msg); }
@@ -692,6 +795,7 @@ function toggleDebug(){
 async function runAll(){
   allSignals=[];
   debugLines=[];
+  window._sampleRows=[];
   document.getElementById('loadingWrap').style.display='flex';
   document.getElementById('resultsWrap').style.display='none';
   document.getElementById('errBanner').style.display='none';
@@ -766,14 +870,46 @@ async function runAll(){
       const lowMap   = parseWide(lowP   || closeP);
       const volMap   = parseWide(volP   || {headers:[],rows:[]});
 
-      // Build pct lookup: ticker -> row object
+      // Build pct lookup: ticker -> {1M, 3M, 6M}
+      // pct sheet may be transposed: rows=periods(1M/3M/6M), cols=tickers
+      // OR rows=tickers, cols=periods
       const pctLookup={};
       if(pctP){
-        const tcol=pctP.headers[0];
-        pctP.rows.forEach(r=>{
-          const t=(r[tcol]||'').trim().toUpperCase();
-          if(t) pctLookup[t]=r;
-        });
+        const ph=pctP.headers, pr=pctP.rows;
+        const firstH=(ph[0]||'').trim().toUpperCase();
+        const secondH=(ph[1]||'').trim().toUpperCase();
+        // If first col looks like a period label (1M,3M,6M) → transposed
+        const isPctTransposed = /^(1M|3M|6M|1 MONTH|3 MONTH|6 MONTH|PERIOD|RETURN)$/i.test(firstH) ||
+          (pr.length<=10 && /^(1M|3M|6M)$/i.test((pr[0]?.[ph[0]]||'').trim()));
+        if(isPctTransposed) {
+          // rows = [1M row, 3M row, 6M row], cols = tickers
+          const periodCol=ph[0];
+          const tickerCols=ph.slice(1);
+          tickerCols.forEach(t=>{
+            const tk=t.trim().toUpperCase();
+            if(!tk) return;
+            pctLookup[tk]={};
+            pr.forEach(r=>{
+              const period=(r[periodCol]||'').trim().replace(/\s+/g,'').toUpperCase();
+              const val=parseFloat((r[t]||'').toString().replace(/[%,$]/g,''));
+              if(!isNaN(val)) pctLookup[tk][period]=val;
+            });
+          });
+          dbg(`[pct] transposed: ${Object.keys(pctLookup).length} tickers, periods: ${pr.map(r=>r[periodCol]).join(',')}`);
+        } else {
+          // rows = tickers, cols = periods
+          const tcol=ph[0];
+          pr.forEach(r=>{
+            const t=(r[tcol]||'').trim().toUpperCase();
+            if(!t) return;
+            pctLookup[t]={};
+            ph.slice(1).forEach(p=>{
+              const val=parseFloat((r[p]||'').toString().replace(/[%,$]/g,''));
+              if(!isNaN(val)) pctLookup[t][p.trim().toUpperCase()]=val;
+            });
+          });
+          dbg(`[pct] row-format: ${Object.keys(pctLookup).length} tickers`);
+        }
       }
 
       // Build main lookup: ticker -> row object
@@ -800,28 +936,39 @@ async function runAll(){
 
       document.getElementById('loadMsg').textContent=`Computing indicators for ${wl.name} (${tickers.length} tickers)…`;
 
-      // Run strategy per ticker — log first 3 tickers for debugging
+      // Run strategy per ticker
       let hitCount=0;
+      const sampleRows = window._sampleRows || (window._sampleRows = []);
+
       tickers.forEach((ticker,ti)=>{
         const series=mergeSeries(ticker,closeMap,openMap,highMap,lowMap,volMap);
-        if(!series){ if(ti<3) dbg(`[${wl.name}] ${ticker}: series null (len=${closeMap[ticker]?.length})`); return; }
+        if(!series){ dbg(`[${wl.name}] ${ticker}: series null (len=${closeMap[ticker]?.length})`); return; }
 
-        // Debug first 3 tickers: show raw indicator values
-        if(ti<3) {
-          const C=series.map(x=>x.c), H=series.map(x=>x.h), L=series.map(x=>x.l), V=series.map(x=>x.v);
-          const n=C.length;
-          const i=n-1;
-          const rsiA=rsi(C,14), mfiA=mfi(H,L,C,V,14);
-          const s50=sma(C,50),s10=sma(C,10),vw50=vwma(C,V,50),vw10=vwma(C,V,10),vs10=sma(V,10),vs50=sma(V,50);
-          const rocV=(i>=7&&C[i-7]>0)?((C[i]/C[i-7])-1)*100:NaN;
-          const vmiV=(!isNaN(mfiA[i])&&!isNaN(rsiA[i]))?1+(mfiA[i]-rsiA[i])/100:NaN;
-          const vpc=vw50[i]-s50[i], vpr=vw10[i]/s10[i], vm=vs10[i]/vs50[i];
-          const vpciV=(vpc/s50[i])*vpr*vm;
-          dbg(`[${wl.name}] ${ticker} (n=${n}): close[last]=${C[i]?.toFixed(2)} date=${series[i]?.date}`);
-          dbg(`  ROC(7)=${isNaN(rocV)?'NaN':rocV.toFixed(3)} | VMI=${isNaN(vmiV)?'NaN':vmiV.toFixed(3)} | VPCI=${isNaN(vpciV)?'NaN':vpciV.toFixed(4)}`);
-          dbg(`  RSI=${isNaN(rsiA[i])?'NaN':rsiA[i].toFixed(2)} | MFI=${isNaN(mfiA[i])?'NaN':mfiA[i].toFixed(2)} | SMA50=${isNaN(s50[i])?'NaN':s50[i].toFixed(2)}`);
-          dbg(`  passROC=${!isNaN(rocV)&&rocV>0&&rocV<20} | passVMI=${!isNaN(vmiV)&&vmiV>=1.05} | passVPCI=${!isNaN(vpciV)&&vpciV>0&&vpciV<1.5} | price<50=${C[i]<50}`);
-          dbg(`  dates[0]=${series[0]?.date} dates[-1]=${series[n-1]?.date}`);
+        const C=series.map(x=>x.c), H=series.map(x=>x.h), L=series.map(x=>x.l), V=series.map(x=>x.v);
+        const n2=C.length, i2=n2-1;
+        const longP2=n2>=50?50:Math.max(20,n2-4);
+        const shortP2=n2>=10?10:Math.max(5,Math.floor(n2*0.15));
+        const rsiA2=rsi(C,14), mfiA2=mfi(H,L,C,V,14);
+        const s50_2=sma(C,longP2),s10_2=sma(C,shortP2),vw50_2=vwma(C,V,longP2),vw10_2=vwma(C,V,shortP2),vs10_2=sma(V,shortP2),vs50_2=sma(V,longP2);
+        const rocV=(i2>=7&&C[i2-7]>0)?((C[i2]/C[i2-7])-1)*100:NaN;
+        const vmiV=(!isNaN(mfiA2[i2])&&!isNaN(rsiA2[i2]))?1+(mfiA2[i2]-rsiA2[i2])/100:NaN;
+        const vpc2=(!isNaN(vw50_2[i2])&&!isNaN(s50_2[i2]))?vw50_2[i2]-s50_2[i2]:NaN;
+        const vpr2=(!isNaN(vw10_2[i2])&&!isNaN(s10_2[i2])&&s10_2[i2]>0)?vw10_2[i2]/s10_2[i2]:NaN;
+        const vm2=(!isNaN(vs10_2[i2])&&!isNaN(vs50_2[i2])&&vs50_2[i2]>0)?vs10_2[i2]/vs50_2[i2]:NaN;
+        const vpciV=(!isNaN(vpc2)&&!isNaN(vpr2)&&!isNaN(vm2)&&!isNaN(s50_2[i2])&&s50_2[i2]>0)?(vpc2/s50_2[i2])*vpr2*vm2:NaN;
+
+        // Add to sample table (first 10 per watchlist, max 30 total)
+        if(ti<10 && sampleRows.length<30){
+          sampleRows.push({
+            ticker, wlName:wl.name, wlColor:wl.color,
+            price:C[i2], bars:n2,
+            roc:rocV, rsi:rsiA2[i2], mfi:mfiA2[i2], vmi:vmiV, vpci:vpciV,
+            passROC:!isNaN(rocV)&&rocV>0&&rocV<20,
+            passVMI:!isNaN(vmiV)&&vmiV>=1.05,
+            passVPCI:!isNaN(vpciV)&&vpciV>0&&vpciV<1.5,
+            passPrice:C[i2]<50,
+            dateFirst:series[0]?.date, dateLast:series[n2-1]?.date,
+          });
         }
 
         const sigs=computeStrategy(ticker,series,pctLookup[ticker]||null,mainLookup[ticker]||null,wk);
@@ -841,6 +988,7 @@ async function runAll(){
     document.getElementById('loadingWrap').style.display='none';
     document.getElementById('resultsWrap').style.display='block';
     flushDebug();
+    renderSampleTable();
     renderTable();
 
   }catch(err){
@@ -850,7 +998,7 @@ async function runAll(){
     b.style.display='block';
     b.innerHTML=`⚠️ <strong>Error:</strong> ${err.message}<br>
       <small>Ensure all Google Sheets are published as CSV. Must run on GitHub Pages.</small>`;
-    renderTable();
+    flushDebug(); renderSampleTable(); renderTable();
   }
 }
 
