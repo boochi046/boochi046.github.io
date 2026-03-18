@@ -355,26 +355,55 @@ function parseCSV(text) {
 // ═══════════════════════════════════════════════════════════════════
 // PROXY FETCH
 // ═══════════════════════════════════════════════════════════════════
+// Track which proxy worked last — use it first next time
+let bestProxyIdx = 0;
 const PROXIES = [
   u=>`https://corsproxy.io/?${encodeURIComponent(u)}`,
   u=>`https://api.allorigins.win/raw?url=${encodeURIComponent(u)}`,
   u=>`https://thingproxy.freeboard.io/fetch/${u}`,
   u=>`https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(u)}`,
 ];
+
+// Global debug logger
+let debugLines = [];
+function dbg(msg){ debugLines.push(msg); console.log(msg); }
+
+function fetchWithTimeout(url, ms=12000) {
+  return Promise.race([
+    fetch(url, {cache:'no-store'}),
+    new Promise((_,reject) => setTimeout(()=>reject(new Error('timeout')), ms))
+  ]);
+}
+
 async function fetchSheet(url) {
   if(!url) return null;
-  for(const p of PROXIES){
+
+  // Build list of URLs to try: direct first, then each proxy
+  const attempts = [
+    url,  // direct (works on GitHub Pages since same origin headers allowed)
+    ...PROXIES.map(p => p(url))
+  ];
+
+  const order = [...Array(PROXIES.length).keys()].map(i=>(i+bestProxyIdx)%PROXIES.length);
+
+  for(let ai=0; ai<attempts.length; ai++){
+    const tryUrl = ai===0 ? url : PROXIES[order[ai-1]](url);
     try{
-      const res=await fetch(p(url),{cache:'no-store'});
-      if(!res.ok){ console.log('[fetch] HTTP',res.status,'from',p(url).slice(0,80)); continue; }
-      const text=await res.text();
-      if(!text||text.length<20){ console.log('[fetch] Empty response'); continue; }
-      if(text.trim().startsWith('<')){ console.log('[fetch] Got HTML not CSV, first 100:', text.slice(0,100)); continue; }
-      console.log('[fetch] OK, length:', text.length, '| first 150:', text.slice(0,150));
+      const res = await fetchWithTimeout(tryUrl, 12000);
+      if(!res.ok) continue;
+      const text = await res.text();
+      if(!text || text.length < 20) continue;
+      if(text.trim().startsWith('<')) continue;
+      if(!text.includes(',')) continue;
+      if(ai>0) bestProxyIdx = order[ai-1]; // remember working proxy
+      dbg(`[fetch OK] attempt ${ai} (${ai===0?'direct':['corsproxy','allorigins','thingproxy','codetabs'][order[ai-1]]}) len=${text.length}`);
       return parseCSV(text);
-    }catch(e){ console.log('[fetch] Error:', e.message); continue; }
+    }catch(e){
+      dbg(`[fetch FAIL] attempt ${ai}: ${e.message}`);
+      continue;
+    }
   }
-  console.log('[fetch] ALL PROXIES FAILED for', url.slice(0,80));
+  dbg(`[fetch DEAD] all ${attempts.length} attempts failed for ${url.slice(0,60)}`);
   return null;
 }
 
@@ -630,22 +659,25 @@ function computeStrategy(ticker, series, pctRow, mainRow, wlKey) {
     if(mainRow){
       const find=(...keys)=>{
         for(const k of keys){
-          // Try exact key
+          // Try exact key first
           let v=mainRow[k];
           if(v===undefined||v===''){
             // Try case-insensitive partial match
             const kl=k.toLowerCase();
-            const match=Object.keys(mainRow).find(mk=>mk.toLowerCase().includes(kl));
-            if(match) v=mainRow[match];
+            const matchKey=Object.keys(mainRow).find(mk=>mk.toLowerCase().includes(kl));
+            if(matchKey) v=mainRow[matchKey];
           }
-          if(v!==undefined&&v!==''){const n=parseFloat(String(v).replace(/[$,%]/g,''));if(!isNaN(n))return n;}
+          if(v!==undefined&&v!==''){
+            const n=parseFloat(String(v).replace(/[$,%]/g,''));
+            if(!isNaN(n)) return n;
+          }
         }
         return null;
       };
       // Try to get analyst price target (absolute $)
-      target=find('Top Analysts' Price Target','Price Target','Analyst Target','Target Price','PT','Target','Best Price Target');
+      target=find('Top Analysts Price Target','Price Target','Analyst Target','Target Price','PT','Target','Best Price Target');
       // Try to get upside % directly
-      const upsideDirect=find('Top Analysts' Price Target - upside/downside','upside','upside/downside','Upside','Best Price Target Upside');
+      const upsideDirect=find('Top Analysts Price Target upside downside','upside','upside downside','Upside','Best Price Target Upside');
       if(upsideDirect!==null) targetUpside=upsideDirect;
       else if(target&&close>0) targetUpside=(target-close)/close*100;
     }
@@ -779,8 +811,6 @@ function renderSampleTable(){
 }
 
 // Debug helpers
-let debugLines = [];
-function dbg(msg){ debugLines.push(msg); }
 function flushDebug(){
   const el = document.getElementById('debugContent');
   if(el) el.textContent = debugLines.join('\n');
@@ -796,6 +826,11 @@ async function runAll(){
   allSignals=[];
   debugLines=[];
   window._sampleRows=[];
+
+  // Warn if running locally
+  const isLocal = location.protocol === 'file:' || location.protocol === 'content:' || location.hostname === '';
+  document.getElementById('localWarning').style.display = isLocal ? 'block' : 'none';
+  if(isLocal) dbg('[WARN] Running from local file — proxies will likely fail. Host on GitHub Pages.');
   document.getElementById('loadingWrap').style.display='flex';
   document.getElementById('resultsWrap').style.display='none';
   document.getElementById('errBanner').style.display='none';
@@ -818,25 +853,28 @@ async function runAll(){
     });
   });
 
+  // Cache fetched URLs so identical gids aren't re-fetched
+  const fetchCache = {};
   async function fetchStep(url, id){
     if(!url){
-      stepEls[id].textContent=stepEls[id].textContent.replace('⬜','⚪');
-      dbg(`[SKIP] ${id} — no URL`);
+      if(stepEls[id]) { stepEls[id].textContent=stepEls[id].textContent.replace('⬜','⚪'); }
       return null;
     }
-    stepEls[id].className='ls active';
-    stepEls[id].textContent=stepEls[id].textContent.replace('⬜','⏳');
+    // Return cached result if same URL already fetched
+    if(fetchCache[url]!==undefined){
+      if(stepEls[id]){ stepEls[id].className='ls done'; stepEls[id].textContent=stepEls[id].textContent.replace('⬜','✅ (cached)'); }
+      return fetchCache[url];
+    }
+    if(stepEls[id]){ stepEls[id].className='ls active'; stepEls[id].textContent=stepEls[id].textContent.replace('⬜','⏳'); }
     const res=await fetchSheet(url);
-    stepEls[id].className=res?'ls done':'ls';
-    stepEls[id].textContent=stepEls[id].textContent.replace('⏳',res?'✅':'❌');
+    fetchCache[url]=res;
+    if(stepEls[id]){
+      stepEls[id].className=res?'ls done':'ls';
+      stepEls[id].textContent=stepEls[id].textContent.replace('⏳',res?'✅':'❌');
+    }
     if(res){
       dbg(`[OK] ${id} → ${res.rows.length} rows, ${res.headers.length} cols`);
       dbg(`     Headers[0..5]: ${res.headers.slice(0,6).join(' | ')}`);
-      if(res.rows.length>0){
-        const firstRow = res.rows[0];
-        const firstKey = res.headers[0];
-        dbg(`     Row[0] ticker: "${firstRow[firstKey]}" | cols with data: ${Object.values(firstRow).filter(v=>v&&v!=='').length}`);
-      }
     } else {
       dbg(`[FAIL] ${id} — all proxies failed`);
     }
@@ -851,15 +889,21 @@ async function runAll(){
       document.getElementById('loadMsg').textContent=`Loading ${wl.name}…`;
 
       // Fetch all sheets for this watchlist in parallel
-      const [closeP,openP,highP,lowP,volP,pctP,mainP] = await Promise.all([
-        fetchStep(wl.close,  `ls-${wk}-close`),
-        fetchStep(wl.open,   `ls-${wk}-open`),
-        fetchStep(wl.high,   `ls-${wk}-high`),
-        fetchStep(wl.low,    `ls-${wk}-low`),
-        fetchStep(wl.volume, `ls-${wk}-volume`),
-        fetchStep(wl.pct,    `ls-${wk}-pct`),
-        fetchStep(wl.main,   `ls-${wk}-main`),
-      ]);
+      // Fetch sequentially to avoid overwhelming proxies
+      document.getElementById('loadMsg').textContent=`Fetching ${wl.name} close prices…`;
+      const closeP = await fetchStep(wl.close,  `ls-${wk}-close`);
+      document.getElementById('loadMsg').textContent=`Fetching ${wl.name} open prices…`;
+      const openP  = await fetchStep(wl.open,   `ls-${wk}-open`);
+      document.getElementById('loadMsg').textContent=`Fetching ${wl.name} high prices…`;
+      const highP  = await fetchStep(wl.high,   `ls-${wk}-high`);
+      document.getElementById('loadMsg').textContent=`Fetching ${wl.name} low prices…`;
+      const lowP   = await fetchStep(wl.low,    `ls-${wk}-low`);
+      document.getElementById('loadMsg').textContent=`Fetching ${wl.name} volume…`;
+      const volP   = await fetchStep(wl.volume, `ls-${wk}-volume`);
+      document.getElementById('loadMsg').textContent=`Fetching ${wl.name} % returns…`;
+      const pctP   = await fetchStep(wl.pct,    `ls-${wk}-pct`);
+      document.getElementById('loadMsg').textContent=`Fetching ${wl.name} targets…`;
+      const mainP  = await fetchStep(wl.main,   `ls-${wk}-main`);
 
       if(!closeP){ console.warn(`No close data for ${wk}`); continue; }
 
