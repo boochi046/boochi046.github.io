@@ -3,13 +3,13 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Top Analyst — Screener</title>
+<title>Top Score — Screener</title>
 <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
 :root{
   --bg:#05080f;--surface:#0d1525;--surface2:#111d2e;
   --border:#1a2d47;--border2:#1f3554;
-  --accent:#00d4ff;--accent2:#7c3aed;
+  --accent:#f59e0b;--accent2:#7c3aed;
   --green:#00e5a0;--red:#ff4466;--yellow:#fbbf24;
   --text:#e8f0fe;--text2:#a8b8d0;--muted:#4a6080;
   --font:'Outfit',sans-serif;--mono:'IBM Plex Mono',monospace;
@@ -149,12 +149,12 @@ td:first-child{text-align:left;padding-left:1rem;}
   <div class="nav-brand">◈ PORTFOLIO</div>
   <a href="index.html" class="nav-link">Dashboard</a>
   <a href="futures.html" class="nav-link">Futures</a>
-  <a href="screener-analyst.html" class="nav-link active">Top Analyst</a>
-  <a href="screener-score.html" class="nav-link">Top Score</a>
+  <a href="screener-analyst.html" class="nav-link">Top Analyst</a>
+  <a href="screener-score.html" class="nav-link active">Top Score</a>
   <a href="screener-penny.html" class="nav-link">Penny Stocks</a>
 </nav>
 
-<div class="page-title">📊 <span class="acc">Top Analyst</span> Screener</div>
+<div class="page-title">🏆 <span class="acc">Top Score</span> Screener</div>
 <div class="page-sub">7 sheets · 4-day lookback · Indicators computed in browser · ~253 tickers</div>
 
 <div class="strat-box">
@@ -166,12 +166,12 @@ td:first-child{text-align:left;padding-left:1rem;}
   <span class="sp">📅 Last 4 days</span>
 </div>
 
-<div class="warn-box" id="warnLocal">⚠️ <strong>Local file detected.</strong> Must be hosted on GitHub Pages to fetch data. Upload to your repo and open <code>https://boochi046.github.io/screener-analyst.html</code></div>
+<div class="warn-box" id="warnLocal">⚠️ <strong>Local file detected.</strong> Must be hosted on GitHub Pages to fetch data. Upload to your repo and open <code>https://boochi046.github.io/screener-score.html</code></div>
 <div class="err-box" id="errBox"></div>
 
 <!-- LOAD PROGRESS -->
 <div class="load-card" id="loadCard">
-  <div class="load-title"><span class="spinner"></span> Loading Top Analyst Data</div>
+  <div class="load-title"><span class="spinner"></span> Loading Top Score Data</div>
   <div class="load-steps" id="loadSteps"></div>
   <div class="load-msg" id="loadMsg">Starting…</div>
 </div>
@@ -262,13 +262,13 @@ td:first-child{text-align:left;padding-left:1rem;}
 <script>
 // ── SHEET URLS ────────────────────────────────────────────────────────────────
 const SHEETS = {
-    close:  'https://docs.google.com/spreadsheets/d/e/2PACX-1vRxlFkcZptqDRlGKHycKvvjXkvP71aN3ayrb6bfcYVARg1DTtLkEgqXmc48QMw2on7PsVAJdztQxoJ6/pub?gid=628580815&single=true&output=csv',
-    open:   'https://docs.google.com/spreadsheets/d/e/2PACX-1vRxlFkcZptqDRlGKHycKvvjXkvP71aN3ayrb6bfcYVARg1DTtLkEgqXmc48QMw2on7PsVAJdztQxoJ6/pub?gid=1220929174&single=true&output=csv',
-    high:   'https://docs.google.com/spreadsheets/d/e/2PACX-1vRxlFkcZptqDRlGKHycKvvjXkvP71aN3ayrb6bfcYVARg1DTtLkEgqXmc48QMw2on7PsVAJdztQxoJ6/pub?gid=1449708019&single=true&output=csv',
-    low:    'https://docs.google.com/spreadsheets/d/e/2PACX-1vRxlFkcZptqDRlGKHycKvvjXkvP71aN3ayrb6bfcYVARg1DTtLkEgqXmc48QMw2on7PsVAJdztQxoJ6/pub?gid=2137301959&single=true&output=csv',
-    volume: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRxlFkcZptqDRlGKHycKvvjXkvP71aN3ayrb6bfcYVARg1DTtLkEgqXmc48QMw2on7PsVAJdztQxoJ6/pub?gid=696617267&single=true&output=csv',
-    pct:    'https://docs.google.com/spreadsheets/d/e/2PACX-1vRxlFkcZptqDRlGKHycKvvjXkvP71aN3ayrb6bfcYVARg1DTtLkEgqXmc48QMw2on7PsVAJdztQxoJ6/pub?gid=1042550901&single=true&output=csv',
-    main:   'https://docs.google.com/spreadsheets/d/e/2PACX-1vRxlFkcZptqDRlGKHycKvvjXkvP71aN3ayrb6bfcYVARg1DTtLkEgqXmc48QMw2on7PsVAJdztQxoJ6/pub?output=csv',
+    close:  'https://docs.google.com/spreadsheets/d/e/2PACX-1vRFmzsy7mklmiwzmczqrUswzNM0vAz3BsjS1kODfGlgmqzF-Zw7Zdx5r1NMkZ7TggckHvOwlUk-eCzn/pub?gid=1283231042&single=true&output=csv',
+    open:   'https://docs.google.com/spreadsheets/d/e/2PACX-1vRFmzsy7mklmiwzmczqrUswzNM0vAz3BsjS1kODfGlgmqzF-Zw7Zdx5r1NMkZ7TggckHvOwlUk-eCzn/pub?gid=1419154816&single=true&output=csv',
+    high:   'https://docs.google.com/spreadsheets/d/e/2PACX-1vRFmzsy7mklmiwzmczqrUswzNM0vAz3BsjS1kODfGlgmqzF-Zw7Zdx5r1NMkZ7TggckHvOwlUk-eCzn/pub?gid=1182012761&single=true&output=csv',
+    low:    'https://docs.google.com/spreadsheets/d/e/2PACX-1vRFmzsy7mklmiwzmczqrUswzNM0vAz3BsjS1kODfGlgmqzF-Zw7Zdx5r1NMkZ7TggckHvOwlUk-eCzn/pub?gid=1633471424&single=true&output=csv',
+    volume: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRFmzsy7mklmiwzmczqrUswzNM0vAz3BsjS1kODfGlgmqzF-Zw7Zdx5r1NMkZ7TggckHvOwlUk-eCzn/pub?gid=1289012452&single=true&output=csv',
+    pct:    'https://docs.google.com/spreadsheets/d/e/2PACX-1vRFmzsy7mklmiwzmczqrUswzNM0vAz3BsjS1kODfGlgmqzF-Zw7Zdx5r1NMkZ7TggckHvOwlUk-eCzn/pub?gid=2023944038&single=true&output=csv',
+    main:   'https://docs.google.com/spreadsheets/d/e/2PACX-1vRFmzsy7mklmiwzmczqrUswzNM0vAz3BsjS1kODfGlgmqzF-Zw7Zdx5r1NMkZ7TggckHvOwlUk-eCzn/pub?gid=0&single=true&output=csv',
 };
 
 // ── STATE ─────────────────────────────────────────────────────────────────────
@@ -310,17 +310,20 @@ const PROXIES = [
 function timeout(ms){ return new Promise((_,r)=>setTimeout(()=>r(new Error('timeout')),ms)); }
 async function fetchSheet(url){
   if(!url) return null;
+  const proxyNames=['corsproxy','allorigins','thingproxy','codetabs'];
   const order=[...Array(PROXIES.length).keys()].map(i=>(i+bestProxy)%PROXIES.length);
   for(const pi of order){
     try{
-      const res=await Promise.race([fetch(PROXIES[pi](url),{cache:'no-store'}),timeout(12000)]);
-      if(!res.ok) continue;
+      const res=await Promise.race([fetch(PROXIES[pi](url),{cache:'no-store'}),timeout(14000)]);
+      if(!res.ok){dbg('❌ '+proxyNames[pi]+': HTTP '+res.status);continue;}
       const text=await res.text();
-      if(!text||text.length<30||text.trim().startsWith('<')||!text.includes(',')) continue;
+      if(!text||text.length<500){dbg('❌ '+proxyNames[pi]+': too small ('+text.length+' chars)');continue;}
+      if(text.trim().startsWith('<')){dbg('❌ '+proxyNames[pi]+': got HTML not CSV');continue;}
+      if(!text.includes(',')){dbg('❌ '+proxyNames[pi]+': not CSV (no commas)');continue;}
       bestProxy=pi;
-      dbg(`✅ ${['corsproxy','allorigins','thingproxy','codetabs'][pi]}: ${text.length} chars`);
+      dbg('✅ '+proxyNames[pi]+': '+text.length+' chars, ~'+text.split('\n').length+' rows');
       return parseCSV(text);
-    }catch(e){ dbg(`❌ ${['corsproxy','allorigins','thingproxy','codetabs'][pi]}: ${e.message}`); continue; }
+    }catch(e){dbg('❌ '+proxyNames[pi]+': '+e.message);continue;}
   }
   return null;
 }
@@ -621,7 +624,9 @@ async function runScreener(){
 
   try{
     // Sequential fetch — one at a time
-    const closeP =await load('close');
+    dbg('Fetching close from: '+SHEETS.close.slice(0,80));
+  const closeP =await load('close');
+  dbg('close result: '+(closeP?closeP.rows.length+' rows, '+closeP.headers.length+' cols':'FAILED'));
     const openP  =await load('open');
     const highP  =await load('high');
     const lowP   =await load('low');
@@ -631,7 +636,7 @@ async function runScreener(){
 
     if(!closeP){
       document.getElementById('errBox').style.display='block';
-      document.getElementById('errBox').innerHTML='❌ <strong>Could not fetch close prices.</strong> Check debug log. Must be on GitHub Pages.';
+      document.getElementById('errBox').innerHTML='❌ <strong>Could not fetch close prices.</strong> The close sheet returned too little data or failed. Check debug log below — look for the ❌ lines.';
       document.getElementById('loadCard').style.display='none';
       document.getElementById('resultsCard').style.display='block';
       document.getElementById('sampleCard').style.display='block';
@@ -644,6 +649,8 @@ async function runScreener(){
 
     msg('Parsing sheets…');
     const cMap=parseWide(closeP);
+    dbg('cMap tickers: '+Object.keys(cMap).length+' | headers[0]: '+closeP.headers[0]+' | headers[1]: '+closeP.headers[1]);
+    if(closeP.rows.length>0) dbg('closeP row[0] keys: '+Object.keys(closeP.rows[0]).slice(0,6).join(', '));
     const oMap=parseWide(openP||closeP);
     const hMap=parseWide(highP||closeP);
     const lMap=parseWide(lowP||closeP);
