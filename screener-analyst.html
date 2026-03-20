@@ -289,8 +289,9 @@ function splitLine(l){
 }
 function parseCSV(text){
   const lines=text.trim().split(/\r?\n/).filter(l=>l.trim());
-  if(lines.length<2) return null;
+  if(lines.length<2){ dbg('parseCSV: only '+lines.length+' lines'); return null; }
   const hdrs=splitLine(lines[0]).map(h=>h.trim());
+  dbg('parseCSV: '+lines.length+' lines, '+hdrs.length+' cols, header[0]='+hdrs[0]+' header[1]='+hdrs[1]);
   const rows=lines.slice(1).map(l=>{
     const v=splitLine(l),o={};
     hdrs.forEach((h,i)=>o[h]=(v[i]||'').trim());
@@ -301,6 +302,7 @@ function parseCSV(text){
 
 // ── PROXY FETCH ───────────────────────────────────────────────────────────────
 let bestProxy = 0;
+const PROXY_NAMES = ['corsproxy','allorigins','thingproxy','codetabs'];
 const PROXIES = [
   u=>`https://corsproxy.io/?${encodeURIComponent(u)}`,
   u=>`https://api.allorigins.win/raw?url=${encodeURIComponent(u)}`,
@@ -308,23 +310,42 @@ const PROXIES = [
   u=>`https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(u)}`,
 ];
 function timeout(ms){ return new Promise((_,r)=>setTimeout(()=>r(new Error('timeout')),ms)); }
+
 async function fetchSheet(url){
   if(!url) return null;
-  const proxyNames=['corsproxy','allorigins','thingproxy','codetabs'];
-  const order=[...Array(PROXIES.length).keys()].map(i=>(i+bestProxy)%PROXIES.length);
-  for(const pi of order){
+  // Try ALL proxies every time (don't skip based on bestProxy)
+  for(let pi=0; pi<PROXIES.length; pi++){
+    const name = PROXY_NAMES[pi];
     try{
-      const res=await Promise.race([fetch(PROXIES[pi](url),{cache:'no-store'}),timeout(14000)]);
-      if(!res.ok){dbg('❌ '+proxyNames[pi]+': HTTP '+res.status);continue;}
-      const text=await res.text();
-      if(!text||text.length<500){dbg('❌ '+proxyNames[pi]+': too small ('+text.length+' chars)');continue;}
-      if(text.trim().startsWith('<')){dbg('❌ '+proxyNames[pi]+': got HTML not CSV');continue;}
-      if(!text.includes(',')){dbg('❌ '+proxyNames[pi]+': not CSV (no commas)');continue;}
-      bestProxy=pi;
-      dbg('✅ '+proxyNames[pi]+': '+text.length+' chars, ~'+text.split('\n').length+' rows');
+      dbg('Trying '+name+' for '+url.slice(url.indexOf('gid='),url.indexOf('gid=')+20));
+      const res = await Promise.race([
+        fetch(PROXIES[pi](url), {cache:'no-store', mode:'cors'}),
+        timeout(15000)
+      ]);
+      if(!res.ok){ dbg('❌ '+name+': HTTP '+res.status); continue; }
+      const text = await res.text();
+      const len = text ? text.length : 0;
+      if(len < 500){
+        dbg('❌ '+name+': only '+len+' chars: '+text.slice(0,200).replace(/[\n\r]/g,' '));
+        continue;
+      }
+      if(text.trim().startsWith('<')){
+        dbg('❌ '+name+': HTML response: '+text.slice(0,100).replace(/[\n\r]/g,' '));
+        continue;
+      }
+      if(!text.includes(',')){
+        dbg('❌ '+name+': no commas in response');
+        continue;
+      }
+      dbg('✅ '+name+': '+len+' chars, ~'+text.split('\n').length+' rows');
+      bestProxy = pi;
       return parseCSV(text);
-    }catch(e){dbg('❌ '+proxyNames[pi]+': '+e.message);continue;}
+    } catch(e){
+      dbg('❌ '+name+': '+e.message);
+      continue;
+    }
   }
+  dbg('💀 ALL PROXIES FAILED for gid'+url.slice(url.indexOf('gid='),url.indexOf('&single')));
   return null;
 }
 
@@ -378,16 +399,29 @@ function parseWide(parsed){
 // ── DATE SORT ─────────────────────────────────────────────────────────────────
 function parseDate(s){
   if(!s) return null;
-  let d=new Date(s);
-  if(!isNaN(d)) return d;
-  const p=s.split(/[\/\-\.]/);
-  if(p.length===3){
-    const y=p[2].length===4?+p[2]:+(20+p[2]);
-    d=new Date(y,+p[1]-1,+p[0]);
-    if(!isNaN(d)) return d;
+  const str = String(s).trim();
+  // Try ISO format first: 2026-03-18
+  let d = new Date(str);
+  if(!isNaN(d) && d.getFullYear() > 1990) return d;
+  // M/D/YYYY or M/D/YY (Google Sheets default export)
+  const slash = str.split('/');
+  if(slash.length===3){
+    const y = slash[2].length===4 ? +slash[2] : +(20+slash[2]);
+    d = new Date(y, +slash[0]-1, +slash[1]);
+    if(!isNaN(d) && d.getFullYear() > 1990) return d;
   }
-  const n=parseFloat(s);
-  if(!isNaN(n)&&n>40000&&n<70000) return new Date((n-25569)*86400000);
+  // D-M-YYYY or YYYY-M-D
+  const dash = str.split('-');
+  if(dash.length===3){
+    const y = dash[0].length===4 ? +dash[0] : +dash[2].length===4 ? +dash[2] : +(20+dash[2]);
+    const m = dash[0].length===4 ? +dash[1] : +dash[1];
+    const day = dash[0].length===4 ? +dash[2] : +dash[0];
+    d = new Date(y, m-1, day);
+    if(!isNaN(d) && d.getFullYear() > 1990) return d;
+  }
+  // Excel serial number
+  const n = parseFloat(str);
+  if(!isNaN(n) && n>40000 && n<70000) return new Date((n-25569)*86400000);
   return null;
 }
 
@@ -627,8 +661,13 @@ async function runScreener(){
   try{
     // Sequential fetch — one at a time
     dbg('Fetching close from: '+SHEETS.close.slice(0,80));
-  const closeP =await load('close');
-  dbg('close result: '+(closeP?closeP.rows.length+' rows, '+closeP.headers.length+' cols':'FAILED'));
+  let closeP = await load('close');
+  if(!closeP){
+    dbg('⚠️ Close failed first attempt, waiting 2s and retrying...');
+    await new Promise(r=>setTimeout(r,2000));
+    closeP = await load('close');
+  }
+  dbg('close result: '+(closeP?closeP.rows.length+' rows, '+closeP.headers.length+' cols':'FAILED BOTH ATTEMPTS'));
     const openP  =await load('open');
     const highP  =await load('high');
     const lowP   =await load('low');
