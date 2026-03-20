@@ -289,130 +289,115 @@ function splitLine(l){
 }
 function parseCSV(text){
   const lines=text.trim().split(/\r?\n/).filter(l=>l.trim());
-  if(lines.length<2) return null;
+  if(lines.length<2){dbg('parseCSV: only '+lines.length+' lines');return null;}
   const hdrs=splitLine(lines[0]).map(h=>h.trim());
   const rows=lines.slice(1).map(l=>{
     const v=splitLine(l),o={};
     hdrs.forEach((h,i)=>o[h]=(v[i]||'').trim());
     return o;
   }).filter(r=>Object.values(r).some(v=>v));
-  return {headers:hdrs, rows};
+  dbg('parseCSV: '+rows.length+' rows, '+hdrs.length+' cols | h[0]='+hdrs[0]+' h[1]='+hdrs[1]);
+  return {headers:hdrs,rows};
 }
 
 // ── PROXY FETCH ───────────────────────────────────────────────────────────────
-let bestProxy = 0;
-const PROXIES = [
+let bestProxy=0;
+const PROXY_NAMES=['corsproxy','allorigins','thingproxy','codetabs'];
+const PROXIES=[
   u=>`https://corsproxy.io/?${encodeURIComponent(u)}`,
   u=>`https://api.allorigins.win/raw?url=${encodeURIComponent(u)}`,
   u=>`https://thingproxy.freeboard.io/fetch/${u}`,
   u=>`https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(u)}`,
 ];
-function timeout(ms){ return new Promise((_,r)=>setTimeout(()=>r(new Error('timeout')),ms)); }
+function timeout(ms){return new Promise((_,r)=>setTimeout(()=>r(new Error('timeout')),ms));}
 async function fetchSheet(url){
   if(!url) return null;
-  const proxyNames=['corsproxy','allorigins','thingproxy','codetabs'];
-  const order=[...Array(PROXIES.length).keys()].map(i=>(i+bestProxy)%PROXIES.length);
-  for(const pi of order){
+  for(let pi=0;pi<PROXIES.length;pi++){
     try{
-      const res=await Promise.race([fetch(PROXIES[pi](url),{cache:'no-store'}),timeout(14000)]);
-      if(!res.ok){dbg('❌ '+proxyNames[pi]+': HTTP '+res.status);continue;}
+      const res=await Promise.race([fetch(PROXIES[pi](url),{cache:'no-store'}),timeout(15000)]);
+      if(!res.ok){dbg('x '+PROXY_NAMES[pi]+': HTTP '+res.status);continue;}
       const text=await res.text();
-      if(!text||text.length<500){dbg('❌ '+proxyNames[pi]+': too small ('+text.length+' chars)');continue;}
-      if(text.trim().startsWith('<')){dbg('❌ '+proxyNames[pi]+': got HTML not CSV');continue;}
-      if(!text.includes(',')){dbg('❌ '+proxyNames[pi]+': not CSV (no commas)');continue;}
+      if(!text||text.length<500){dbg('x '+PROXY_NAMES[pi]+': too small ('+text.length+')');continue;}
+      if(text.trim().startsWith('<')){dbg('x '+PROXY_NAMES[pi]+': got HTML');continue;}
+      if(!text.includes(',')){dbg('x '+PROXY_NAMES[pi]+': not CSV');continue;}
+      dbg('OK '+PROXY_NAMES[pi]+': '+text.length+' chars');
       bestProxy=pi;
-      dbg('✅ '+proxyNames[pi]+': '+text.length+' chars, ~'+text.split('\n').length+' rows');
       return parseCSV(text);
-    }catch(e){dbg('❌ '+proxyNames[pi]+': '+e.message);continue;}
+    }catch(e){dbg('x '+PROXY_NAMES[pi]+': '+e.message);continue;}
   }
   return null;
 }
 
-// ── PARSE WIDE FORMAT ─────────────────────────────────────────────────────────
-// Sheets are: rows=dates, cols=tickers (transposed wide format)
-// Header: [DateCol, TICKER1, TICKER2, ...]
+// ── PARSE WIDE (Close/Open/High/Low/Volume sheets) ────────────────────────────
+// Structure: col[0]=date, col[1..]=ticker symbols, rows=trading days (newest first)
+// "Unavailable" treated as null. Output reversed to oldest-first for indicators.
 function parseWide(parsed){
   if(!parsed) return {};
   const {headers,rows}=parsed;
   if(!headers.length||!rows.length) return {};
-  // Detect: if 2nd header looks like ticker (short uppercase) → transposed
-  const h1=(headers[1]||'').trim();
-  const isTransposed=/^[A-Z]{1,6}$/.test(h1.toUpperCase()) && !/[\d\-\/]/.test(h1);
+  const dateCol=headers[0];
+  const tickerCols=headers.slice(1).filter(h=>h.trim());
   const map={};
-  if(isTransposed){
-    // rows=dates, cols=tickers
-    const dateCol=headers[0];
-    headers.slice(1).filter(h=>h.trim()).forEach(ticker=>{
-      const t=ticker.trim().toUpperCase();
-      const series=[];
-      rows.forEach(row=>{
-        const date=(row[dateCol]||'').trim();
-        if(!date) return;
-        const raw=(row[ticker]||'').toString().trim().replace(/[$, ]/g,'');
-        if(!raw||raw==='-'||raw==='N/A'||raw==='0') return;
-        const val=parseFloat(raw);
-        if(!isNaN(val)&&val>0) series.push({date,val});
-      });
-      if(series.length>0) map[t]=series;
-    });
-  } else {
-    // rows=tickers, cols=dates
-    const tickerCol=headers[0];
+  tickerCols.forEach(ticker=>{
+    const t=ticker.trim().toUpperCase();
+    const series=[];
     rows.forEach(row=>{
-      const t=(row[tickerCol]||'').trim().toUpperCase();
-      if(!t) return;
-      const series=[];
-      headers.slice(1).filter(h=>h.trim()).forEach(d=>{
-        const raw=(row[d]||'').toString().trim().replace(/[$, ]/g,'');
-        if(!raw||raw==='-'||raw==='N/A'||raw==='0') return;
-        const val=parseFloat(raw);
-        if(!isNaN(val)&&val>0) series.push({date:d,val});
-      });
-      if(series.length>0) map[t]=series;
+      const date=(row[dateCol]||'').toString().trim();
+      if(!date) return;
+      const raw=(row[ticker]||'').toString().trim();
+      if(!raw||raw==='Unavailable'||raw==='-'||raw==='N/A') return;
+      const val=parseFloat(raw.replace(/[$, ]/g,''));
+      if(!isNaN(val)&&val>0) series.push({date,val});
     });
-  }
-  dbg(`parseWide: transposed=${isTransposed}, tickers=${Object.keys(map).length}, sample: ${Object.keys(map).slice(0,5).join(',')}`);
+    // Rows come newest-first from Google Sheets — reverse to oldest-first
+    series.reverse();
+    if(series.length>0) map[t]=series;
+  });
+  dbg('parseWide: '+Object.keys(map).length+' tickers | dates: '+
+    (Object.values(map)[0]?.[0]?.date||'?')+' to '+
+    (Object.values(map)[0]?.[Object.values(map)[0].length-1]?.date||'?'));
   return map;
 }
 
-// ── DATE SORT ─────────────────────────────────────────────────────────────────
-function parseDate(s){
-  if(!s) return null;
-  let d=new Date(s);
-  if(!isNaN(d)) return d;
-  const p=s.split(/[\/\-\.]/);
-  if(p.length===3){
-    const y=p[2].length===4?+p[2]:+(20+p[2]);
-    d=new Date(y,+p[1]-1,+p[0]);
-    if(!isNaN(d)) return d;
-  }
-  const n=parseFloat(s);
-  if(!isNaN(n)&&n>40000&&n<70000) return new Date((n-25569)*86400000);
-  return null;
+// ── PARSE PCT SHEET ──────────────────────────────────────────────────────────
+// Structure: col[0]=period label (1M/3M/6M/Beta/Sector/IPO Date), cols=tickers
+// Values are decimals (0.12 = 12%) — we multiply by 100 for display
+function parsePct(parsed){
+  if(!parsed) return {};
+  const {headers,rows}=parsed;
+  if(!headers.length||!rows.length) return {};
+  const labelCol=headers[0];
+  const tickerCols=headers.slice(1).filter(h=>h.trim());
+  const lookup={};
+  tickerCols.forEach(ticker=>{
+    const t=ticker.trim().toUpperCase();
+    lookup[t]={};
+    rows.forEach(row=>{
+      const label=(row[labelCol]||'').toString().trim().toUpperCase();
+      if(!['1M','3M','6M'].includes(label)) return;
+      const raw=(row[ticker]||'').toString().trim();
+      if(!raw||raw==='Unavailable') return;
+      const val=parseFloat(raw);
+      if(!isNaN(val)) lookup[t][label]=+(val*100).toFixed(2);
+    });
+  });
+  dbg('parsePct: '+Object.keys(lookup).length+' tickers | sample: '+JSON.stringify(Object.values(lookup)[0]||{}));
+  return lookup;
 }
 
-// ── MERGE OHLCV ───────────────────────────────────────────────────────────────
-function mergeSeries(ticker,cMap,oMap,hMap,lMap,vMap){
-  const cArr=cMap[ticker]||[];
-  if(cArr.length<14) return null;
-  const om={},hm={},lm={},vm={};
-  (oMap[ticker]||[]).forEach(x=>om[x.date]=x.val);
-  (hMap[ticker]||[]).forEach(x=>hm[x.date]=x.val);
-  (lMap[ticker]||[]).forEach(x=>lm[x.date]=x.val);
-  (vMap[ticker]||[]).forEach(x=>vm[x.date]=x.val);
-  let rows=cArr.map(x=>{
-    const c=x.val;
-    return {date:x.date,c,o:om[x.date]||c,h:hm[x.date]||c,l:lm[x.date]||c,v:vm[x.date]||1};
-  }).filter(x=>x.c>0);
-  // Sort oldest→newest
-  const withD=rows.map(x=>{const p=parseDate(x.date);return{...x,parsed:p};});
-  if(withD.every(x=>x.parsed)) withD.sort((a,b)=>a.parsed-b.parsed);
-  else{
-    const f=parseFloat(rows[0]?.date),la=parseFloat(rows[rows.length-1]?.date);
-    if(!isNaN(f)&&!isNaN(la)&&f>la) rows.reverse();
-    return rows;
-  }
-  return withD;
+// ── PARSE MAIN ANALYST SHEET ──────────────────────────────────────────────────
+// Structure: rows=tickers, cols include analyst target and upside columns
+function parseMain(parsed){
+  if(!parsed) return {};
+  const {headers,rows}=parsed;
+  const tickerCol=headers[0];
+  const lookup={};
+  rows.forEach(row=>{
+    const t=(row[tickerCol]||'').trim().toUpperCase();
+    if(t) lookup[t]=row;
+  });
+  dbg('parseMain: '+Object.keys(lookup).length+' tickers');
+  return lookup;
 }
 
 // ── INDICATORS ────────────────────────────────────────────────────────────────
@@ -421,7 +406,7 @@ function vwma(C,V,p){
   return C.map((_,i)=>{
     if(i<p-1) return NaN;
     const c=C.slice(i-p+1,i+1),v=V.slice(i-p+1,i+1),sv=v.reduce((s,x)=>s+x,0);
-    return sv>0?c.reduce((s,x,j)=>s+x*v[j],0)/sv:NaN;
+    return sv>0?c.reduce((s,x,j)=>s+x*v[j],0)/sv:sma(C,p)[i];
   });
 }
 function rsi(C,p=14){
@@ -433,7 +418,7 @@ function rsi(C,p=14){
   r[p]=100-(100/(1+(al>0?ag/al:1e9)));
   for(let i=p+1;i<C.length;i++){
     const d=C[i]-C[i-1];
-    ag=(ag*(p-1)+Math.max(d,0))/p; al=(al*(p-1)+Math.max(-d,0))/p;
+    ag=(ag*(p-1)+Math.max(d,0))/p;al=(al*(p-1)+Math.max(-d,0))/p;
     r[i]=100-(100/(1+(al>0?ag/al:1e9)));
   }
   return r;
@@ -453,50 +438,71 @@ function mfi(H,L,C,V,p=14){
 }
 
 // ── STRATEGY ─────────────────────────────────────────────────────────────────
-function runStrategy(ticker,series,pctData,mainData){
+function runStrategy(ticker,series,pctData,mainRow){
   if(!series||series.length<14) return [];
   const C=series.map(x=>x.c),H=series.map(x=>x.h),L=series.map(x=>x.l),V=series.map(x=>x.v);
   const n=C.length;
-  const lp=Math.min(50,Math.max(20,n-4)), sp=Math.min(10,Math.max(5,Math.floor(n*.15)));
+  const lp=Math.min(50,Math.max(20,n-4)),sp=Math.min(10,Math.max(5,Math.floor(n*0.15)));
   const rsiA=rsi(C,14),mfiA=mfi(H,L,C,V,14);
   const s50=sma(C,lp),s10=sma(C,sp),vw50=vwma(C,V,lp),vw10=vwma(C,V,sp);
   const vs10=sma(V,sp),vs50=sma(V,lp);
+  const hasVol=V.some(v=>v>0);
   const out=[];
   for(let da=0;da<=3;da++){
     const i=n-1-da;
-    if(i<13||isNaN(s50[i])) continue;
+    if(i<Math.max(13,lp-1)) continue;
+    if(isNaN(s50[i])||isNaN(rsiA[i])||isNaN(mfiA[i])) continue;
     const cl=C[i],prev=i>0?C[i-1]:null;
     const roc=(i>=7&&C[i-7]>0)?((cl/C[i-7])-1)*100:NaN;
-    const vmi=(!isNaN(mfiA[i])&&!isNaN(rsiA[i]))?+(1+(mfiA[i]-rsiA[i])/100).toFixed(2):NaN;
-    const vpc=(!isNaN(vw50[i])&&!isNaN(s50[i]))?vw50[i]-s50[i]:NaN;
-    const vpr=(!isNaN(vw10[i])&&!isNaN(s10[i])&&s10[i]>0)?vw10[i]/s10[i]:NaN;
-    const vm2=(!isNaN(vs10[i])&&!isNaN(vs50[i])&&vs50[i]>0)?vs10[i]/vs50[i]:NaN;
+    const vmi=+(1+(mfiA[i]-rsiA[i])/100).toFixed(2);
+    const vpc=vw50[i]-s50[i];
+    const vpr=s10[i]>0?vw10[i]/s10[i]:NaN;
+    const vm2=vs50[i]>0?vs10[i]/vs50[i]:NaN;
     const vpci=(!isNaN(vpc)&&!isNaN(vpr)&&!isNaN(vm2)&&s50[i]>0)?(vpc/s50[i])*vpr*vm2:NaN;
     const pR=!isNaN(roc)&&roc>0&&roc<20;
-    const pV=!isNaN(vmi)&&vmi>=1.05;
-    const pP=!isNaN(vpci)&&vpci>0&&vpci<1.5;
+    const pV=vmi>=1.05;
+    const pP=hasVol?(!isNaN(vpci)&&vpci>0&&vpci<1.5):true;
     const pPr=cl<50;
     if(!(pR&&pV&&pP&&pPr)) continue;
-    // pct returns
-    let r1m=null,r3m=null,r6m=null;
-    if(pctData){
-      const get=(...ks)=>{for(const k of ks){const v=pctData[k];if(v!=null&&!isNaN(v))return v;}return null;};
-      r1m=get('1M','1MONTH','1M%');r3m=get('3M','3MONTH','3M%');r6m=get('6M','6MONTH','6M%');
-    }
+    const r1m=pctData?.['1M']??null;
+    const r3m=pctData?.['3M']??null;
+    const r6m=pctData?.['6M']??null;
     let tgt=null,tgtUp=null;
-    if(mainData){
-      const get=(...ks)=>{for(const k of ks){const v=mainData[k];if(v!=null&&v!==''){const n2=parseFloat(String(v).replace(/[$,%]/g,''));if(!isNaN(n2))return n2;}}return null;};
-      tgt=get('Price Target','Analyst Target','Target Price','PT','Target','Best Price Target','Top Analysts Price Target');
-      // Try upside directly
-      const up=get('Upside','upside/downside','Top Analysts Price Target upside downside','Best Price Target Upside');
-      tgtUp=up!=null?up:(tgt&&cl>0?(tgt-cl)/cl*100:null);
+    if(mainRow){
+      const up=mainRow["Top Analysts' Price Target - upside/downside"];
+      if(up!==undefined&&up!=='Unavailable'){const n2=parseFloat(String(up));if(!isNaN(n2))tgtUp=n2;}
+      const pt=mainRow['Best Price Target Upside'];
+      if(pt!==undefined&&pt!=='Unavailable'){const n2=parseFloat(String(pt));if(!isNaN(n2))tgt=n2;}
     }
-    out.push({ticker,daysAgo:da,price:cl,prevPrice:prev,chgPct:prev&&prev>0?(cl-prev)/prev*100:null,
+    out.push({ticker,daysAgo:da,price:cl,prevPrice:prev,
+      chgPct:prev&&prev>0?(cl-prev)/prev*100:null,
       ret1m:r1m,ret3m:r3m,ret6m:r6m,target:tgt,targetUpside:tgtUp,
-      roc:isNaN(roc)?null:+roc.toFixed(2),vmi:isNaN(vmi)?null:vmi,
-      vpci:isNaN(vpci)?null:+vpci.toFixed(4),passROC:pR,passVMI:pV,passVPCI:pP,passPrice:pPr});
+      roc:isNaN(roc)?null:+roc.toFixed(2),vmi:+vmi.toFixed(2),
+      vpci:isNaN(vpci)?null:+vpci.toFixed(4),
+      passROC:pR,passVMI:pV,passVPCI:pP,passPrice:pPr});
   }
   return out;
+}
+
+
+// ── MERGE OHLCV ───────────────────────────────────────────────────────────────
+function mergeSeries(ticker,cMap,oMap,hMap,lMap,vMap){
+  const cArr=cMap[ticker]||[];
+  if(cArr.length<14) return null;
+  const om={},hm={},lm={},vm={};
+  (oMap[ticker]||[]).forEach(x=>om[x.date]=x.val);
+  (hMap[ticker]||[]).forEach(x=>hm[x.date]=x.val);
+  (lMap[ticker]||[]).forEach(x=>lm[x.date]=x.val);
+  (vMap[ticker]||[]).forEach(x=>vm[x.date]=x.val);
+  const rows=cArr.map(x=>({
+    date:x.date,c:x.val,
+    o:om[x.date]||x.val,
+    h:hm[x.date]||x.val,
+    l:lm[x.date]||x.val,
+    v:vm[x.date]||0,
+  })).filter(x=>x.c>0);
+  // cArr already reversed to oldest-first by parseWide
+  return rows;
 }
 
 // ── FORMAT ────────────────────────────────────────────────────────────────────
@@ -624,9 +630,7 @@ async function runScreener(){
 
   try{
     // Sequential fetch — one at a time
-    dbg('Fetching close from: '+SHEETS.close.slice(0,80));
-  const closeP =await load('close');
-  dbg('close result: '+(closeP?closeP.rows.length+' rows, '+closeP.headers.length+' cols':'FAILED'));
+    const closeP =await load('close');
     const openP  =await load('open');
     const highP  =await load('high');
     const lowP   =await load('low');
@@ -636,7 +640,7 @@ async function runScreener(){
 
     if(!closeP){
       document.getElementById('errBox').style.display='block';
-      document.getElementById('errBox').innerHTML='❌ <strong>Could not fetch close prices.</strong> The close sheet returned too little data or failed. Check debug log below — look for the ❌ lines.';
+      document.getElementById('errBox').innerHTML='❌ <strong>Could not fetch close prices.</strong> Check debug log. Must be on GitHub Pages.';
       document.getElementById('loadCard').style.display='none';
       document.getElementById('resultsCard').style.display='block';
       document.getElementById('sampleCard').style.display='block';
@@ -649,8 +653,6 @@ async function runScreener(){
 
     msg('Parsing sheets…');
     const cMap=parseWide(closeP);
-    dbg('cMap tickers: '+Object.keys(cMap).length+' | headers[0]: '+closeP.headers[0]+' | headers[1]: '+closeP.headers[1]);
-    if(closeP.rows.length>0) dbg('closeP row[0] keys: '+Object.keys(closeP.rows[0]).slice(0,6).join(', '));
     const oMap=parseWide(openP||closeP);
     const hMap=parseWide(highP||closeP);
     const lMap=parseWide(lowP||closeP);
