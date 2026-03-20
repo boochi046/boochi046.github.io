@@ -484,6 +484,27 @@ function runStrategy(ticker,series,pctData,mainRow){
   return out;
 }
 
+
+// ── MERGE OHLCV ───────────────────────────────────────────────────────────────
+function mergeSeries(ticker,cMap,oMap,hMap,lMap,vMap){
+  const cArr=cMap[ticker]||[];
+  if(cArr.length<14) return null;
+  const om={},hm={},lm={},vm={};
+  (oMap[ticker]||[]).forEach(x=>om[x.date]=x.val);
+  (hMap[ticker]||[]).forEach(x=>hm[x.date]=x.val);
+  (lMap[ticker]||[]).forEach(x=>lm[x.date]=x.val);
+  (vMap[ticker]||[]).forEach(x=>vm[x.date]=x.val);
+  const rows=cArr.map(x=>({
+    date:x.date,c:x.val,
+    o:om[x.date]||x.val,
+    h:hm[x.date]||x.val,
+    l:lm[x.date]||x.val,
+    v:vm[x.date]||0,
+  })).filter(x=>x.c>0);
+  // cArr already reversed to oldest-first by parseWide
+  return rows;
+}
+
 // ── FORMAT ────────────────────────────────────────────────────────────────────
 const f$=n=>n==null?'—':'$'+Math.abs(n).toFixed(2);
 const pill=n=>{
