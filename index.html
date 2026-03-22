@@ -523,6 +523,8 @@ function parseCSV(text){
 }
 
 // ── FETCH with proxy chain ────────────────────────────────────────────────────
+function updateSbTime(t){const el=document.getElementById('sbTime');if(el)el.textContent=t;}
+
 async function fetchRaw(url){
   const proxies=[
     u=>u,
