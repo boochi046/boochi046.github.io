@@ -210,7 +210,15 @@ td:first-child{text-align:left;padding-left:1.1rem;}
   <!-- Load progress -->
   <div class="load-card" id="loadCard">
     <div class="load-title"><span class="spinner"></span> Loading Top Analyst Data</div>
-    <div class="load-steps" id="loadSteps"></div>
+    <div class="load-steps" id="loadSteps">
+    <div class="ls" id="step-close">⬜ Close Prices <span style="opacity:.45;font-size:.58rem">(gid=628580815)</span></div>
+    <div class="ls" id="step-open">⬜ Open Prices <span style="opacity:.45;font-size:.58rem">(gid=1220929174)</span></div>
+    <div class="ls" id="step-high">⬜ High Prices <span style="opacity:.45;font-size:.58rem">(gid=1449708019)</span></div>
+    <div class="ls" id="step-low">⬜ Low Prices <span style="opacity:.45;font-size:.58rem">(gid=2137301959)</span></div>
+    <div class="ls" id="step-volume">⬜ Volume <span style="opacity:.45;font-size:.58rem">(gid=696617267)</span></div>
+    <div class="ls" id="step-pct">⬜ % Returns <span style="opacity:.45;font-size:.58rem">(gid=1042550901)</span></div>
+    <div class="ls" id="step-main">⬜ Analyst Targets <span style="opacity:.45;font-size:.58rem">(main sheet)</span></div>
+    </div>
     <div class="load-msg" id="loadMsg">Starting…</div>
   </div>
 
@@ -509,12 +517,17 @@ function srt(col){{if(sortCol===col)sortDir*=-1;else{{sortCol=col;sortDir=1;}}do
 // Step tracker
 const stepEls={{}};
 function initSteps(){{
-  const labels={'close':'Close Prices (gid=628580815)','open':'Open Prices (gid=1220929174)','high':'High Prices (gid=1449708019)','low':'Low Prices (gid=2137301959)','volume':'Volume (gid=696617267)','pct':'% Returns (gid=1042550901)','main':'Analyst Targets (main)'};
-  const grid=document.getElementById('loadSteps');grid.innerHTML='';
-  Object.entries(labels).forEach(([k,v])=>{{
-    const el=document.createElement('div');el.className='ls';el.id='step-'+k;
-    el.textContent='⬜ '+v;grid.appendChild(el);stepEls[k]=el;
+  // Reset all pre-existing step elements to initial state
+  ['close','open','high','low','volume','pct','main'].forEach(k=>{
+    const el=document.getElementById("step-"+k);
+    if(!el)return;
+    // Keep label, reset icon
+    const txt=el.textContent.replace(/^[^ ]+ /,"");
+    el.textContent="⬜ "+txt;
+    el.className="ls";
+    stepEls[k]=el;
   }});
+}});
 }}
 function setStep(n,state,extra=''){{
   const el=stepEls[n];if(!el)return;
