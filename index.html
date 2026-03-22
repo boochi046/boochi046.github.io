@@ -268,6 +268,7 @@ td:first-child{text-align:left;padding-left:1.1rem;}
 @media(max-width:900px){.wl-row{grid-template-columns:1fr}.bottom-grid{grid-template-columns:1fr}}
 @media(max-width:600px){.main{padding:1rem}.kpi-row{grid-template-columns:1fr 1fr}}
 </style>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 </head>
 <body>
 
@@ -303,75 +304,6 @@ td:first-child{text-align:left;padding-left:1.1rem;}
   </aside>
   <div class="main">
 
-  <!-- ── SIDEBAR ── -->
-  <aside class="sidebar">
-    <div class="sidebar-brand">◈ PORTFOLIO</div>
-    <nav class="sidebar-nav">
-      <div class="sidebar-section">Navigation</div>
-      <a href="index.html" class="sidebar-link active">📊 Dashboard</a>
-      <a href="futures.html" class="sidebar-link">📈 Futures</a>
-      <a href="screener-analyst.html" class="sidebar-link">📊 Top Analyst</a>
-      <a href="screener-score.html" class="sidebar-link">🏆 Top Score</a>
-      <a href="screener-penny.html" class="sidebar-link">💎 Penny Stocks</a>
-      <div class="sidebar-section" style="margin-top:1rem">Overview</div>
-      <a href="#holdings" class="sidebar-link">🗂 Holdings</a>
-      <a href="#performance" class="sidebar-link">📉 Performance</a>
-      <a href="#pnl" class="sidebar-link">💰 P&amp;L</a>
-      <a href="#news" class="sidebar-link">📰 News</a>
-    </nav>
-
-    <!-- Key metrics stacked vertically -->
-    <div class="sidebar-metrics">
-      <div class="sidebar-section" style="padding-left:0.2rem">Key Metrics</div>
-      <div class="sb-metric">
-        <div class="sb-label">Cost Basis</div>
-        <div class="sb-value" id="sb-cost">—</div>
-        <div class="sb-sub" id="sb-positions">—</div>
-      </div>
-      <div class="sb-metric">
-        <div class="sb-label">Market Value</div>
-        <div class="sb-value" id="sb-value">—</div>
-        <div class="sb-sub" id="sb-value-sub">—</div>
-      </div>
-      <div class="sb-metric">
-        <div class="sb-label">Unrealized P&amp;L</div>
-        <div class="sb-value" id="sb-unreal">—</div>
-        <div class="sb-sub" id="sb-unreal-sub">—</div>
-      </div>
-      <div class="sb-metric">
-        <div class="sb-label">Realized P&amp;L</div>
-        <div class="sb-value" id="sb-realized">—</div>
-        <div class="sb-sub">Closed trades</div>
-      </div>
-      <div class="sb-metric">
-        <div class="sb-label">Total P&amp;L</div>
-        <div class="sb-value" id="sb-total">—</div>
-        <div class="sb-sub">Realized + Unrealized</div>
-      </div>
-      <div class="sb-metric">
-        <div class="sb-label">Today's P&amp;L</div>
-        <div class="sb-value" id="sb-today">—</div>
-        <div class="sb-sub" id="sb-today-sub">vs prev close</div>
-      </div>
-      <div class="sb-metric">
-        <div class="sb-label">Sharpe Ratio</div>
-        <div class="sb-value" id="sb-sharpe">—</div>
-        <div class="sb-sub">Risk-adjusted return</div>
-      </div>
-    </div>
-
-    <div class="sidebar-footer">
-      <div class="theme-row">
-        <span class="theme-label" id="themeLabel">DARK</span>
-        <button class="theme-toggle" onclick="toggleTheme()"></button>
-      </div>
-      <div style="font-size:.6rem;color:var(--muted);margin-top:.5rem;font-family:'JetBrains Mono',monospace" id="lastUpdated">—</div>
-      <button class="btn" onclick="loadAll()" style="width:100%;margin-top:.5rem;text-align:center">↻ Refresh</button>
-    </div>
-  </aside>
-
-  <!-- ── MAIN ── -->
-  <div class="main">
     <div id="errorBanner"></div>
 
     <div class="topbar">
