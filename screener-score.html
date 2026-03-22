@@ -163,10 +163,10 @@ td:first-child{text-align:left;padding-left:1.1rem;}
 @media(max-width:768px){.sidebar{display:none}.main{padding:1rem}}
 </style>
 <style>
-:root {{ --page-accent: #f59e0b; }}
-.sb-link[href="screener-score.html"]{{ color:var(--page-accent) !important; border-left-color:var(--page-accent) !important; }}
-.day-tab.active{{ border-color:var(--page-accent);color:var(--page-accent);background:rgba(59,130,246,.08); }}
-.page-title .acc{{ background:linear-gradient(135deg,var(--page-accent),var(--accent2));-webkit-background-clip:text;-webkit-text-fill-color:transparent; }}
+:root { --page-accent: #f59e0b; }
+.sb-link[href="screener-score.html"]{ color:var(--page-accent) !important; border-left-color:var(--page-accent) !important; }
+.day-tab.active{ border-color:var(--page-accent);color:var(--page-accent);background:rgba(59,130,246,.08); }
+.page-title .acc{ background:linear-gradient(135deg,var(--page-accent),var(--accent2));-webkit-background-clip:text;-webkit-text-fill-color:transparent; }
 </style>
 </head>
 <body>
@@ -310,7 +310,7 @@ function toggleTheme(){
 function updateSbTime(txt){const el=document.getElementById('sbTime');if(el)el.textContent=txt;}
 
 
-const SHEETS = {{
+const SHEETS = {
   close: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRFmzsy7mklmiwzmczqrUswzNM0vAz3BsjS1kODfGlgmqzF-Zw7Zdx5r1NMkZ7TggckHvOwlUk-eCzn/pub?gid=1283231042&single=true&output=csv',
   open: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRFmzsy7mklmiwzmczqrUswzNM0vAz3BsjS1kODfGlgmqzF-Zw7Zdx5r1NMkZ7TggckHvOwlUk-eCzn/pub?gid=1419154816&single=true&output=csv',
   high: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRFmzsy7mklmiwzmczqrUswzNM0vAz3BsjS1kODfGlgmqzF-Zw7Zdx5r1NMkZ7TggckHvOwlUk-eCzn/pub?gid=1182012761&single=true&output=csv',
@@ -318,125 +318,133 @@ const SHEETS = {{
   volume: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRFmzsy7mklmiwzmczqrUswzNM0vAz3BsjS1kODfGlgmqzF-Zw7Zdx5r1NMkZ7TggckHvOwlUk-eCzn/pub?gid=1289012452&single=true&output=csv',
   pct: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRFmzsy7mklmiwzmczqrUswzNM0vAz3BsjS1kODfGlgmqzF-Zw7Zdx5r1NMkZ7TggckHvOwlUk-eCzn/pub?gid=2023944038&single=true&output=csv',
   main: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRFmzsy7mklmiwzmczqrUswzNM0vAz3BsjS1kODfGlgmqzF-Zw7Zdx5r1NMkZ7TggckHvOwlUk-eCzn/pub?gid=0&single=true&output=csv',
-}};
+};
 
 let allSignals=[], dayFilter=-1, sortCol='daysAgo', sortDir=1;
 let dbgLines=[];
-function dbg(m){{dbgLines.push(m);}}
-function toggleDebug(){{
+function dbg(m){dbgLines.push(m);}
+function toggleDebug(){
   const b=document.getElementById('dbgBody'),t=document.getElementById('dbgToggle');
-  if(b.style.display==='none'||!b.style.display){{b.style.display='block';t.textContent='▲ hide';}}
-  else{{b.style.display='none';t.textContent='▼ show';}}
-}}
+  if(b.style.display==='none'||!b.style.display){b.style.display='block';t.textContent='▲ hide';}
+  else{b.style.display='none';t.textContent='▼ show';}
+}
 
 // CSV
-function splitLine(l){{const r=[];let c='',q=false;for(const ch of l){{if(ch==='"'){{q=!q;}}else if(ch===','&&!q){{r.push(c);c='';}}else{{c+=ch;}}}}r.push(c);return r;}}
-function parseCSV(text){{
+function splitLine(l){const r=[];let c='',q=false;for(const ch of l){if(ch==='"'){q=!q;}else if(ch===','&&!q){r.push(c);c='';}else{c+=ch;}}r.push(c);return r;}
+function parseCSV(text){
   const lines=text.trim().split(/\\r?\\n/).filter(l=>l.trim());
-  if(lines.length<2){{dbg('parseCSV: only '+lines.length+' lines');return null;}}
+  if(lines.length<2){dbg('parseCSV: only '+lines.length+' lines');return null;}
   const hdrs=splitLine(lines[0]).map(h=>h.trim());
-  const rows=lines.slice(1).map(l=>{{const v=splitLine(l),o={{}};hdrs.forEach((h,i)=>o[h]=(v[i]||'').trim());return o;}}).filter(r=>Object.values(r).some(v=>v));
+  const rows=lines.slice(1).map(l=>{const v=splitLine(l),o={};hdrs.forEach((h,i)=>o[h]=(v[i]||'').trim());return o;}).filter(r=>Object.values(r).some(v=>v));
   dbg('parseCSV: '+rows.length+' rows, '+hdrs.length+' cols | h[0]='+hdrs[0]+' h[1]='+hdrs[1]);
-  return {{headers:hdrs,rows}};
-}}
+  return {headers:hdrs,rows};
+}
 
 // Proxy
 let bestProxy=0;
-const PN=['corsproxy','allorigins','thingproxy','codetabs'];
-const PX=[u=>`https://corsproxy.io/?${{encodeURIComponent(u)}}`,u=>`https://api.allorigins.win/raw?url=${{encodeURIComponent(u)}}`,u=>`https://thingproxy.freeboard.io/fetch/${{u}}`,u=>`https://api.codetabs.com/v1/proxy?quest=${{encodeURIComponent(u)}}`];
-function tout(ms){{return new Promise((_,r)=>setTimeout(()=>r(new Error('timeout')),ms));}}
-async function fetchSheet(url){{
+const PN=['allorigins','codetabs','corsproxy','thingproxy'];
+const PX=[u=>`https://api.allorigins.win/raw?url=${encodeURIComponent(u)}`,u=>`https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(u)}`,u=>`https://corsproxy.io/?${encodeURIComponent(u)}`,u=>`https://thingproxy.freeboard.io/fetch/${u}`];
+function tout(ms){return new Promise((_,r)=>setTimeout(()=>r(new Error('timeout')),ms));}
+async function fetchSheet(url, stepKey){
   if(!url||url==='null') return null;
-  for(let pi=0;pi<PX.length;pi++){{
-    try{{
-      const res=await Promise.race([fetch(PX[pi](url),{{cache:'no-store'}}),tout(15000)]);
-      if(!res.ok){{dbg('x '+PN[pi]+': HTTP '+res.status);continue;}}
+  for(let pi=0;pi<PX.length;pi++){
+    // Update step to show which proxy is being tried
+    if(stepKey){
+      const el=stepEls[stepKey];
+      if(el){
+        const lbl=el.textContent.replace(/^[^ ]+ /,'').replace(/ \[.*\]$/,'').replace(/ — trying.*$/,'');
+        el.textContent='⏳ '+lbl+' — trying '+PN[pi]+'…';
+      }
+    }
+    try{
+      const res=await Promise.race([fetch(PX[pi](url),{cache:'no-store'}),tout(8000)]);
+      if(!res.ok){dbg('x '+PN[pi]+': HTTP '+res.status);continue;}
       const text=await res.text();
-      if(!text||text.length<500){{dbg('x '+PN[pi]+': too small ('+text.length+')');continue;}}
-      if(text.trim().startsWith('<')){{dbg('x '+PN[pi]+': HTML');continue;}}
-      if(!text.includes(',')){{dbg('x '+PN[pi]+': no commas');continue;}}
+      if(!text||text.length<500){dbg('x '+PN[pi]+': too small ('+text.length+')');continue;}
+      if(text.trim().startsWith('<')){dbg('x '+PN[pi]+': HTML');continue;}
+      if(!text.includes(',')){dbg('x '+PN[pi]+': no commas');continue;}
       dbg('OK '+PN[pi]+': '+text.length+' chars');bestProxy=pi;return parseCSV(text);
-    }}catch(e){{dbg('x '+PN[pi]+': '+e.message);continue;}}
-  }}
-  dbg('DEAD: all proxies failed');return null;
-}}
+    }catch(e){dbg('x '+PN[pi]+': '+e.message);continue;}
+  }
+  dbg('DEAD: all proxies failed for '+url.slice(0,60));return null;
+}
 
 // Parse wide (Close/Open/High/Low/Volume): col0=date, cols=tickers, rows newest→oldest
-function parseWide(parsed){{
-  if(!parsed) return {{}};
-  const {{headers,rows}}=parsed;
-  if(!headers.length||!rows.length) return {{}};
+function parseWide(parsed){
+  if(!parsed) return {};
+  const {headers,rows}=parsed;
+  if(!headers.length||!rows.length) return {};
   const dateCol=headers[0];
-  const map={{}};
-  headers.slice(1).filter(h=>h.trim()).forEach(ticker=>{{
+  const map={};
+  headers.slice(1).filter(h=>h.trim()).forEach(ticker=>{
     const t=ticker.trim().toUpperCase();
     const series=[];
-    rows.forEach(row=>{{
+    rows.forEach(row=>{
       const date=(row[dateCol]||'').toString().trim();if(!date) return;
       const raw=(row[ticker]||'').toString().trim();
       if(!raw||raw==='Unavailable'||raw==='-'||raw==='N/A') return;
       const val=parseFloat(raw.replace(/[$, ]/g,''));
-      if(!isNaN(val)&&val>0) series.push({{date,val}});
-    }});
+      if(!isNaN(val)&&val>0) series.push({date,val});
+    });
     series.reverse(); // newest→oldest becomes oldest→newest
     if(series.length>0) map[t]=series;
-  }});
+  });
   dbg('parseWide: '+Object.keys(map).length+' tickers, dates: '+(Object.values(map)[0]?.[0]?.date||'?')+' to '+(Object.values(map)[0]?.slice(-1)[0]?.date||'?'));
   return map;
-}}
+}
 
 // Parse pct sheet: col0=period label, cols=tickers, values are decimals
-function parsePct(parsed){{
-  if(!parsed) return {{}};
-  const {{headers,rows}}=parsed;
+function parsePct(parsed){
+  if(!parsed) return {};
+  const {headers,rows}=parsed;
   const labelCol=headers[0];
-  const lookup={{}};
-  headers.slice(1).filter(h=>h.trim()).forEach(ticker=>{{
+  const lookup={};
+  headers.slice(1).filter(h=>h.trim()).forEach(ticker=>{
     const t=ticker.trim().toUpperCase();
-    lookup[t]={{}};
-    rows.forEach(row=>{{
+    lookup[t]={};
+    rows.forEach(row=>{
       const label=(row[labelCol]||'').toString().trim().toUpperCase();
       if(!['1M','3M','6M'].includes(label)) return;
       const raw=(row[ticker]||'').toString().trim();
       if(!raw||raw==='Unavailable') return;
       const val=parseFloat(raw);
       if(!isNaN(val)) lookup[t][label]=+(val*100).toFixed(2);
-    }});
-  }});
+    });
+  });
   dbg('parsePct: '+Object.keys(lookup).length+' tickers');
   return lookup;
-}}
+}
 
 // Parse main analyst sheet: rows=tickers
-function parseMain(parsed){{
-  if(!parsed) return {{}};
-  const {{headers,rows}}=parsed;
+function parseMain(parsed){
+  if(!parsed) return {};
+  const {headers,rows}=parsed;
   const tc=headers[0];
-  const lookup={{}};
-  rows.forEach(row=>{{const t=(row[tc]||'').trim().toUpperCase();if(t)lookup[t]=row;}});
+  const lookup={};
+  rows.forEach(row=>{const t=(row[tc]||'').trim().toUpperCase();if(t)lookup[t]=row;});
   dbg('parseMain: '+Object.keys(lookup).length+' tickers');
   return lookup;
-}}
+}
 
 // Merge OHLCV
-function mergeSeries(ticker,cMap,oMap,hMap,lMap,vMap){{
+function mergeSeries(ticker,cMap,oMap,hMap,lMap,vMap){
   const cArr=cMap[ticker]||[];if(cArr.length<14) return null;
-  const om={{}},hm={{}},lm={{}},vm={{}};
+  const om={},hm={},lm={},vm={};
   (oMap[ticker]||[]).forEach(x=>om[x.date]=x.val);
   (hMap[ticker]||[]).forEach(x=>hm[x.date]=x.val);
   (lMap[ticker]||[]).forEach(x=>lm[x.date]=x.val);
   (vMap[ticker]||[]).forEach(x=>vm[x.date]=x.val);
-  return cArr.map(x=>{{return{{date:x.date,c:x.val,o:om[x.date]||x.val,h:hm[x.date]||x.val,l:lm[x.date]||x.val,v:vm[x.date]||0}};}}). filter(x=>x.c>0);
-}}
+  return cArr.map(x=>{return{date:x.date,c:x.val,o:om[x.date]||x.val,h:hm[x.date]||x.val,l:lm[x.date]||x.val,v:vm[x.date]||0};}). filter(x=>x.c>0);
+}
 
 // Indicators
-function sma(a,p){{return a.map((_,i)=>i<p-1?NaN:a.slice(i-p+1,i+1).reduce((s,v)=>s+v,0)/p);}}
-function vwma(C,V,p){{return C.map((_,i)=>{{if(i<p-1)return NaN;const c=C.slice(i-p+1,i+1),v=V.slice(i-p+1,i+1),sv=v.reduce((a,b)=>a+b,0);return sv>0?c.reduce((a,x,j)=>a+x*v[j],0)/sv:sma(C,p)[i];}});}}
-function rsi(C,p=14){{const r=Array(C.length).fill(NaN);if(C.length<p+1)return r;let g=0,l=0;for(let i=1;i<=p;i++){{const d=C[i]-C[i-1];if(d>0)g+=d;else l-=d;}}let ag=g/p,al=l/p;r[p]=100-(100/(1+(al>0?ag/al:1e9)));for(let i=p+1;i<C.length;i++){{const d=C[i]-C[i-1];ag=(ag*(p-1)+Math.max(d,0))/p;al=(al*(p-1)+Math.max(-d,0))/p;r[i]=100-(100/(1+(al>0?ag/al:1e9)));}}return r;}}
-function mfi(H,L,C,V,p=14){{const r=Array(C.length).fill(NaN);const tp=C.map((_,i)=>(H[i]+L[i]+C[i])/3);for(let i=p;i<C.length;i++){{let pos=0,neg=0;for(let j=i-p+1;j<=i;j++){{const mf=tp[j]*V[j];if(j>0&&tp[j]>tp[j-1])pos+=mf;else neg+=mf;}}r[i]=100-(100/(1+(neg>0?pos/neg:1e9)));}}return r;}}
+function sma(a,p){return a.map((_,i)=>i<p-1?NaN:a.slice(i-p+1,i+1).reduce((s,v)=>s+v,0)/p);}
+function vwma(C,V,p){return C.map((_,i)=>{if(i<p-1)return NaN;const c=C.slice(i-p+1,i+1),v=V.slice(i-p+1,i+1),sv=v.reduce((a,b)=>a+b,0);return sv>0?c.reduce((a,x,j)=>a+x*v[j],0)/sv:sma(C,p)[i];});}
+function rsi(C,p=14){const r=Array(C.length).fill(NaN);if(C.length<p+1)return r;let g=0,l=0;for(let i=1;i<=p;i++){const d=C[i]-C[i-1];if(d>0)g+=d;else l-=d;}let ag=g/p,al=l/p;r[p]=100-(100/(1+(al>0?ag/al:1e9)));for(let i=p+1;i<C.length;i++){const d=C[i]-C[i-1];ag=(ag*(p-1)+Math.max(d,0))/p;al=(al*(p-1)+Math.max(-d,0))/p;r[i]=100-(100/(1+(al>0?ag/al:1e9)));}return r;}
+function mfi(H,L,C,V,p=14){const r=Array(C.length).fill(NaN);const tp=C.map((_,i)=>(H[i]+L[i]+C[i])/3);for(let i=p;i<C.length;i++){let pos=0,neg=0;for(let j=i-p+1;j<=i;j++){const mf=tp[j]*V[j];if(j>0&&tp[j]>tp[j-1])pos+=mf;else neg+=mf;}r[i]=100-(100/(1+(neg>0?pos/neg:1e9)));}return r;}
 
 // Strategy
-function runStrategy(ticker,series,pctData,mainRow){{
+function runStrategy(ticker,series,pctData,mainRow){
   if(!series||series.length<14) return [];
   const C=series.map(x=>x.c),H=series.map(x=>x.h),L=series.map(x=>x.l),V=series.map(x=>x.v);
   const n=C.length,lp=Math.min(50,Math.max(20,n-4)),sp=Math.min(10,Math.max(5,Math.floor(n*.15)));
@@ -444,7 +452,7 @@ function runStrategy(ticker,series,pctData,mainRow){{
   const s50=sma(C,lp),s10=sma(C,sp),vw50=vwma(C,V,lp),vw10=vwma(C,V,sp),vs10=sma(V,sp),vs50=sma(V,lp);
   const hasVol=V.some(v=>v>0);
   const out=[];
-  for(let da=0;da<=3;da++){{
+  for(let da=0;da<=3;da++){
     const i=n-1-da;
     if(i<Math.max(13,lp-1)||isNaN(s50[i])||isNaN(rsiA[i])||isNaN(mfiA[i])) continue;
     const cl=C[i],prev=i>0?C[i-1]:null;
@@ -458,65 +466,65 @@ function runStrategy(ticker,series,pctData,mainRow){{
     if(!(pR&&pV&&pP&&pPr)) continue;
     const r1m=pctData?.['1M']??null,r3m=pctData?.['3M']??null,r6m=pctData?.['6M']??null;
     let tgt=null,tgtUp=null;
-    if(mainRow){{
+    if(mainRow){
       const up=mainRow["Top Analysts' Price Target - upside/downside"];
-      if(up!==undefined&&up!=='Unavailable'){{const n2=parseFloat(String(up));if(!isNaN(n2))tgtUp=n2;}}
+      if(up!==undefined&&up!=='Unavailable'){const n2=parseFloat(String(up));if(!isNaN(n2))tgtUp=n2;}
       const pt=mainRow['Best Price Target Upside'];
-      if(pt!==undefined&&pt!=='Unavailable'){{const n2=parseFloat(String(pt));if(!isNaN(n2))tgt=n2;}}
-    }}
-    out.push({{ticker,daysAgo:da,price:cl,prevPrice:prev,chgPct:prev&&prev>0?(cl-prev)/prev*100:null,
+      if(pt!==undefined&&pt!=='Unavailable'){const n2=parseFloat(String(pt));if(!isNaN(n2))tgt=n2;}
+    }
+    out.push({ticker,daysAgo:da,price:cl,prevPrice:prev,chgPct:prev&&prev>0?(cl-prev)/prev*100:null,
       ret1m:r1m,ret3m:r3m,ret6m:r6m,target:tgt,targetUpside:tgtUp,
       roc:isNaN(roc)?null:+roc.toFixed(2),vmi:+vmi.toFixed(2),vpci:isNaN(vpci)?null:+vpci.toFixed(4),
-      passROC:pR,passVMI:pV,passVPCI:pP,passPrice:pPr}});
-  }}
+      passROC:pR,passVMI:pV,passVPCI:pP,passPrice:pPr});
+  }
   return out;
-}}
+}
 
 // Format
 const f$=n=>n==null?'—':'$'+Math.abs(n).toFixed(2);
-const pill=n=>{{if(n==null)return'<span class="pill neu">—</span>';return`<span class="pill ${{n>=0?'pos':'neg'}}">${{n>=0?'+':''}}${{n.toFixed(2)}}%</span>`;}}
+const pill=n=>{if(n==null)return'<span class="pill neu">—</span>';return`<span class="pill ${n>=0?'pos':'neg'}">${n>=0?'+':''}${n.toFixed(2)}%</span>`;}
 const dayLbl=['Today','Yesterday','2d ago','3d ago'];
 
 // Render
-function renderTable(){{
+function renderTable(){
   let data=dayFilter===-1?allSignals:allSignals.filter(s=>s.daysAgo===dayFilter);
-  data=[...data].sort((a,b)=>{{
+  data=[...data].sort((a,b)=>{
     let av=a[sortCol]??(sortDir>0?Infinity:-Infinity);
     let bv=b[sortCol]??(sortDir>0?Infinity:-Infinity);
     return typeof av==='string'?sortDir*av.localeCompare(bv):sortDir*(av-bv);
-  }});
+  });
   document.getElementById('resCount').textContent=data.length+' signal'+(data.length!==1?'s':'');
   const tb=document.getElementById('resBody');
-  if(!data.length){{
+  if(!data.length){
     tb.innerHTML=`<tr><td colspan="14"><div class="empty"><div class="empty-icon">🔍</div><div class="empty-t">No signals found</div><div class="empty-s">Strategy filters found no matches in last 4 days</div></div></td></tr>`;
     return;
-  }}
-  tb.innerHTML=data.map(s=>{{
+  }
+  tb.innerHTML=data.map(s=>{
     const tuC=s.targetUpside==null?'neu':s.targetUpside>=0?'pos':'neg';
     return`<tr>
-      <td><span class="tkr">${{s.ticker}}</span><span class="pass-dots"><span class="pd ${{s.passROC?'on':''}}" title="ROC"></span><span class="pd ${{s.passVMI?'on':''}}" title="VMI"></span><span class="pd ${{s.passVPCI?'on':''}}" title="VPCI"></span><span class="pd ${{s.passPrice?'on':''}}" title="P&lt;$50"></span></span></td>
-      <td><span class="sig-badge day-badge">${{dayLbl[s.daysAgo]||s.daysAgo+'d'}}</span></td>
-      <td><strong>${{s.price.toFixed(2)}}</strong></td>
-      <td class="pv m">${{f$(s.prevPrice)}}</td>
-      <td>${{pill(s.chgPct)}}</td>
-      <td>${{pill(s.ret1m)}}</td>
-      <td>${{pill(s.ret3m)}}</td>
-      <td>${{pill(s.ret6m)}}</td>
-      <td><span class="pill ${{tuC}}">${{s.targetUpside==null?'—':(s.targetUpside>=0?'+':'')+s.targetUpside.toFixed(1)+'%'}}</span></td>
-      <td class="pv m">${{f$(s.target)}}</td>
-      <td class="pv ${{s.passROC?'g':'r'}}">${{s.roc??'—'}}</td>
-      <td class="pv ${{s.passVMI?'g':'r'}}">${{s.vmi??'—'}}</td>
-      <td class="pv ${{s.passVPCI?'g':'r'}}">${{s.vpci??'—'}}</td>
+      <td><span class="tkr">${s.ticker}</span><span class="pass-dots"><span class="pd ${s.passROC?'on':''}" title="ROC"></span><span class="pd ${s.passVMI?'on':''}" title="VMI"></span><span class="pd ${s.passVPCI?'on':''}" title="VPCI"></span><span class="pd ${s.passPrice?'on':''}" title="P&lt;$50"></span></span></td>
+      <td><span class="sig-badge day-badge">${dayLbl[s.daysAgo]||s.daysAgo+'d'}</span></td>
+      <td><strong>${s.price.toFixed(2)}</strong></td>
+      <td class="pv m">${f$(s.prevPrice)}</td>
+      <td>${pill(s.chgPct)}</td>
+      <td>${pill(s.ret1m)}</td>
+      <td>${pill(s.ret3m)}</td>
+      <td>${pill(s.ret6m)}</td>
+      <td><span class="pill ${tuC}">${s.targetUpside==null?'—':(s.targetUpside>=0?'+':'')+s.targetUpside.toFixed(1)+'%'}</span></td>
+      <td class="pv m">${f$(s.target)}</td>
+      <td class="pv ${s.passROC?'g':'r'}">${s.roc??'—'}</td>
+      <td class="pv ${s.passVMI?'g':'r'}">${s.vmi??'—'}</td>
+      <td class="pv ${s.passVPCI?'g':'r'}">${s.vpci??'—'}</td>
       <td><span class="sig-badge">✓ ALL</span></td>
     </tr>`;
-  }}).join('');
-}}
-function setDay(d,btn){{dayFilter=d;document.querySelectorAll('.day-tab').forEach(b=>b.classList.remove('active'));btn.classList.add('active');renderTable();}}
-function srt(col){{if(sortCol===col)sortDir*=-1;else{{sortCol=col;sortDir=1;}}document.querySelectorAll('.sa').forEach(e=>{{e.className='sa';e.textContent='↕';}});const el=document.getElementById('sa-'+col);if(el){{el.className='sa on';el.textContent=sortDir>0?'↑':'↓';}}renderTable();}}
+  }).join('');
+}
+function setDay(d,btn){dayFilter=d;document.querySelectorAll('.day-tab').forEach(b=>b.classList.remove('active'));btn.classList.add('active');renderTable();}
+function srt(col){if(sortCol===col)sortDir*=-1;else{sortCol=col;sortDir=1;}document.querySelectorAll('.sa').forEach(e=>{e.className='sa';e.textContent='↕';});const el=document.getElementById('sa-'+col);if(el){el.className='sa on';el.textContent=sortDir>0?'↑':'↓';}renderTable();}
 
 // Step tracker
-const stepEls={{}};
-function initSteps(){{
+const stepEls={};
+function initSteps(){
   // Reset all pre-existing step elements to initial state
   ['close','open','high','low','volume','pct','main'].forEach(k=>{
     const el=document.getElementById("step-"+k);
@@ -526,18 +534,18 @@ function initSteps(){{
     el.textContent="⬜ "+txt;
     el.className="ls";
     stepEls[k]=el;
-  }});
-}});
-}}
-function setStep(n,state,extra=''){{
+  });
+});
+}
+function setStep(n,state,extra=''){
   const el=stepEls[n];if(!el)return;
-  const icons={{loading:'⏳',done:'✅',fail:'❌',skip:'⚪'}};
+  const icons={loading:'⏳',done:'✅',fail:'❌',skip:'⚪'};
   el.className='ls '+(state==='loading'?'active':state==='done'?'done':state==='fail'?'fail':'');
   const cur=el.textContent.replace(/^[^a-zA-Z]+ /,'');
   el.textContent=(icons[state]||'⬜')+' '+cur+(extra?' ['+extra+']':'');
-}}
+}
 
-async function runScreener(){{
+async function runScreener(){
   allSignals=[];dbgLines=[];
   document.getElementById('loadCard').style.display='block';
   document.getElementById('statusBar').style.display='none';
@@ -550,50 +558,49 @@ async function runScreener(){{
   const isLocal=location.protocol==='file:'||location.protocol==='content:';
   document.getElementById('warnLocal').style.display=isLocal?'block':'none';
   const msg=t=>document.getElementById('loadMsg').textContent=t;
-  async function load(key){{
-    const url=SHEETS[key];if(!url||url==='null'){{setStep(key,'skip');return null;}}
+  async function load(key){
+    const url=SHEETS[key];if(!url||url==='null'){setStep(key,'skip');return null;}
     setStep(key,'loading');msg('Fetching '+key+'…');
-    let res=await fetchSheet(url);
-    if(!res&&key==='close'){{dbg('Retrying close…');await new Promise(r=>setTimeout(r,2000));res=await fetchSheet(url);}}
-    if(res){{
+    let res=await fetchSheet(url, key);
+    if(!res&&key==='close'){dbg('Retrying close…');await new Promise(r=>setTimeout(r,1000));res=await fetchSheet(url, key);}
+    if(res){
       const info=res.rows.length+'r x '+res.headers.length+'c';
       setStep(key,'done',info);
-    }} else {{
+    } else {
       setStep(key,'fail','FAILED');
       dbg('FAIL: '+key);
-    }}
+    }
     return res;
-  }}
-  try{{
-    const closeP=await load('close');
-    const openP =await load('open');
-    const highP =await load('high');
-    const lowP  =await load('low');
-    const volP  =await load('volume');
-    const pctP  =await load('pct');
-    const mainP =await load('main');
-    if(!closeP){{
+  }
+  try{
+    // Fetch all sheets in parallel for speed
+    msg('Fetching all 7 sheets simultaneously — watch status below…');
+    const [closeP,openP,highP,lowP,volP,pctP,mainP] = await Promise.all([
+      load('close'), load('open'), load('high'), load('low'),
+      load('volume'), load('pct'), load('main')
+    ]);
+    if(!closeP){
       document.getElementById('errBox').style.display='block';
       document.getElementById('errBox').innerHTML='❌ <strong>Close price sheet failed to load.</strong> Check debug log.';
       document.getElementById('loadCard').style.display='none';
       showResults(); return;
-    }}
+    }
     msg('Parsing data…');
     const cMap=parseWide(closeP),oMap=parseWide(openP||closeP),hMap=parseWide(highP||closeP);
-    const lMap=parseWide(lowP||closeP),vMap=parseWide(volP||{{headers:[],rows:[]}});
+    const lMap=parseWide(lowP||closeP),vMap=parseWide(volP||{headers:[],rows:[]});
     const pctLookup=parsePct(pctP),mainLookup=parseMain(mainP);
     const tickers=Object.keys(cMap);
     dbg('Tickers: '+tickers.length+' | Vol: '+Object.keys(vMap).length);
     msg('Computing indicators for '+tickers.length+' tickers…');
     let maxBars=0;
-    tickers.forEach(ticker=>{{
+    tickers.forEach(ticker=>{
       const series=mergeSeries(ticker,cMap,oMap,hMap,lMap,vMap);
       if(!series||series.length<14) return;
       maxBars=Math.max(maxBars,series.length);
       const sigs=runStrategy(ticker,series,pctLookup[ticker]||null,mainLookup[ticker]||null);
       if(sigs.length>0) dbg('HIT '+ticker+': '+sigs.length+' signal(s)');
       allSignals.push(...sigs);
-    }});
+    });
     dbg('Total signals: '+allSignals.length);
     document.getElementById('stTickers').textContent=tickers.length;
     document.getElementById('stSignals').textContent=allSignals.length;
@@ -604,22 +611,22 @@ async function runScreener(){{
     updateSbTime(t);
     document.getElementById('dbgBody').textContent=dbgLines.join('\\n');
     showResults();
-  }}catch(err){{
+  }catch(err){
     dbg('ERROR: '+err.message+' '+err.stack);
     document.getElementById('errBox').style.display='block';
     document.getElementById('errBox').textContent='Error: '+err.message;
     document.getElementById('dbgBody').textContent=dbgLines.join('\\n');
     showResults();
-  }}
-}}
-function showResults(){{
+  }
+}
+function showResults(){
   document.getElementById('loadCard').style.display='none';
   document.getElementById('statusBar').style.display='flex';
   document.getElementById('dayTabs').style.display='flex';
   document.getElementById('resultsCard').style.display='block';
   document.getElementById('footNote').style.display='block';
   renderTable();
-}}
+}
 runScreener();
 </script>
 </body>
