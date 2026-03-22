@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>💎 Penny Stocks Screener</title>
+<title>🏆 Top Score Screener</title>
 
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@300;400;500&display=swap" rel="stylesheet">
 <style>
@@ -163,8 +163,8 @@ td:first-child{text-align:left;padding-left:1.1rem;}
 @media(max-width:768px){.sidebar{display:none}.main{padding:1rem}}
 </style>
 <style>
-:root {{ --page-accent: #10b981; }}
-.sb-link[href="screener-penny.html"]{{ color:var(--page-accent) !important; border-left-color:var(--page-accent) !important; }}
+:root {{ --page-accent: #f59e0b; }}
+.sb-link[href="screener-score.html"]{{ color:var(--page-accent) !important; border-left-color:var(--page-accent) !important; }}
 .day-tab.active{{ border-color:var(--page-accent);color:var(--page-accent);background:rgba(59,130,246,.08); }}
 .page-title .acc{{ background:linear-gradient(135deg,var(--page-accent),var(--accent2));-webkit-background-clip:text;-webkit-text-fill-color:transparent; }}
 </style>
@@ -172,7 +172,7 @@ td:first-child{text-align:left;padding-left:1.1rem;}
 <body>
 {sidebar_html(active_page)}
 <div class="main">
-  <div class="page-title">💎 <span class="acc">Penny Stocks</span> Screener</div>
+  <div class="page-title">🏆 <span class="acc">Top Score</span> Screener</div>
   <div class="page-sub">~324 tickers · 4-day lookback · ROC(7) · VMI · VPCI · Price &lt; $50</div>
 
   <div class="strat-box">
@@ -184,12 +184,12 @@ td:first-child{text-align:left;padding-left:1.1rem;}
     <span class="sp">📅 Last 4 days</span>
   </div>
 
-  <div class="warn-box" id="warnLocal">⚠️ <strong>Local file detected.</strong> Must be on GitHub Pages to fetch data. Open <code>https://boochi046.github.io/screener-penny.html</code></div>
+  <div class="warn-box" id="warnLocal">⚠️ <strong>Local file detected.</strong> Must be on GitHub Pages to fetch data. Open <code>https://boochi046.github.io/screener-score.html</code></div>
   <div class="err-box" id="errBox"></div>
 
   <!-- Load progress -->
   <div class="load-card" id="loadCard">
-    <div class="load-title"><span class="spinner"></span> Loading Penny Stocks Data</div>
+    <div class="load-title"><span class="spinner"></span> Loading Top Score Data</div>
     <div class="load-steps" id="loadSteps"></div>
     <div class="load-msg" id="loadMsg">Starting…</div>
   </div>
@@ -283,13 +283,13 @@ function updateSbTime(txt){const el=document.getElementById('sbTime');if(el)el.t
 
 
 const SHEETS = {{
-  close: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRmr1-VzM4LAjC3NjpATd4RFEIlxPSfYQ1glax4nyO3O8HJxgudL7EsBrDSIORrU-fPXgy7zA0h9Iig/pub?gid=1367407215&single=true&output=csv',
-  open: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRmr1-VzM4LAjC3NjpATd4RFEIlxPSfYQ1glax4nyO3O8HJxgudL7EsBrDSIORrU-fPXgy7zA0h9Iig/pub?gid=1011864711&single=true&output=csv',
-  high: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRmr1-VzM4LAjC3NjpATd4RFEIlxPSfYQ1glax4nyO3O8HJxgudL7EsBrDSIORrU-fPXgy7zA0h9Iig/pub?gid=2026096205&single=true&output=csv',
-  low: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRmr1-VzM4LAjC3NjpATd4RFEIlxPSfYQ1glax4nyO3O8HJxgudL7EsBrDSIORrU-fPXgy7zA0h9Iig/pub?gid=503225051&single=true&output=csv',
-  volume: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRmr1-VzM4LAjC3NjpATd4RFEIlxPSfYQ1glax4nyO3O8HJxgudL7EsBrDSIORrU-fPXgy7zA0h9Iig/pub?gid=1726462987&single=true&output=csv',
-  pct: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRmr1-VzM4LAjC3NjpATd4RFEIlxPSfYQ1glax4nyO3O8HJxgudL7EsBrDSIORrU-fPXgy7zA0h9Iig/pub?gid=1061908618&single=true&output=csv',
-  main: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRmr1-VzM4LAjC3NjpATd4RFEIlxPSfYQ1glax4nyO3O8HJxgudL7EsBrDSIORrU-fPXgy7zA0h9Iig/pub?gid=0&single=true&output=csv',
+  close: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRFmzsy7mklmiwzmczqrUswzNM0vAz3BsjS1kODfGlgmqzF-Zw7Zdx5r1NMkZ7TggckHvOwlUk-eCzn/pub?gid=1283231042&single=true&output=csv',
+  open: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRFmzsy7mklmiwzmczqrUswzNM0vAz3BsjS1kODfGlgmqzF-Zw7Zdx5r1NMkZ7TggckHvOwlUk-eCzn/pub?gid=1419154816&single=true&output=csv',
+  high: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRFmzsy7mklmiwzmczqrUswzNM0vAz3BsjS1kODfGlgmqzF-Zw7Zdx5r1NMkZ7TggckHvOwlUk-eCzn/pub?gid=1182012761&single=true&output=csv',
+  low: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRFmzsy7mklmiwzmczqrUswzNM0vAz3BsjS1kODfGlgmqzF-Zw7Zdx5r1NMkZ7TggckHvOwlUk-eCzn/pub?gid=1633471424&single=true&output=csv',
+  volume: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRFmzsy7mklmiwzmczqrUswzNM0vAz3BsjS1kODfGlgmqzF-Zw7Zdx5r1NMkZ7TggckHvOwlUk-eCzn/pub?gid=1289012452&single=true&output=csv',
+  pct: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRFmzsy7mklmiwzmczqrUswzNM0vAz3BsjS1kODfGlgmqzF-Zw7Zdx5r1NMkZ7TggckHvOwlUk-eCzn/pub?gid=2023944038&single=true&output=csv',
+  main: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRFmzsy7mklmiwzmczqrUswzNM0vAz3BsjS1kODfGlgmqzF-Zw7Zdx5r1NMkZ7TggckHvOwlUk-eCzn/pub?gid=0&single=true&output=csv',
 }};
 
 let allSignals=[], dayFilter=-1, sortCol='daysAgo', sortDir=1;
