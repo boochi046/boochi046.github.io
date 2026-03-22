@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>💎 Penny Stocks Screener</title>
+<title>🏅 Top Analyst Screener</title>
 
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@300;400;500&display=swap" rel="stylesheet">
 <style>
@@ -163,8 +163,8 @@ td:first-child{text-align:left;padding-left:1.1rem;}
 @media(max-width:768px){.sidebar{display:none}.main{padding:1rem}}
 </style>
 <style>
-:root {{ --page-accent: #10b981; }}
-.sb-link[href="screener-penny.html"]{{ color:var(--page-accent) !important; border-left-color:var(--page-accent) !important; }}
+:root {{ --page-accent: #00d4ff; }}
+.sb-link[href="screener-analyst.html"]{{ color:var(--page-accent) !important; border-left-color:var(--page-accent) !important; }}
 .day-tab.active{{ border-color:var(--page-accent);color:var(--page-accent);background:rgba(59,130,246,.08); }}
 .page-title .acc{{ background:linear-gradient(135deg,var(--page-accent),var(--accent2));-webkit-background-clip:text;-webkit-text-fill-color:transparent; }}
 </style>
@@ -176,9 +176,9 @@ td:first-child{text-align:left;padding-left:1.1rem;}
       <div class="sb-section">Pages</div>
     <a href="index.html" class="sb-link">📊 Dashboard</a>
     <a href="futures.html" class="sb-link">📈 Futures</a>
-    <a href="screener-analyst.html" class="sb-link">🏅 Top Analyst</a>
+    <a href="screener-analyst.html" class="sb-link active">🏅 Top Analyst</a>
     <a href="screener-score.html" class="sb-link">🏆 Top Score</a>
-    <a href="screener-penny.html" class="sb-link active">💎 Penny Stocks</a>
+    <a href="screener-penny.html" class="sb-link">💎 Penny Stocks</a>
     </nav>
     <div class="sb-footer">
       <div class="theme-row">
@@ -190,9 +190,9 @@ td:first-child{text-align:left;padding-left:1.1rem;}
   </aside>
 <div class="main">
   <div style="font-size:.6rem;font-family:'JetBrains Mono',monospace;color:var(--muted);margin-bottom:.75rem;padding:.35rem .75rem;background:var(--surface);border:1px solid var(--border);border-radius:6px;display:inline-flex;align-items:center;gap:.5rem;">
-    <span style="opacity:.5">📄</span> <strong style="color:var(--text2)">screener-penny.html</strong> <span style="opacity:.5">· 💎 Penny Stocks Screener</span>
+    <span style="opacity:.5">📄</span> <strong style="color:var(--text2)">screener-analyst.html</strong> <span style="opacity:.5">· 🏅 Top Analyst Screener</span>
   </div>
-  <div class="page-title">💎 <span class="acc">Penny Stocks</span> Screener</div>
+  <div class="page-title">🏅 <span class="acc">Top Analyst</span> Screener</div>
   <div class="page-sub">~324 tickers · 4-day lookback · ROC(7) · VMI · VPCI · Price &lt; $50</div>
 
   <div class="strat-box">
@@ -204,20 +204,20 @@ td:first-child{text-align:left;padding-left:1.1rem;}
     <span class="sp">📅 Last 4 days</span>
   </div>
 
-  <div class="warn-box" id="warnLocal">⚠️ <strong>Local file detected.</strong> Must be on GitHub Pages to fetch data. Open <code>https://boochi046.github.io/screener-penny.html</code></div>
+  <div class="warn-box" id="warnLocal">⚠️ <strong>Local file detected.</strong> Must be on GitHub Pages to fetch data. Open <code>https://boochi046.github.io/screener-analyst.html</code></div>
   <div class="err-box" id="errBox"></div>
 
   <!-- Load progress -->
   <div class="load-card" id="loadCard">
-    <div class="load-title"><span class="spinner"></span> Loading Penny Stocks Data</div>
+    <div class="load-title"><span class="spinner"></span> Loading Top Analyst Data</div>
     <div class="load-steps" id="loadSteps">
-    <div class="ls" id="step-close">⬜ Close Prices <span style="opacity:.45;font-size:.58rem">(gid=1367407215)</span></div>
-    <div class="ls" id="step-open">⬜ Open Prices <span style="opacity:.45;font-size:.58rem">(gid=1011864711)</span></div>
-    <div class="ls" id="step-high">⬜ High Prices <span style="opacity:.45;font-size:.58rem">(gid=2026096205)</span></div>
-    <div class="ls" id="step-low">⬜ Low Prices <span style="opacity:.45;font-size:.58rem">(gid=503225051)</span></div>
-    <div class="ls" id="step-volume">⬜ Volume <span style="opacity:.45;font-size:.58rem">(gid=1726462987)</span></div>
-    <div class="ls" id="step-pct">⬜ % Returns <span style="opacity:.45;font-size:.58rem">(gid=1061908618)</span></div>
-    <div class="ls" id="step-main">⬜ Penny Data <span style="opacity:.45;font-size:.58rem">(gid=0)</span></div>
+    <div class="ls" id="step-close">⬜ Close Prices <span style="opacity:.45;font-size:.58rem">(gid=628580815)</span></div>
+    <div class="ls" id="step-open">⬜ Open Prices <span style="opacity:.45;font-size:.58rem">(gid=1220929174)</span></div>
+    <div class="ls" id="step-high">⬜ High Prices <span style="opacity:.45;font-size:.58rem">(gid=1449708019)</span></div>
+    <div class="ls" id="step-low">⬜ Low Prices <span style="opacity:.45;font-size:.58rem">(gid=2137301959)</span></div>
+    <div class="ls" id="step-volume">⬜ Volume <span style="opacity:.45;font-size:.58rem">(gid=696617267)</span></div>
+    <div class="ls" id="step-pct">⬜ % Returns <span style="opacity:.45;font-size:.58rem">(gid=1042550901)</span></div>
+    <div class="ls" id="step-main">⬜ Analyst Targets <span style="opacity:.45;font-size:.58rem">(main sheet)</span></div>
     </div>
     <div class="load-msg" id="loadMsg">Starting…</div>
   </div>
@@ -311,13 +311,13 @@ function updateSbTime(txt){const el=document.getElementById('sbTime');if(el)el.t
 
 
 const SHEETS = {{
-  close: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRmr1-VzM4LAjC3NjpATd4RFEIlxPSfYQ1glax4nyO3O8HJxgudL7EsBrDSIORrU-fPXgy7zA0h9Iig/pub?gid=1367407215&single=true&output=csv',
-  open: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRmr1-VzM4LAjC3NjpATd4RFEIlxPSfYQ1glax4nyO3O8HJxgudL7EsBrDSIORrU-fPXgy7zA0h9Iig/pub?gid=1011864711&single=true&output=csv',
-  high: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRmr1-VzM4LAjC3NjpATd4RFEIlxPSfYQ1glax4nyO3O8HJxgudL7EsBrDSIORrU-fPXgy7zA0h9Iig/pub?gid=2026096205&single=true&output=csv',
-  low: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRmr1-VzM4LAjC3NjpATd4RFEIlxPSfYQ1glax4nyO3O8HJxgudL7EsBrDSIORrU-fPXgy7zA0h9Iig/pub?gid=503225051&single=true&output=csv',
-  volume: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRmr1-VzM4LAjC3NjpATd4RFEIlxPSfYQ1glax4nyO3O8HJxgudL7EsBrDSIORrU-fPXgy7zA0h9Iig/pub?gid=1726462987&single=true&output=csv',
-  pct: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRmr1-VzM4LAjC3NjpATd4RFEIlxPSfYQ1glax4nyO3O8HJxgudL7EsBrDSIORrU-fPXgy7zA0h9Iig/pub?gid=1061908618&single=true&output=csv',
-  main: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRmr1-VzM4LAjC3NjpATd4RFEIlxPSfYQ1glax4nyO3O8HJxgudL7EsBrDSIORrU-fPXgy7zA0h9Iig/pub?gid=0&single=true&output=csv',
+  close: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRxlFkcZptqDRlGKHycKvvjXkvP71aN3ayrb6bfcYVARg1DTtLkEgqXmc48QMw2on7PsVAJdztQxoJ6/pub?gid=628580815&single=true&output=csv',
+  open: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRxlFkcZptqDRlGKHycKvvjXkvP71aN3ayrb6bfcYVARg1DTtLkEgqXmc48QMw2on7PsVAJdztQxoJ6/pub?gid=1220929174&single=true&output=csv',
+  high: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRxlFkcZptqDRlGKHycKvvjXkvP71aN3ayrb6bfcYVARg1DTtLkEgqXmc48QMw2on7PsVAJdztQxoJ6/pub?gid=1449708019&single=true&output=csv',
+  low: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRxlFkcZptqDRlGKHycKvvjXkvP71aN3ayrb6bfcYVARg1DTtLkEgqXmc48QMw2on7PsVAJdztQxoJ6/pub?gid=2137301959&single=true&output=csv',
+  volume: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRxlFkcZptqDRlGKHycKvvjXkvP71aN3ayrb6bfcYVARg1DTtLkEgqXmc48QMw2on7PsVAJdztQxoJ6/pub?gid=696617267&single=true&output=csv',
+  pct: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRxlFkcZptqDRlGKHycKvvjXkvP71aN3ayrb6bfcYVARg1DTtLkEgqXmc48QMw2on7PsVAJdztQxoJ6/pub?gid=1042550901&single=true&output=csv',
+  main: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRxlFkcZptqDRlGKHycKvvjXkvP71aN3ayrb6bfcYVARg1DTtLkEgqXmc48QMw2on7PsVAJdztQxoJ6/pub?output=csv',
 }};
 
 let allSignals=[], dayFilter=-1, sortCol='daysAgo', sortDir=1;
@@ -345,11 +345,19 @@ let bestProxy=0;
 const PN=['corsproxy','allorigins','thingproxy','codetabs'];
 const PX=[u=>`https://corsproxy.io/?${{encodeURIComponent(u)}}`,u=>`https://api.allorigins.win/raw?url=${{encodeURIComponent(u)}}`,u=>`https://thingproxy.freeboard.io/fetch/${{u}}`,u=>`https://api.codetabs.com/v1/proxy?quest=${{encodeURIComponent(u)}}`];
 function tout(ms){{return new Promise((_,r)=>setTimeout(()=>r(new Error('timeout')),ms));}}
-async function fetchSheet(url){{
+async function fetchSheet(url, stepKey){{
   if(!url||url==='null') return null;
   for(let pi=0;pi<PX.length;pi++){{
+    // Update step to show which proxy is being tried
+    if(stepKey){{
+      const el=stepEls[stepKey];
+      if(el){{
+        const lbl=el.textContent.replace(/^[^ ]+ /,'').replace(/ \[.*\]$/,'').replace(/ — trying.*$/,'');
+        el.textContent='⏳ '+lbl+' — trying '+PN[pi]+'…';
+      }}
+    }}
     try{{
-      const res=await Promise.race([fetch(PX[pi](url),{{cache:'no-store'}}),tout(15000)]);
+      const res=await Promise.race([fetch(PX[pi](url),{{cache:'no-store'}}),tout(8000)]);
       if(!res.ok){{dbg('x '+PN[pi]+': HTTP '+res.status);continue;}}
       const text=await res.text();
       if(!text||text.length<500){{dbg('x '+PN[pi]+': too small ('+text.length+')');continue;}}
@@ -358,7 +366,7 @@ async function fetchSheet(url){{
       dbg('OK '+PN[pi]+': '+text.length+' chars');bestProxy=pi;return parseCSV(text);
     }}catch(e){{dbg('x '+PN[pi]+': '+e.message);continue;}}
   }}
-  dbg('DEAD: all proxies failed');return null;
+  dbg('DEAD: all proxies failed for '+url.slice(0,60));return null;
 }}
 
 // Parse wide (Close/Open/High/Low/Volume): col0=date, cols=tickers, rows newest→oldest
@@ -553,8 +561,8 @@ async function runScreener(){{
   async function load(key){{
     const url=SHEETS[key];if(!url||url==='null'){{setStep(key,'skip');return null;}}
     setStep(key,'loading');msg('Fetching '+key+'…');
-    let res=await fetchSheet(url);
-    if(!res&&key==='close'){{dbg('Retrying close…');await new Promise(r=>setTimeout(r,2000));res=await fetchSheet(url);}}
+    let res=await fetchSheet(url, key);
+    if(!res&&key==='close'){{dbg('Retrying close…');await new Promise(r=>setTimeout(r,1000));res=await fetchSheet(url, key);}}
     if(res){{
       const info=res.rows.length+'r x '+res.headers.length+'c';
       setStep(key,'done',info);
@@ -566,7 +574,7 @@ async function runScreener(){{
   }}
   try{{
     // Fetch all sheets in parallel for speed
-    msg('Fetching all 7 sheets in parallel…');
+    msg('Fetching all 7 sheets simultaneously — watch status below…');
     const [closeP,openP,highP,lowP,volP,pctP,mainP] = await Promise.all([
       load('close'), load('open'), load('high'), load('low'),
       load('volume'), load('pct'), load('main')
