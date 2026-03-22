@@ -531,16 +531,17 @@ async function fetchRaw(url){
     u=>`https://thingproxy.freeboard.io/fetch/${u}`,
     u=>`https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(u)}`,
   ];
+  const tout=ms=>new Promise((_,r)=>setTimeout(()=>r(new Error('timeout')),ms));
   for(const p of proxies){
     try{
-      const r=await fetch(p(url),{cache:'no-store'});
+      const r=await Promise.race([fetch(p(url),{cache:'no-store'}),tout(12000)]);
       if(!r.ok) continue;
       const t=await r.text();
-      if(!t||t.length<20||t.trim().startsWith('<')) continue;
+      if(!t||t.length<50||t.trim().startsWith('<')||!t.includes(',')) continue;
       return t;
     }catch(e){continue;}
   }
-  throw new Error('All proxies failed for: '+url.slice(0,60));
+  throw new Error('All proxies failed — check Google Sheet is published as CSV');
 }
 async function fetchCSV(url,stepId){
   const el=document.getElementById(stepId);
@@ -813,8 +814,8 @@ function renderSharpe(holdings,totalCost,totalMkt,unreal,totalRealized){
   document.getElementById('sharpe-badge').textContent=sharpe===null?'Need more data':`Sharpe: ${sharpe.toFixed(2)} — ${sharpeLabel}`;
   document.getElementById('sharpe-badge').style.color=sharpeColor;
 
-  document.getElementById('sb-sharpe').textContent=sharpe===null?'N/A':sharpe.toFixed(2);
-  document.getElementById('sb-sharpe').style.color=sharpeColor;
+  const sbSharpeEl=document.getElementById('sb-sharpe');
+  if(sbSharpeEl){sbSharpeEl.textContent=sharpe===null?'N/A':sharpe.toFixed(2);sbSharpeEl.style.color=sharpeColor;}
 
   document.getElementById('sharpeGrid').innerHTML=`
     <div class="sharpe-item">
@@ -984,9 +985,9 @@ async function loadAll(){
     s4.classList.remove('active');s4.classList.add('done');
     s4.textContent=s4.textContent.replace('⏳','✅');
     const t='Updated: '+new Date().toLocaleTimeString();
-    document.getElementById('lastUpdated').textContent=t;
+    const luEl=document.getElementById('lastUpdated');if(luEl)luEl.textContent=t;
     updateSbTime(t);
-    document.getElementById('lastUpdatedTop').textContent=t;
+    const lutEl=document.getElementById('lastUpdatedTop');if(lutEl)lutEl.textContent=t;
 
     await new Promise(r=>setTimeout(r,400));
     document.getElementById('loadingOverlay').style.display='none';
