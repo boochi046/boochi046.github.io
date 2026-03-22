@@ -170,7 +170,24 @@ td:first-child{text-align:left;padding-left:1.1rem;}
 </style>
 </head>
 <body>
-{sidebar_html(active_page)}
+  <aside class="sidebar">
+    <div class="sb-brand">◈ PORTFOLIO</div>
+    <nav class="sb-nav">
+      <div class="sb-section">Pages</div>
+    <a href="index.html" class="sb-link">📊 Dashboard</a>
+    <a href="futures.html" class="sb-link">📈 Futures</a>
+    <a href="screener-analyst.html" class="sb-link active">🏅 Top Analyst</a>
+    <a href="screener-score.html" class="sb-link">🏆 Top Score</a>
+    <a href="screener-penny.html" class="sb-link">💎 Penny Stocks</a>
+    </nav>
+    <div class="sb-footer">
+      <div class="theme-row">
+        <span class="theme-lbl" id="themeLabel">DARK</span>
+        <button class="theme-toggle" onclick="toggleTheme()"></button>
+      </div>
+      <div class="sb-time" id="sbTime">—</div>
+    </div>
+  </aside>
 <div class="main">
   <div class="page-title">🏅 <span class="acc">Top Analyst</span> Screener</div>
   <div class="page-sub">~324 tickers · 4-day lookback · ROC(7) · VMI · VPCI · Price &lt; $50</div>
