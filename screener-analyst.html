@@ -509,17 +509,19 @@ function srt(col){{if(sortCol===col)sortDir*=-1;else{{sortCol=col;sortDir=1;}}do
 // Step tracker
 const stepEls={{}};
 function initSteps(){{
+  const labels={'close':'Close Prices (gid=628580815)','open':'Open Prices (gid=1220929174)','high':'High Prices (gid=1449708019)','low':'Low Prices (gid=2137301959)','volume':'Volume (gid=696617267)','pct':'% Returns (gid=1042550901)','main':'Analyst Targets (main)'};
   const grid=document.getElementById('loadSteps');grid.innerHTML='';
-  ['close','open','high','low','volume','pct','main'].forEach(n=>{{
-    const el=document.createElement('div');el.className='ls';el.id='step-'+n;
-    el.textContent='⬜ '+n+'…';grid.appendChild(el);stepEls[n]=el;
+  Object.entries(labels).forEach(([k,v])=>{{
+    const el=document.createElement('div');el.className='ls';el.id='step-'+k;
+    el.textContent='⬜ '+v;grid.appendChild(el);stepEls[k]=el;
   }});
 }}
-function setStep(n,state){{
+function setStep(n,state,extra=''){{
   const el=stepEls[n];if(!el)return;
   const icons={{loading:'⏳',done:'✅',fail:'❌',skip:'⚪'}};
   el.className='ls '+(state==='loading'?'active':state==='done'?'done':state==='fail'?'fail':'');
-  el.textContent=(icons[state]||'⬜')+' '+n;
+  const cur=el.textContent.replace(/^[^a-zA-Z]+ /,'');
+  el.textContent=(icons[state]||'⬜')+' '+cur+(extra?' ['+extra+']':'');
 }}
 
 async function runScreener(){{
@@ -540,8 +542,13 @@ async function runScreener(){{
     setStep(key,'loading');msg('Fetching '+key+'…');
     let res=await fetchSheet(url);
     if(!res&&key==='close'){{dbg('Retrying close…');await new Promise(r=>setTimeout(r,2000));res=await fetchSheet(url);}}
-    setStep(key,res?'done':'fail');
-    if(!res)dbg('FAIL: '+key);
+    if(res){{
+      const info=res.rows.length+'r x '+res.headers.length+'c';
+      setStep(key,'done',info);
+    }} else {{
+      setStep(key,'fail','FAILED');
+      dbg('FAIL: '+key);
+    }}
     return res;
   }}
   try{{
