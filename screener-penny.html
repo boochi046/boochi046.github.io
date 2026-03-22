@@ -565,13 +565,12 @@ async function runScreener(){{
     return res;
   }}
   try{{
-    const closeP=await load('close');
-    const openP =await load('open');
-    const highP =await load('high');
-    const lowP  =await load('low');
-    const volP  =await load('volume');
-    const pctP  =await load('pct');
-    const mainP =await load('main');
+    // Fetch all sheets in parallel for speed
+    msg('Fetching all 7 sheets in parallel…');
+    const [closeP,openP,highP,lowP,volP,pctP,mainP] = await Promise.all([
+      load('close'), load('open'), load('high'), load('low'),
+      load('volume'), load('pct'), load('main')
+    ]);
     if(!closeP){{
       document.getElementById('errBox').style.display='block';
       document.getElementById('errBox').innerHTML='❌ <strong>Close price sheet failed to load.</strong> Check debug log.';
