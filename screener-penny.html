@@ -189,6 +189,9 @@ td:first-child{text-align:left;padding-left:1.1rem;}
     </div>
   </aside>
 <div class="main">
+  <div style="font-size:.6rem;font-family:'JetBrains Mono',monospace;color:var(--muted);margin-bottom:.75rem;padding:.35rem .75rem;background:var(--surface);border:1px solid var(--border);border-radius:6px;display:inline-flex;align-items:center;gap:.5rem;">
+    <span style="opacity:.5">📄</span> <strong style="color:var(--text2)">screener-penny.html</strong> <span style="opacity:.5">· 💎 Penny Stocks Screener</span>
+  </div>
   <div class="page-title">💎 <span class="acc">Penny Stocks</span> Screener</div>
   <div class="page-sub">~324 tickers · 4-day lookback · ROC(7) · VMI · VPCI · Price &lt; $50</div>
 
@@ -207,7 +210,15 @@ td:first-child{text-align:left;padding-left:1.1rem;}
   <!-- Load progress -->
   <div class="load-card" id="loadCard">
     <div class="load-title"><span class="spinner"></span> Loading Penny Stocks Data</div>
-    <div class="load-steps" id="loadSteps"></div>
+    <div class="load-steps" id="loadSteps">
+    <div class="ls" id="step-close">⬜ Close Prices <span style="opacity:.45;font-size:.58rem">(gid=1367407215)</span></div>
+    <div class="ls" id="step-open">⬜ Open Prices <span style="opacity:.45;font-size:.58rem">(gid=1011864711)</span></div>
+    <div class="ls" id="step-high">⬜ High Prices <span style="opacity:.45;font-size:.58rem">(gid=2026096205)</span></div>
+    <div class="ls" id="step-low">⬜ Low Prices <span style="opacity:.45;font-size:.58rem">(gid=503225051)</span></div>
+    <div class="ls" id="step-volume">⬜ Volume <span style="opacity:.45;font-size:.58rem">(gid=1726462987)</span></div>
+    <div class="ls" id="step-pct">⬜ % Returns <span style="opacity:.45;font-size:.58rem">(gid=1061908618)</span></div>
+    <div class="ls" id="step-main">⬜ Penny Data <span style="opacity:.45;font-size:.58rem">(gid=0)</span></div>
+    </div>
     <div class="load-msg" id="loadMsg">Starting…</div>
   </div>
 
@@ -506,17 +517,24 @@ function srt(col){{if(sortCol===col)sortDir*=-1;else{{sortCol=col;sortDir=1;}}do
 // Step tracker
 const stepEls={{}};
 function initSteps(){{
-  const grid=document.getElementById('loadSteps');grid.innerHTML='';
-  ['close','open','high','low','volume','pct','main'].forEach(n=>{{
-    const el=document.createElement('div');el.className='ls';el.id='step-'+n;
-    el.textContent='⬜ '+n+'…';grid.appendChild(el);stepEls[n]=el;
+  // Reset all pre-existing step elements to initial state
+  ['close','open','high','low','volume','pct','main'].forEach(k=>{
+    const el=document.getElementById("step-"+k);
+    if(!el)return;
+    // Keep label, reset icon
+    const txt=el.textContent.replace(/^[^ ]+ /,"");
+    el.textContent="⬜ "+txt;
+    el.className="ls";
+    stepEls[k]=el;
   }});
+}});
 }}
-function setStep(n,state){{
+function setStep(n,state,extra=''){{
   const el=stepEls[n];if(!el)return;
   const icons={{loading:'⏳',done:'✅',fail:'❌',skip:'⚪'}};
   el.className='ls '+(state==='loading'?'active':state==='done'?'done':state==='fail'?'fail':'');
-  el.textContent=(icons[state]||'⬜')+' '+n;
+  const cur=el.textContent.replace(/^[^a-zA-Z]+ /,'');
+  el.textContent=(icons[state]||'⬜')+' '+cur+(extra?' ['+extra+']':'');
 }}
 
 async function runScreener(){{
@@ -537,8 +555,13 @@ async function runScreener(){{
     setStep(key,'loading');msg('Fetching '+key+'…');
     let res=await fetchSheet(url);
     if(!res&&key==='close'){{dbg('Retrying close…');await new Promise(r=>setTimeout(r,2000));res=await fetchSheet(url);}}
-    setStep(key,res?'done':'fail');
-    if(!res)dbg('FAIL: '+key);
+    if(res){{
+      const info=res.rows.length+'r x '+res.headers.length+'c';
+      setStep(key,'done',info);
+    }} else {{
+      setStep(key,'fail','FAILED');
+      dbg('FAIL: '+key);
+    }}
     return res;
   }}
   try{{
