@@ -352,8 +352,8 @@ td:first-child{text-align:left;padding-left:1.1rem;}
       <div class="sharpe-grid" id="sharpeGrid"></div>
     </div>
 
-    <!-- Holdings (full width) + Allocation side by side -->
-    <div style="display:grid;grid-template-columns:1fr 300px;gap:1rem;margin-bottom:1rem" id="holdings">
+    <!-- Holdings (full width) -->
+    <div style="display:grid;grid-template-columns:1fr;gap:1rem;margin-bottom:1rem" id="holdings">
       <div class="card">
         <div class="card-hdr">
           <span class="card-title">Open Holdings</span>
@@ -388,15 +388,6 @@ td:first-child{text-align:left;padding-left:1.1rem;}
           </table>
         </div>
       </div>
-      <div class="card">
-        <div class="card-hdr"><span class="card-title">Sector Allocation</span></div>
-        <div class="donut-wrap">
-          <canvas class="donut-chart" id="sectorChart"></canvas>
-          <div class="legend" id="sectorLegend"></div>
-        </div>
-        <div class="card-hdr"><span class="card-title">Investment Timeline</span></div>
-        <div class="chart-sm"><canvas id="timelineChart"></canvas></div>
-      </div>
     </div>
 
     <!-- Winners / Losers (below chart) -->
@@ -411,17 +402,28 @@ td:first-child{text-align:left;padding-left:1.1rem;}
       </div>
     </div>
 
-    <!-- Performance Chart (compact) -->
-    <div class="perf-card">
-      <div class="perf-hdr">
-        <span class="card-title">📊 Portfolio Performance</span>
-        <div class="perf-tabs">
-          <button class="ptab active" onclick="setPerfView('cost',this)">Cost Basis</button>
-          <button class="ptab" onclick="setPerfView('trades',this)">Trade Count</button>
+    <!-- Performance Chart + Sector side by side -->
+    <div style="display:grid;grid-template-columns:1fr 280px;gap:1rem;margin-bottom:1.25rem">
+      <div class="perf-card" style="margin-bottom:0">
+        <div class="perf-hdr">
+          <span class="card-title">📊 Portfolio Performance</span>
+          <div class="perf-tabs">
+            <button class="ptab active" onclick="setPerfView('cost',this)">Cost Basis</button>
+            <button class="ptab" onclick="setPerfView('trades',this)">Trade Count</button>
+          </div>
         </div>
+        <div class="perf-body" style="height:160px"><canvas id="perfChart"></canvas></div>
+        <div class="perf-stats" id="perfStats"></div>
       </div>
-      <div class="perf-body" style="height:160px"><canvas id="perfChart"></canvas></div>
-      <div class="perf-stats" id="perfStats"></div>
+      <div class="card" style="margin-bottom:0">
+        <div class="card-hdr"><span class="card-title">Sector Allocation</span></div>
+        <div class="donut-wrap" style="padding:.7rem .9rem">
+          <canvas class="donut-chart" id="sectorChart" style="width:100px;height:100px"></canvas>
+          <div class="legend" id="sectorLegend"></div>
+        </div>
+        <div class="card-hdr"><span class="card-title">Investment Timeline</span></div>
+        <div class="chart-sm" style="height:130px"><canvas id="timelineChart"></canvas></div>
+      </div>
     </div>
 
     <!-- P&L + Ledgers -->
