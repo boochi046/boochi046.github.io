@@ -369,8 +369,11 @@ async function fetchSheet(url, stepKey){
       if(!text||text.length<500){dbg('x '+PN[pi]+': '+text.length+' chars');continue;}
       if(text.trim().startsWith('<')){dbg('x '+PN[pi]+': got HTML');continue;}
       if(!text.includes(',')){dbg('x '+PN[pi]+': not CSV');continue;}
-      bestProxy=pi; // remember winner for next time
-      dbg('OK '+PN[pi]+': '+text.length+' chars');
+      // Reject if only 1 data row — OHLCV sheets should have 200+ rows
+      const lineCount=text.trim().split('\n').length;
+      if(lineCount<10){dbg('x '+PN[pi]+': only '+lineCount+' lines (expected 200+)');continue;}
+      bestProxy=pi;
+      dbg('OK '+PN[pi]+': '+text.length+' chars, '+lineCount+' lines');
       return parseCSV(text);
     }catch(e){dbg('x '+PN[pi]+': '+e.message);continue;}
   }
