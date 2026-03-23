@@ -352,33 +352,8 @@ td:first-child{text-align:left;padding-left:1.1rem;}
       <div class="sharpe-grid" id="sharpeGrid"></div>
     </div>
 
-    <!-- Winners / Losers -->
-    <div class="wl-row">
-      <div class="wl-card">
-        <div class="card-hdr"><span class="card-title">🏆 Top Winners</span><span class="badge">by return %</span></div>
-        <div id="winnersList"></div>
-      </div>
-      <div class="wl-card">
-        <div class="card-hdr"><span class="card-title">📉 Top Losers</span><span class="badge">by return %</span></div>
-        <div id="losersList"></div>
-      </div>
-    </div>
-
-    <!-- Performance Chart -->
-    <div class="perf-card">
-      <div class="perf-hdr">
-        <span class="card-title">📊 Portfolio Performance</span>
-        <div class="perf-tabs">
-          <button class="ptab active" onclick="setPerfView('cost',this)">Cost Basis</button>
-          <button class="ptab" onclick="setPerfView('trades',this)">Trade Count</button>
-        </div>
-      </div>
-      <div class="perf-body"><canvas id="perfChart"></canvas></div>
-      <div class="perf-stats" id="perfStats"></div>
-    </div>
-
-    <!-- Holdings + Allocation -->
-    <div class="main-grid" id="holdings">
+    <!-- Holdings (full width) + Allocation side by side -->
+    <div style="display:grid;grid-template-columns:1fr 300px;gap:1rem;margin-bottom:1rem" id="holdings">
       <div class="card">
         <div class="card-hdr">
           <span class="card-title">Open Holdings</span>
@@ -392,19 +367,21 @@ td:first-child{text-align:left;padding-left:1.1rem;}
           <button class="fbtn" onclick="filterH('Biotech',this)">Biotech</button>
           <button class="fbtn" onclick="filterH('Other',this)">Other</button>
         </div>
-        <div class="scroll" style="max-height:420px">
-          <table>
+        <div class="scroll" style="max-height:460px;overflow-x:auto;overflow-y:auto">
+          <table style="min-width:1100px">
             <thead><tr id="holdingsHead">
-              <th onclick="sortHoldings('name')" style="cursor:pointer;user-select:none">Stock <span class="sort-icon" data-col="name">↕</span></th>
+              <th onclick="sortHoldings('name')" style="cursor:pointer;user-select:none;position:sticky;left:0;background:var(--surface);z-index:3">Stock <span class="sort-icon" data-col="name">↕</span></th>
               <th onclick="sortHoldings('units')" style="cursor:pointer;user-select:none">Units <span class="sort-icon" data-col="units">↕</span></th>
               <th onclick="sortHoldings('avg')" style="cursor:pointer;user-select:none">Avg Cost <span class="sort-icon" data-col="avg">↕</span></th>
               <th onclick="sortHoldings('live')" style="cursor:pointer;user-select:none">Live <span class="sort-icon" data-col="live">↕</span></th>
-              <th onclick="sortHoldings('mkt')" style="cursor:pointer;user-select:none">Mkt Val <span class="sort-icon" data-col="mkt">↕</span></th>
-              <th onclick="sortHoldings('pnl')" style="cursor:pointer;user-select:none">Unreal P&amp;L <span class="sort-icon" data-col="pnl">↕</span></th>
-              <th onclick="sortHoldings('retToday')" style="cursor:pointer;user-select:none">Today % <span class="sort-icon" data-col="retToday">↕</span></th>
+              <th onclick="sortHoldings('prevPrice')" style="cursor:pointer;user-select:none">Prev Close <span class="sort-icon" data-col="prevPrice">↕</span></th>
+              <th onclick="sortHoldings('todayPnl')" style="cursor:pointer;user-select:none;background:rgba(59,130,246,.07)">Today P&amp;L $ <span class="sort-icon" data-col="todayPnl">↕</span></th>
+              <th onclick="sortHoldings('retToday')" style="cursor:pointer;user-select:none;background:rgba(59,130,246,.07)">Today % <span class="sort-icon" data-col="retToday">↕</span></th>
+              <th onclick="sortHoldings('ret1w')" style="cursor:pointer;user-select:none">1W % <span class="sort-icon" data-col="ret1w">↕</span></th>
               <th onclick="sortHoldings('ret1m')" style="cursor:pointer;user-select:none">1M % <span class="sort-icon" data-col="ret1m">↕</span></th>
               <th onclick="sortHoldings('ret3m')" style="cursor:pointer;user-select:none">3M % <span class="sort-icon" data-col="ret3m">↕</span></th>
               <th onclick="sortHoldings('ret6m')" style="cursor:pointer;user-select:none">6M % <span class="sort-icon" data-col="ret6m">↕</span></th>
+              <th onclick="sortHoldings('pnl')" style="cursor:pointer;user-select:none">Unreal P&amp;L <span class="sort-icon" data-col="pnl">↕</span></th>
               <th onclick="sortHoldings('retTotal')" style="cursor:pointer;user-select:none">Total % <span class="sort-icon" data-col="retTotal">↕</span></th>
             </tr></thead>
             <tbody id="holdingsBody"></tbody>
@@ -412,7 +389,7 @@ td:first-child{text-align:left;padding-left:1.1rem;}
         </div>
       </div>
       <div class="card">
-        <div class="card-hdr"><span class="card-title">Allocation by Sector</span></div>
+        <div class="card-hdr"><span class="card-title">Sector Allocation</span></div>
         <div class="donut-wrap">
           <canvas class="donut-chart" id="sectorChart"></canvas>
           <div class="legend" id="sectorLegend"></div>
@@ -420,6 +397,31 @@ td:first-child{text-align:left;padding-left:1.1rem;}
         <div class="card-hdr"><span class="card-title">Investment Timeline</span></div>
         <div class="chart-sm"><canvas id="timelineChart"></canvas></div>
       </div>
+    </div>
+
+    <!-- Winners / Losers (below chart) -->
+    <div class="wl-row">
+      <div class="wl-card">
+        <div class="card-hdr"><span class="card-title">🏆 Top Winners</span><span class="badge">by return %</span></div>
+        <div id="winnersList"></div>
+      </div>
+      <div class="wl-card">
+        <div class="card-hdr"><span class="card-title">📉 Top Losers</span><span class="badge">by return %</span></div>
+        <div id="losersList"></div>
+      </div>
+    </div>
+
+    <!-- Performance Chart (compact) -->
+    <div class="perf-card">
+      <div class="perf-hdr">
+        <span class="card-title">📊 Portfolio Performance</span>
+        <div class="perf-tabs">
+          <button class="ptab active" onclick="setPerfView('cost',this)">Cost Basis</button>
+          <button class="ptab" onclick="setPerfView('trades',this)">Trade Count</button>
+        </div>
+      </div>
+      <div class="perf-body" style="height:160px"><canvas id="perfChart"></canvas></div>
+      <div class="perf-stats" id="perfStats"></div>
     </div>
 
     <!-- P&L + Ledgers -->
@@ -691,7 +693,7 @@ function renderPerfChart(buyRows,view){
 
 
 // ── SORT ──────────────────────────────────────────────────────────────────────
-let sortCol='retTotal', sortDir=-1; // default: best total return first
+let sortCol='todayPnl', sortDir=1; // default: today P&L ascending (worst to best)
 function sortHoldings(col){
   if(sortCol===col){sortDir*=-1;}else{sortCol=col;sortDir=-1;}
   // Update icons
@@ -713,17 +715,21 @@ function renderHoldings(filter){
   // Sort
   list.sort((a,b)=>{
     let av,bv;
+    const nullVal = sortDir>0?-Infinity:Infinity;
     if(sortCol==='name'){av=a.ticker;bv=b.ticker;return sortDir*(av<bv?-1:av>bv?1:0);}
-    if(sortCol==='units'){av=a.units;bv=b.units;}
+    else if(sortCol==='units'){av=a.units;bv=b.units;}
     else if(sortCol==='avg'){av=a.avg;bv=b.avg;}
     else if(sortCol==='live'){av=a.live||0;bv=b.live||0;}
+    else if(sortCol==='prevPrice'){av=a.prevPrice??nullVal;bv=b.prevPrice??nullVal;}
     else if(sortCol==='mkt'){av=a.live?a.live*a.units:0;bv=b.live?b.live*b.units:0;}
-    else if(sortCol==='pnl'){av=a.live?a.live*a.units-a.cost:-Infinity;bv=b.live?b.live*b.units-b.cost:-Infinity;}
-    else if(sortCol==='retToday'){av=a.retToday??-Infinity;bv=b.retToday??-Infinity;}
-    else if(sortCol==='ret1m'){av=a.ret1m??-Infinity;bv=b.ret1m??-Infinity;}
-    else if(sortCol==='ret3m'){av=a.ret3m??-Infinity;bv=b.ret3m??-Infinity;}
-    else if(sortCol==='ret6m'){av=a.ret6m??-Infinity;bv=b.ret6m??-Infinity;}
-    else{av=a.retTotal??-Infinity;bv=b.retTotal??-Infinity;}
+    else if(sortCol==='pnl'){av=a.live?a.live*a.units-a.cost:nullVal;bv=b.live?b.live*b.units-b.cost:nullVal;}
+    else if(sortCol==='todayPnl'){av=a.todayPnl??nullVal;bv=b.todayPnl??nullVal;}
+    else if(sortCol==='retToday'){av=a.retToday??nullVal;bv=b.retToday??nullVal;}
+    else if(sortCol==='ret1w'){av=a.ret1w??nullVal;bv=b.ret1w??nullVal;}
+    else if(sortCol==='ret1m'){av=a.ret1m??nullVal;bv=b.ret1m??nullVal;}
+    else if(sortCol==='ret3m'){av=a.ret3m??nullVal;bv=b.ret3m??nullVal;}
+    else if(sortCol==='ret6m'){av=a.ret6m??nullVal;bv=b.ret6m??nullVal;}
+    else{av=a.retTotal??nullVal;bv=b.retTotal??nullVal;}
     return sortDir*(av-bv);
   });
   list.forEach(h=>{
