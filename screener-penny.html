@@ -343,31 +343,40 @@ function parseCSV(text){
 
 // Proxy
 let bestProxy=0;
-const PN=['allorigins','codetabs','corsproxy','thingproxy'];
-const PX=[u=>`https://api.allorigins.win/raw?url=${encodeURIComponent(u)}`,u=>`https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(u)}`,u=>`https://corsproxy.io/?${encodeURIComponent(u)}`,u=>`https://thingproxy.freeboard.io/fetch/${u}`];
+const PN=['gas','allorigins','codetabs','corsproxy'];
+const PX=[
+  u=>`https://script.google.com/macros/s/AKfycbx-abu6CxsA4AcaQUoNLiXMoLO8SStapS843H3PGpeRSBTyPcZ75FAwtPSORBJBnSjf/exec?url=${encodeURIComponent(u)}`,
+  u=>`https://api.allorigins.win/raw?url=${encodeURIComponent(u)}`,
+  u=>`https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(u)}`,
+  u=>`https://corsproxy.io/?${encodeURIComponent(u)}`,
+];
 function tout(ms){return new Promise((_,r)=>setTimeout(()=>r(new Error('timeout')),ms));}
 async function fetchSheet(url, stepKey){
   if(!url||url==='null') return null;
-  for(let pi=0;pi<PX.length;pi++){
-    // Update step to show which proxy is being tried
+  // Try each proxy with 10s timeout; on failure move to next
+  const order=[...Array(PX.length).keys()].map(i=>(i+bestProxy)%PX.length);
+  for(const pi of order){
     if(stepKey){
       const el=stepEls[stepKey];
       if(el){
-        const lbl=el.textContent.replace(/^[^ ]+ /,'').replace(/ \[.*\]$/,'').replace(/ — trying.*$/,'');
-        el.textContent='⏳ '+lbl+' — trying '+PN[pi]+'…';
+        const lbl=el.textContent.replace(/^\S+ /,'').replace(/ \[.*$/, '');
+        el.textContent='⏳ '+lbl+' ['+PN[pi]+'…]';
       }
     }
     try{
-      const res=await Promise.race([fetch(PX[pi](url),{cache:'no-store'}),tout(8000)]);
+      const res=await Promise.race([fetch(PX[pi](url),{cache:'no-store'}),tout(12000)]);
       if(!res.ok){dbg('x '+PN[pi]+': HTTP '+res.status);continue;}
       const text=await res.text();
-      if(!text||text.length<500){dbg('x '+PN[pi]+': too small ('+text.length+')');continue;}
-      if(text.trim().startsWith('<')){dbg('x '+PN[pi]+': HTML');continue;}
-      if(!text.includes(',')){dbg('x '+PN[pi]+': no commas');continue;}
-      dbg('OK '+PN[pi]+': '+text.length+' chars');bestProxy=pi;return parseCSV(text);
+      if(!text||text.length<500){dbg('x '+PN[pi]+': '+text.length+' chars');continue;}
+      if(text.trim().startsWith('<')){dbg('x '+PN[pi]+': got HTML');continue;}
+      if(!text.includes(',')){dbg('x '+PN[pi]+': not CSV');continue;}
+      bestProxy=pi; // remember winner for next time
+      dbg('OK '+PN[pi]+': '+text.length+' chars');
+      return parseCSV(text);
     }catch(e){dbg('x '+PN[pi]+': '+e.message);continue;}
   }
-  dbg('DEAD: all proxies failed for '+url.slice(0,60));return null;
+  dbg('DEAD: '+url.slice(url.indexOf('gid='),url.indexOf('&')));
+  return null;
 }
 
 // Parse wide (Close/Open/High/Low/Volume): col0=date, cols=tickers, rows newest→oldest
