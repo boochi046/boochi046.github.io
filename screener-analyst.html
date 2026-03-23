@@ -337,6 +337,7 @@ function parseCSV(text){
   const hdrs=splitLine(lines[0]).map(h=>h.trim());
   const rows=lines.slice(1).map(l=>{const v=splitLine(l),o={};hdrs.forEach((h,i)=>o[h]=(v[i]||'').trim());return o;}).filter(r=>Object.values(r).some(v=>v));
   dbg('parseCSV: '+rows.length+' rows, '+hdrs.length+' cols | h[0]='+hdrs[0]+' h[1]='+hdrs[1]);
+  if(rows.length<5&&hdrs.length>10) dbg('  ⚠️ WARNING: very few rows - sheet may not be fully published');
   return {headers:hdrs,rows};
 }
 
@@ -396,7 +397,7 @@ function parseWide(parsed){
       const raw=(row[ticker]||'').toString().trim();
       if(!raw||raw==='Unavailable'||raw==='-'||raw==='N/A') return;
       const val=parseFloat(raw.replace(/[$, ]/g,''));
-      if(!isNaN(val)&&val>0) series.push({date,val});
+      if(!isNaN(val)&&val>=0) series.push({date,val});
     });
     series.reverse(); // newest→oldest becomes oldest→newest
     if(series.length>0) map[t]=series;
@@ -404,7 +405,14 @@ function parseWide(parsed){
   const tkCount=Object.keys(map).length;
   const sample=Object.values(map)[0];
   dbg('parseWide: '+tkCount+' tickers, dates: '+(sample?.[0]?.date||'?')+' to '+(sample?.slice(-1)[0]?.date||'?')+(sample?' val0='+sample[0]?.val:''));
-  if(tkCount===0&&rows.length>1)dbg('  DEBUG row[1] keys: '+Object.keys(rows[1]).slice(0,5).join(',')+' vals: '+Object.values(rows[1]).slice(0,5).join(','));
+  if(tkCount===0&&rows.length>1){
+    const r=rows[1];
+    dbg('  DEBUG row[1]: '+JSON.stringify(Object.fromEntries(Object.entries(r).slice(0,6))));
+    // Check if val>0 is the issue
+    const testTicker=Object.keys(r)[1];
+    const testVal=parseFloat((r[testTicker]||'').toString().replace(/[$, ]/g,''));
+    dbg('  TEST ticker='+testTicker+' raw='+r[testTicker]+' parsed='+testVal+' >0='+( testVal>0));
+  }
   return map;
 }
 
