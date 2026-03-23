@@ -370,8 +370,8 @@ async function fetchSheet(url, stepKey){
       if(text.trim().startsWith('<')){dbg('x '+PN[pi]+': got HTML');continue;}
       if(!text.includes(',')){dbg('x '+PN[pi]+': not CSV');continue;}
       // Reject if only 1 data row — OHLCV sheets should have 200+ rows
-      const lineCount=text.trim().split('\n').length;
-      if(lineCount<10){dbg('x '+PN[pi]+': only '+lineCount+' lines (expected 200+)');continue;}
+      const lineCount=text.trim().split(/[\r\n]+/).length;
+      if(lineCount<5){dbg('x '+PN[pi]+': only '+lineCount+' lines');continue;}
       bestProxy=pi;
       dbg('OK '+PN[pi]+': '+text.length+' chars, '+lineCount+' lines');
       return parseCSV(text);
@@ -401,7 +401,10 @@ function parseWide(parsed){
     series.reverse(); // newest→oldest becomes oldest→newest
     if(series.length>0) map[t]=series;
   });
-  dbg('parseWide: '+Object.keys(map).length+' tickers, dates: '+(Object.values(map)[0]?.[0]?.date||'?')+' to '+(Object.values(map)[0]?.slice(-1)[0]?.date||'?'));
+  const tkCount=Object.keys(map).length;
+  const sample=Object.values(map)[0];
+  dbg('parseWide: '+tkCount+' tickers, dates: '+(sample?.[0]?.date||'?')+' to '+(sample?.slice(-1)[0]?.date||'?')+(sample?' val0='+sample[0]?.val:''));
+  if(tkCount===0&&rows.length>1)dbg('  DEBUG row[1] keys: '+Object.keys(rows[1]).slice(0,5).join(',')+' vals: '+Object.values(rows[1]).slice(0,5).join(','));
   return map;
 }
 
