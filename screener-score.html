@@ -332,7 +332,7 @@ function toggleDebug(){
 // CSV
 function splitLine(l){const r=[];let c='',q=false;for(const ch of l){if(ch==='"'){q=!q;}else if(ch===','&&!q){r.push(c);c='';}else{c+=ch;}}r.push(c);return r;}
 function parseCSV(text){
-  const lines=text.trim().split(/\\r?\\n/).filter(l=>l.trim());
+  const lines=text.trim().split(/\r?\n/).filter(l=>l.trim());
   if(lines.length<2){dbg('parseCSV: only '+lines.length+' lines');return null;}
   const hdrs=splitLine(lines[0]).map(h=>h.trim());
   const rows=lines.slice(1).map(l=>{const v=splitLine(l),o={};hdrs.forEach((h,i)=>o[h]=(v[i]||'').trim());return o;}).filter(r=>Object.values(r).some(v=>v));
@@ -342,8 +342,8 @@ function parseCSV(text){
 
 // Proxy
 let bestProxy=0;
-const PN=['allorigins','codetabs','corsproxy','thingproxy'];
-const PX=[u=>`https://api.allorigins.win/raw?url=${encodeURIComponent(u)}`,u=>`https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(u)}`,u=>`https://corsproxy.io/?${encodeURIComponent(u)}`,u=>`https://thingproxy.freeboard.io/fetch/${u}`];
+const PN=['corsproxy','allorigins','thingproxy','codetabs'];
+const PX=[u=>`https://corsproxy.io/?${encodeURIComponent(u)}`,u=>`https://api.allorigins.win/raw?url=${encodeURIComponent(u)}`,u=>`https://thingproxy.freeboard.io/fetch/${u}`,u=>`https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(u)}`];
 function tout(ms){return new Promise((_,r)=>setTimeout(()=>r(new Error('timeout')),ms));}
 async function fetchSheet(url, stepKey){
   if(!url||url==='null') return null;
