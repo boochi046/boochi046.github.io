@@ -499,7 +499,7 @@ function runStrategy(ticker,series,pctData,mainRow){
     out.push({ticker,daysAgo:da,price:cl,prevPrice:prev,chgPct:prev&&prev>0?(cl-prev)/prev*100:null,
       ret1m:r1m,ret3m:r3m,ret6m:r6m,target:tgt,targetUpside:tgtUp,
       roc:isNaN(roc)?null:+roc.toFixed(2),vmi:+vmi.toFixed(2),vpci:isNaN(vpci)?null:+vpci.toFixed(4),
-      passROC:pR,passVMI:pV,passVPCI:pP,passPrice:pPr});
+      passROC:pR,passVMI:pV,passVPCI:pP,passPrice:pPr,hasVol});
   }
   return out;
 }
@@ -538,7 +538,7 @@ function renderTable(){
       <td class="pv m">${f$(s.target)}</td>
       <td class="pv ${s.passROC?'g':'r'}">${s.roc??'—'}</td>
       <td class="pv ${s.passVMI?'g':'r'}">${s.vmi??'—'}</td>
-      <td class="pv ${s.passVPCI?'g':'r'}">${s.vpci??'—'}</td>
+      <td class="pv ${s.passVPCI?'g':'r'}">${s.vpci??'<span style=\'opacity:.4;font-size:.6rem\'>N/A</span>'}</td>
       <td><span class="sig-badge">✓ ALL</span></td>
     </tr>`;
   }).join('');
