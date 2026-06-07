@@ -7,7 +7,7 @@
 
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@300;400;500&display=swap" rel="stylesheet">
 <style>
-/* ── THEME ── */
+/* -- THEME -- */
 [data-theme="dark"]{
   --bg:#080c14;--bg2:#0d1220;--surface:#111827;--surface2:#1a2236;
   --border:#1e2d45;--border2:#263450;
@@ -15,6 +15,7 @@
   --green:#10b981;--red:#ef4444;--yellow:#f59e0b;--orange:#f97316;
   --text:#f1f5f9;--text2:#cbd5e1;--muted:#64748b;--muted2:#475569;
   --sidebar-bg:#0a1020;--card-glow:rgba(59,130,246,.06);
+  --mono:'JetBrains Mono',monospace;
 }
 [data-theme="light"]{
   --bg:#f0f4f8;--bg2:#e8edf4;--surface:#fff;--surface2:#f8fafc;
@@ -23,6 +24,7 @@
   --green:#059669;--red:#dc2626;--yellow:#d97706;--orange:#ea580c;
   --text:#0f172a;--text2:#1e293b;--muted:#64748b;--muted2:#94a3b8;
   --sidebar-bg:#e2e8f0;--card-glow:rgba(37,99,235,.04);
+  --mono:'JetBrains Mono',monospace;
 }
 *{margin:0;padding:0;box-sizing:border-box;}
 html{scroll-behavior:smooth;}
@@ -31,7 +33,7 @@ body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
   background-image:linear-gradient(rgba(59,130,246,.03) 1px,transparent 1px),linear-gradient(90deg,rgba(59,130,246,.03) 1px,transparent 1px);
   background-size:48px 48px;}
 
-/* ── SIDEBAR ── */
+/* -- SIDEBAR -- */
 .sidebar{
   width:210px;flex-shrink:0;background:var(--sidebar-bg);border-right:1px solid var(--border);
   display:flex;flex-direction:column;position:sticky;top:0;height:100vh;overflow-y:auto;
@@ -64,10 +66,10 @@ body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
 [data-theme="light"] .theme-toggle::after{left:16px;background:#fff;}
 .sb-time{font-size:.6rem;color:var(--muted);font-family:'JetBrains Mono',monospace;}
 
-/* ── MAIN ── */
+/* -- MAIN -- */
 .main{flex:1;min-width:0;position:relative;z-index:1;padding:1.5rem 2rem;overflow-x:hidden;}
 
-/* ── SHARED COMPONENTS ── */
+/* -- SHARED COMPONENTS -- */
 .page-title{font-size:1.5rem;font-weight:700;letter-spacing:-.04em;margin-bottom:.3rem;}
 .page-title .acc{background:linear-gradient(135deg,var(--accent),var(--accent2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;}
 .page-sub{font-size:.7rem;color:var(--muted);font-family:'JetBrains Mono',monospace;margin-bottom:1.25rem;}
@@ -164,6 +166,9 @@ td:first-child{text-align:left;padding-left:1.1rem;}
 </style>
 <style>
 /* Futures-specific */
+.page-header{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:.5rem;margin-bottom:1.25rem;}
+.page-header .page-title{margin-bottom:0;}
+.page-header .page-title span{color:var(--muted);font-weight:400;}
 .tape-wrap{background:var(--surface);border:1px solid var(--border);border-radius:14px;overflow:hidden;margin-bottom:1.25rem;}
 .widget-card{background:var(--surface);border:1px solid var(--border);border-radius:14px;overflow:hidden;margin-bottom:1.25rem;}
 .widget-card-hdr{padding:.75rem 1.2rem;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;}
@@ -180,21 +185,21 @@ iframe{display:block;border:none;width:100%;}
 <body>
 <div class="app">
   <aside class="sidebar">
-    <div class="sb-brand">◈ PORTFOLIO</div>
+    <div class="sb-brand">? PORTFOLIO</div>
     <nav class="sb-nav">
       <div class="sb-section">Pages</div>
-    <a href="index.html" class="sb-link">📊 Dashboard</a>
-    <a href="futures.html" class="sb-link active">📈 Futures</a>
-    <a href="screener-analyst.html" class="sb-link">🏅 Top Analyst</a>
-    <a href="screener-score.html" class="sb-link">🏆 Top Score</a>
-    <a href="screener-penny.html" class="sb-link">💎 Penny Stocks</a>
+    <a href="index.html" class="sb-link">?? Dashboard</a>
+    <a href="futures.html" class="sb-link active">?? Futures</a>
+    <a href="screener-analyst.html" class="sb-link">?? Top Analyst</a>
+    <a href="screener-score.html" class="sb-link">?? Top Score</a>
+    <a href="screener-penny.html" class="sb-link">?? Penny Stocks</a>
     </nav>
     <div class="sb-footer">
       <div class="theme-row">
         <span class="theme-lbl" id="themeLabel">DARK</span>
         <button class="theme-toggle" onclick="toggleTheme()"></button>
       </div>
-      <div class="sb-time" id="sbTime">—</div>
+      <div class="sb-time" id="sbTime">�</div>
     </div>
   </aside>
 <div class="main" style="max-width:1500px">
@@ -239,10 +244,10 @@ iframe{display:block;border:none;width:100%;}
   </div>
 
   <!-- MARKET OVERVIEW -->
-  <div class="section-label">📊 Market Overview</div>
+  <div class="section-label">?? Market Overview</div>
   <div class="widget-card">
     <div class="widget-card-hdr">
-      <span class="widget-card-title">Equity Indices · Futures · Commodities · Bonds · Forex · Crypto</span>
+      <span class="widget-card-title">Equity Indices � Futures � Commodities � Bonds � Forex � Crypto</span>
     </div>
     <div class="widget-body">
       <div class="tradingview-widget-container">
@@ -336,7 +341,7 @@ iframe{display:block;border:none;width:100%;}
 
     <!-- HEAT MAP -->
     <div class="widget-card">
-      <div class="widget-card-hdr"><span class="widget-card-title">📈 S&P 500 Heat Map</span></div>
+      <div class="widget-card-hdr"><span class="widget-card-title">?? S&P 500 Heat Map</span></div>
       <div class="widget-body">
         <div class="tradingview-widget-container">
           <div class="tradingview-widget-container__widget"></div>
@@ -365,7 +370,7 @@ iframe{display:block;border:none;width:100%;}
 
     <!-- ECONOMIC CALENDAR -->
     <div class="widget-card">
-      <div class="widget-card-hdr"><span class="widget-card-title">📅 Economic Calendar</span></div>
+      <div class="widget-card-hdr"><span class="widget-card-title">?? Economic Calendar</span></div>
       <div class="widget-body">
         <div class="tradingview-widget-container">
           <div class="tradingview-widget-container__widget"></div>
@@ -390,7 +395,7 @@ iframe{display:block;border:none;width:100%;}
   <div class="two-col">
 
     <div class="widget-card">
-      <div class="widget-card-hdr"><span class="widget-card-title">💱 Forex Cross Rates</span></div>
+      <div class="widget-card-hdr"><span class="widget-card-title">?? Forex Cross Rates</span></div>
       <div class="widget-body">
         <div class="tradingview-widget-container">
           <div class="tradingview-widget-container__widget"></div>
@@ -410,7 +415,7 @@ iframe{display:block;border:none;width:100%;}
     </div>
 
     <div class="widget-card">
-      <div class="widget-card-hdr"><span class="widget-card-title">₿ Crypto Market</span></div>
+      <div class="widget-card-hdr"><span class="widget-card-title">? Crypto Market</span></div>
       <div class="widget-body">
         <div class="tradingview-widget-container">
           <div class="tradingview-widget-container__widget"></div>
@@ -433,7 +438,7 @@ iframe{display:block;border:none;width:100%;}
   </div>
 
   <!-- MINI CHARTS ROW: Key futures -->
-  <div class="section-label">📉 Key Futures Charts</div>
+  <div class="section-label">?? Key Futures Charts</div>
   <div class="three-col">
 
     <div class="widget-card">
@@ -515,7 +520,7 @@ iframe{display:block;border:none;width:100%;}
   </div>
 
   <div style="text-align:center;font-size:.62rem;color:var(--muted);padding:.75rem;border:1px solid var(--border);border-radius:10px;font-family:var(--mono)">
-    Real-time data via TradingView · Charts delayed ~15 min for non-TradingView accounts
+    Real-time data via TradingView � Charts delayed ~15 min for non-TradingView accounts
   </div>
 
   </div><!-- /main -->
@@ -540,6 +545,38 @@ function toggleTheme(){
   });
 })();
 function updateSbTime(txt){const el=document.getElementById('sbTime');if(el)el.textContent=txt;}
+
+// -- TradingView widgets: re-theme on toggle ----------------------------------
+// The embed scripts render once with a fixed colorTheme, so to follow the
+// dark/light toggle we capture each widget's config and rebuild it.
+const tvWidgets=[];
+function initTV(){
+  document.querySelectorAll('.tradingview-widget-container').forEach(c=>{
+    const s=c.querySelector('script[src*="tradingview.com"]');
+    if(!s)return;
+    let cfg={};
+    try{cfg=JSON.parse(s.textContent.trim());}catch(e){return;}
+    tvWidgets.push({container:c,src:s.src,cfg});
+  });
+}
+function buildTV(theme){
+  tvWidgets.forEach(w=>{
+    w.cfg.colorTheme=theme;
+    w.container.innerHTML='<div class="tradingview-widget-container__widget"></div>';
+    const sc=document.createElement('script');
+    sc.type='text/javascript';
+    sc.src=w.src;sc.async=true;
+    sc.textContent=JSON.stringify(w.cfg);
+    w.container.appendChild(sc);
+  });
+}
+function onThemeChange(t){buildTV(t);}
+document.addEventListener('DOMContentLoaded',()=>{
+  initTV();
+  const saved=localStorage.getItem('theme')||'dark';
+  // Widgets render dark by default; only rebuild when the saved theme differs.
+  if(saved!=='dark') buildTV(saved);
+});
 
 </script>
 </body>
