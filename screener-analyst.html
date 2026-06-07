@@ -3,11 +3,11 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>?? Top Analyst Screener</title>
+<title>🏅 Top Analyst Screener</title>
 
-<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@300;400;500&family=Noto+Color+Emoji&display=swap" rel="stylesheet">
 <style>
-/* -- THEME -- */
+/* ── THEME ── */
 [data-theme="dark"]{
   --bg:#080c14;--bg2:#0d1220;--surface:#111827;--surface2:#1a2236;
   --border:#1e2d45;--border2:#263450;
@@ -26,12 +26,12 @@
 }
 *{margin:0;padding:0;box-sizing:border-box;}
 html{scroll-behavior:smooth;}
-body{background:var(--bg);color:var(--text);font-family:'Space Grotesk',sans-serif;min-height:100vh;display:flex;transition:background .3s,color .3s;}
+body{background:var(--bg);color:var(--text);font-family:'Space Grotesk','Noto Color Emoji','Apple Color Emoji','Segoe UI Emoji','Segoe UI Symbol',sans-serif;min-height:100vh;display:flex;transition:background .3s,color .3s;}
 body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
   background-image:linear-gradient(rgba(59,130,246,.03) 1px,transparent 1px),linear-gradient(90deg,rgba(59,130,246,.03) 1px,transparent 1px);
   background-size:48px 48px;}
 
-/* -- SIDEBAR -- */
+/* ── SIDEBAR ── */
 .sidebar{
   width:210px;flex-shrink:0;background:var(--sidebar-bg);border-right:1px solid var(--border);
   display:flex;flex-direction:column;position:sticky;top:0;height:100vh;overflow-y:auto;
@@ -41,9 +41,13 @@ body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
 .sidebar::-webkit-scrollbar-thumb{background:var(--border2);}
 .sb-brand{
   padding:1.1rem 1.2rem .8rem;font-size:1rem;font-weight:700;letter-spacing:-.03em;
-  background:linear-gradient(135deg,var(--accent),var(--accent2));
-  -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+  display:flex;align-items:center;gap:.45rem;
   border-bottom:1px solid var(--border);
+}
+.sb-brand svg{flex-shrink:0;color:var(--accent);}
+.sb-brand-tx{
+  background:linear-gradient(135deg,var(--accent),var(--accent2));
+  -webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;
 }
 .sb-nav{padding:.5rem 0;flex:1;}
 .sb-section{padding:.35rem 1.1rem .2rem;font-size:.57rem;font-weight:700;text-transform:uppercase;letter-spacing:.12em;color:var(--muted2);margin-top:.4rem;}
@@ -57,35 +61,35 @@ body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
 
 .sb-footer{padding:.75rem 1rem;border-top:1px solid var(--border);margin-top:auto;}
 .theme-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:.4rem;}
-.theme-lbl{font-size:.62rem;color:var(--muted);font-family:'JetBrains Mono',monospace;}
+.theme-lbl{font-size:.62rem;color:var(--muted);font-family:'JetBrains Mono','Noto Color Emoji','Apple Color Emoji','Segoe UI Emoji','Segoe UI Symbol',monospace;}
 .theme-toggle{width:32px;height:18px;background:var(--border2);border-radius:100px;cursor:pointer;position:relative;transition:background .3s;border:none;flex-shrink:0;}
 .theme-toggle::after{content:'';position:absolute;top:2px;left:2px;width:14px;height:14px;background:var(--muted);border-radius:50%;transition:all .3s;}
 [data-theme="light"] .theme-toggle{background:var(--accent);}
 [data-theme="light"] .theme-toggle::after{left:16px;background:#fff;}
-.sb-time{font-size:.6rem;color:var(--muted);font-family:'JetBrains Mono',monospace;}
+.sb-time{font-size:.6rem;color:var(--muted);font-family:'JetBrains Mono','Noto Color Emoji','Apple Color Emoji','Segoe UI Emoji','Segoe UI Symbol',monospace;}
 
-/* -- MAIN -- */
+/* ── MAIN ── */
 .main{flex:1;min-width:0;position:relative;z-index:1;padding:1.5rem 2rem;overflow-x:hidden;}
 
-/* -- SHARED COMPONENTS -- */
+/* ── SHARED COMPONENTS ── */
 .page-title{font-size:1.5rem;font-weight:700;letter-spacing:-.04em;margin-bottom:.3rem;}
 .page-title .acc{background:linear-gradient(135deg,var(--accent),var(--accent2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;}
-.page-sub{font-size:.7rem;color:var(--muted);font-family:'JetBrains Mono',monospace;margin-bottom:1.25rem;}
+.page-sub{font-size:.7rem;color:var(--muted);font-family:'JetBrains Mono','Noto Color Emoji','Apple Color Emoji','Segoe UI Emoji','Segoe UI Symbol',monospace;margin-bottom:1.25rem;}
 .card{background:var(--surface);border:1px solid var(--border);border-radius:14px;overflow:hidden;transition:border-color .2s;}
 .card:hover{border-color:var(--border2);}
 .card-hdr{display:flex;align-items:center;justify-content:space-between;padding:.8rem 1.2rem;border-bottom:1px solid var(--border);}
 .card-title{font-size:.72rem;font-weight:600;text-transform:uppercase;letter-spacing:.09em;color:var(--muted);}
-.badge{font-size:.63rem;font-weight:600;font-family:'JetBrains Mono',monospace;padding:.12rem .45rem;border-radius:4px;background:rgba(59,130,246,.1);color:var(--accent);border:1px solid rgba(59,130,246,.2);}
+.badge{font-size:.63rem;font-weight:600;font-family:'JetBrains Mono','Noto Color Emoji','Apple Color Emoji','Segoe UI Emoji','Segoe UI Symbol',monospace;padding:.12rem .45rem;border-radius:4px;background:rgba(59,130,246,.1);color:var(--accent);border:1px solid rgba(59,130,246,.2);}
 .badge.g{background:rgba(16,185,129,.1);color:var(--green);border-color:rgba(16,185,129,.2);}
 .badge.r{background:rgba(239,68,68,.1);color:var(--red);border-color:rgba(239,68,68,.2);}
-.live-tag{display:inline-flex;align-items:center;gap:.35rem;background:rgba(16,185,129,.1);border:1px solid rgba(16,185,129,.25);color:var(--green);padding:.22rem .65rem;border-radius:100px;font-size:.65rem;font-family:'JetBrains Mono',monospace;}
+.live-tag{display:inline-flex;align-items:center;gap:.35rem;background:rgba(16,185,129,.1);border:1px solid rgba(16,185,129,.25);color:var(--green);padding:.22rem .65rem;border-radius:100px;font-size:.65rem;font-family:'JetBrains Mono','Noto Color Emoji','Apple Color Emoji','Segoe UI Emoji','Segoe UI Symbol',monospace;}
 .live-dot{width:5px;height:5px;background:var(--green);border-radius:50%;animation:pulse 2s infinite;}
 @keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
-.btn{padding:.32rem .85rem;border-radius:7px;font-size:.71rem;font-weight:500;cursor:pointer;transition:all .2s;font-family:'Space Grotesk',sans-serif;border:1px solid var(--border2);background:var(--surface);color:var(--text2);}
+.btn{padding:.32rem .85rem;border-radius:7px;font-size:.71rem;font-weight:500;cursor:pointer;transition:all .2s;font-family:'Space Grotesk','Noto Color Emoji','Apple Color Emoji','Segoe UI Emoji','Segoe UI Symbol',sans-serif;border:1px solid var(--border2);background:var(--surface);color:var(--text2);}
 .btn:hover{border-color:var(--accent);color:var(--accent);}
 
 /* Pills */
-.pill{display:inline-block;padding:.1rem .42rem;border-radius:4px;font-size:.65rem;font-weight:700;font-family:'JetBrains Mono',monospace;}
+.pill{display:inline-block;padding:.1rem .42rem;border-radius:4px;font-size:.65rem;font-weight:700;font-family:'JetBrains Mono','Noto Color Emoji','Apple Color Emoji','Segoe UI Emoji','Segoe UI Symbol',monospace;}
 .pill.pos{background:rgba(16,185,129,.12);color:var(--green);}
 .pill.neg{background:rgba(239,68,68,.12);color:var(--red);}
 .pill.neu{background:var(--surface2);color:var(--muted);}
@@ -105,8 +109,8 @@ tbody tr:hover{background:var(--surface2);}
 tbody tr:last-child{border:none;}
 td{padding:.55rem .9rem;text-align:right;vertical-align:middle;white-space:nowrap;}
 td:first-child{text-align:left;padding-left:1.1rem;}
-.tkr{background:rgba(139,92,246,.12);border:1px solid rgba(139,92,246,.25);color:#a78bfa;padding:.08rem .42rem;border-radius:4px;font-size:.65rem;font-weight:700;font-family:'JetBrains Mono',monospace;display:inline-block;min-width:44px;text-align:center;}
-.pv{font-family:'JetBrains Mono',monospace;font-size:.67rem;}
+.tkr{background:rgba(139,92,246,.12);border:1px solid rgba(139,92,246,.25);color:#a78bfa;padding:.08rem .42rem;border-radius:4px;font-size:.65rem;font-weight:700;font-family:'JetBrains Mono','Noto Color Emoji','Apple Color Emoji','Segoe UI Emoji','Segoe UI Symbol',monospace;display:inline-block;min-width:44px;text-align:center;}
+.pv{font-family:'JetBrains Mono','Noto Color Emoji','Apple Color Emoji','Segoe UI Emoji','Segoe UI Symbol',monospace;font-size:.67rem;}
 .pv.g{color:var(--green);}.pv.r{color:var(--red);}.pv.m{color:var(--muted);}
 .pass-dots{display:inline-flex;gap:2px;margin-left:.4rem;vertical-align:middle;}
 .pd{width:5px;height:5px;border-radius:50%;background:var(--border2);display:inline-block;}
@@ -114,7 +118,7 @@ td:first-child{text-align:left;padding-left:1.1rem;}
 
 /* Day tabs */
 .day-tabs{display:flex;gap:.35rem;margin-bottom:1rem;flex-wrap:wrap;}
-.day-tab{padding:.25rem .75rem;font-size:.7rem;font-weight:600;border-radius:6px;cursor:pointer;border:1px solid var(--border2);background:transparent;color:var(--muted);font-family:'Space Grotesk',sans-serif;transition:all .2s;}
+.day-tab{padding:.25rem .75rem;font-size:.7rem;font-weight:600;border-radius:6px;cursor:pointer;border:1px solid var(--border2);background:transparent;color:var(--muted);font-family:'Space Grotesk','Noto Color Emoji','Apple Color Emoji','Segoe UI Emoji','Segoe UI Symbol',sans-serif;transition:all .2s;}
 .day-tab.active{background:rgba(59,130,246,.12);border-color:var(--accent);color:var(--accent);}
 .day-tab:hover:not(.active){color:var(--text);}
 
@@ -122,9 +126,9 @@ td:first-child{text-align:left;padding-left:1.1rem;}
 .load-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:1.25rem 1.5rem;margin-bottom:1rem;}
 .load-title{font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);margin-bottom:.85rem;}
 .load-steps{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:.3rem;}
-.ls{font-size:.67rem;color:var(--muted);font-family:'JetBrains Mono',monospace;padding:.18rem 0;}
+.ls{font-size:.67rem;color:var(--muted);font-family:'JetBrains Mono','Noto Color Emoji','Apple Color Emoji','Segoe UI Emoji','Segoe UI Symbol',monospace;padding:.18rem 0;}
 .ls.done{color:var(--green);}.ls.active{color:var(--accent);}.ls.fail{color:var(--red);}
-.load-msg{font-size:.73rem;color:var(--accent);font-family:'JetBrains Mono',monospace;margin-top:.65rem;}
+.load-msg{font-size:.73rem;color:var(--accent);font-family:'JetBrains Mono','Noto Color Emoji','Apple Color Emoji','Segoe UI Emoji','Segoe UI Symbol',monospace;margin-top:.65rem;}
 .spinner{display:inline-block;width:9px;height:9px;border:2px solid var(--border2);border-top-color:var(--accent);border-radius:50%;animation:spin .7s linear infinite;margin-right:.3rem;vertical-align:middle;}
 @keyframes spin{to{transform:rotate(360deg)}}
 
@@ -137,28 +141,28 @@ td:first-child{text-align:left;padding-left:1.1rem;}
 .status-left{display:flex;align-items:center;gap:1.1rem;flex-wrap:wrap;}
 .si{display:flex;flex-direction:column;gap:.1rem;}
 .si-lbl{font-size:.55rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);}
-.si-val{font-size:.82rem;font-weight:700;font-family:'JetBrains Mono',monospace;}
+.si-val{font-size:.82rem;font-weight:700;font-family:'JetBrains Mono','Noto Color Emoji','Apple Color Emoji','Segoe UI Emoji','Segoe UI Symbol',monospace;}
 .si-val.g{color:var(--green);}.si-val.y{color:var(--yellow);}.si-val.r{color:var(--red);}
 
 /* Signals table */
-.sig-badge{display:inline-flex;align-items:center;padding:.1rem .45rem;border-radius:4px;font-size:.61rem;font-weight:700;font-family:'JetBrains Mono',monospace;background:rgba(16,185,129,.1);border:1px solid rgba(16,185,129,.2);color:var(--green);}
+.sig-badge{display:inline-flex;align-items:center;padding:.1rem .45rem;border-radius:4px;font-size:.61rem;font-weight:700;font-family:'JetBrains Mono','Noto Color Emoji','Apple Color Emoji','Segoe UI Emoji','Segoe UI Symbol',monospace;background:rgba(16,185,129,.1);border:1px solid rgba(16,185,129,.2);color:var(--green);}
 .day-badge{background:rgba(245,158,11,.1);border:1px solid rgba(245,158,11,.2);color:var(--yellow);}
 .empty{padding:3rem;text-align:center;color:var(--muted);}
 .empty-icon{font-size:2rem;margin-bottom:.6rem;}
 .empty-t{font-size:.9rem;font-weight:600;color:var(--text2);margin-bottom:.3rem;}
-.empty-s{font-size:.7rem;font-family:'JetBrains Mono',monospace;}
+.empty-s{font-size:.7rem;font-family:'JetBrains Mono','Noto Color Emoji','Apple Color Emoji','Segoe UI Emoji','Segoe UI Symbol',monospace;}
 
 /* Debug */
 .debug-card{margin-top:.85rem;background:var(--surface);border:1px solid var(--border2);border-radius:11px;overflow:hidden;}
 .debug-hdr{padding:.6rem 1rem;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;cursor:pointer;}
 .debug-hdr-title{font-size:.65rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.1em;}
-.debug-body{display:none;padding:.75rem 1rem;font-size:.63rem;font-family:'JetBrains Mono',monospace;color:var(--text2);line-height:1.9;max-height:350px;overflow-y:auto;white-space:pre-wrap;}
-.foot-note{margin-top:.85rem;padding:.75rem 1rem;background:var(--surface);border:1px solid var(--border);border-radius:10px;font-size:.63rem;color:var(--muted);font-family:'JetBrains Mono',monospace;line-height:1.8;}
+.debug-body{display:none;padding:.75rem 1rem;font-size:.63rem;font-family:'JetBrains Mono','Noto Color Emoji','Apple Color Emoji','Segoe UI Emoji','Segoe UI Symbol',monospace;color:var(--text2);line-height:1.9;max-height:350px;overflow-y:auto;white-space:pre-wrap;}
+.foot-note{margin-top:.85rem;padding:.75rem 1rem;background:var(--surface);border:1px solid var(--border);border-radius:10px;font-size:.63rem;color:var(--muted);font-family:'JetBrains Mono','Noto Color Emoji','Apple Color Emoji','Segoe UI Emoji','Segoe UI Symbol',monospace;line-height:1.8;}
 
 /* Strategy pills */
 .strat-box{background:var(--surface);border:1px solid var(--border2);border-radius:12px;padding:.75rem 1rem;margin-bottom:1.1rem;display:flex;gap:.4rem;flex-wrap:wrap;align-items:center;}
 .strat-lbl{font-size:.58rem;font-weight:700;text-transform:uppercase;letter-spacing:.12em;color:var(--muted);margin-right:.2rem;}
-.sp{display:inline-flex;align-items:center;gap:.3rem;background:var(--surface2);border:1px solid var(--border2);border-radius:5px;padding:.22rem .55rem;font-size:.64rem;font-weight:500;font-family:'JetBrains Mono',monospace;color:var(--accent);white-space:nowrap;}
+.sp{display:inline-flex;align-items:center;gap:.3rem;background:var(--surface2);border:1px solid var(--border2);border-radius:5px;padding:.22rem .55rem;font-size:.64rem;font-weight:500;font-family:'JetBrains Mono','Noto Color Emoji','Apple Color Emoji','Segoe UI Emoji','Segoe UI Symbol',monospace;color:var(--accent);white-space:nowrap;}
 
 @media(max-width:768px){.sidebar{display:none}.main{padding:1rem}}
 </style>
@@ -171,73 +175,73 @@ td:first-child{text-align:left;padding-left:1.1rem;}
 </head>
 <body>
   <aside class="sidebar">
-    <div class="sb-brand">? PORTFOLIO</div>
+    <div class="sb-brand"><svg width="15" height="15" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M8 1l7 7-7 7-7-7 7-7z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/><path d="M8 5l3 3-3 3-3-3 3-3z" fill="currentColor"/></svg><span class="sb-brand-tx">PORTFOLIO</span></div>
     <nav class="sb-nav">
       <div class="sb-section">Pages</div>
-    <a href="index.html" class="sb-link">?? Dashboard</a>
-    <a href="futures.html" class="sb-link">?? Futures</a>
-    <a href="screener-analyst.html" class="sb-link active">?? Top Analyst</a>
-    <a href="screener-score.html" class="sb-link">?? Top Score</a>
-    <a href="screener-penny.html" class="sb-link">?? Penny Stocks</a>
+    <a href="index.html" class="sb-link">📊 Dashboard</a>
+    <a href="futures.html" class="sb-link">📈 Futures</a>
+    <a href="screener-analyst.html" class="sb-link active">🏅 Top Analyst</a>
+    <a href="screener-score.html" class="sb-link">🏆 Top Score</a>
+    <a href="screener-penny.html" class="sb-link">💎 Penny Stocks</a>
     </nav>
     <div class="sb-footer">
       <div class="theme-row">
         <span class="theme-lbl" id="themeLabel">DARK</span>
         <button class="theme-toggle" onclick="toggleTheme()"></button>
       </div>
-      <div class="sb-time" id="sbTime">�</div>
+      <div class="sb-time" id="sbTime">—</div>
     </div>
   </aside>
 <div class="main">
-  <div style="font-size:.6rem;font-family:'JetBrains Mono',monospace;color:var(--muted);margin-bottom:.75rem;padding:.35rem .75rem;background:var(--surface);border:1px solid var(--border);border-radius:6px;display:inline-flex;align-items:center;gap:.5rem;">
-    <span style="opacity:.5">??</span> <strong style="color:var(--text2)">screener-analyst.html</strong> <span style="opacity:.5">� ?? Top Analyst Screener</span>
+  <div style="font-size:.6rem;font-family:'JetBrains Mono','Noto Color Emoji','Apple Color Emoji','Segoe UI Emoji','Segoe UI Symbol',monospace;color:var(--muted);margin-bottom:.75rem;padding:.35rem .75rem;background:var(--surface);border:1px solid var(--border);border-radius:6px;display:inline-flex;align-items:center;gap:.5rem;">
+    <span style="opacity:.5">📄</span> <strong style="color:var(--text2)">screener-analyst.html</strong> <span style="opacity:.5">· 🏅 Top Analyst Screener</span>
   </div>
-  <div class="page-title">?? <span class="acc">Top Analyst</span> Screener</div>
-  <div class="page-sub">~324 tickers � 4-day lookback � ROC(7) � VMI � VPCI � Price &lt; $50</div>
+  <div class="page-title">🏅 <span class="acc">Top Analyst</span> Screener</div>
+  <div class="page-sub">~324 tickers · 4-day lookback · ROC(7) · VMI · VPCI · Price &lt; $50</div>
 
   <div class="strat-box">
     <span class="strat-lbl">Strategy:</span>
-    <span class="sp">?? ROC(7): 0 &lt; x &lt; 20</span>
-    <span class="sp">? VMI = 1.05</span>
-    <span class="sp">?? VPCI: 0 &lt; x &lt; 1.5</span>
-    <span class="sp">?? Price &lt; $50</span>
-    <span class="sp">?? Last 4 days</span>
+    <span class="sp">📈 ROC(7): 0 &lt; x &lt; 20</span>
+    <span class="sp">⚡ VMI ≥ 1.05</span>
+    <span class="sp">💧 VPCI: 0 &lt; x &lt; 1.5</span>
+    <span class="sp">💰 Price &lt; $50</span>
+    <span class="sp">📅 Last 4 days</span>
   </div>
 
-  <div class="warn-box" id="warnLocal">?? <strong>Local file detected.</strong> Must be on GitHub Pages to fetch data. Open <code>https://boochi046.github.io/screener-analyst.html</code></div>
+  <div class="warn-box" id="warnLocal">⚠️ <strong>Local file detected.</strong> Must be on GitHub Pages to fetch data. Open <code>https://boochi046.github.io/screener-analyst.html</code></div>
   <div class="err-box" id="errBox"></div>
 
   <!-- Load progress -->
   <div class="load-card" id="loadCard">
     <div class="load-title"><span class="spinner"></span> Loading Top Analyst Data</div>
     <div class="load-steps" id="loadSteps">
-    <div class="ls" id="step-close">? Close Prices <span style="opacity:.45;font-size:.58rem">(gid=628580815)</span></div>
-    <div class="ls" id="step-open">? Open Prices <span style="opacity:.45;font-size:.58rem">(gid=1220929174)</span></div>
-    <div class="ls" id="step-high">? High Prices <span style="opacity:.45;font-size:.58rem">(gid=1449708019)</span></div>
-    <div class="ls" id="step-low">? Low Prices <span style="opacity:.45;font-size:.58rem">(gid=2137301959)</span></div>
-    <div class="ls" id="step-volume">? Volume <span style="opacity:.45;font-size:.58rem">(gid=696617267)</span></div>
-    <div class="ls" id="step-pct">? % Returns <span style="opacity:.45;font-size:.58rem">(gid=1042550901)</span></div>
-    <div class="ls" id="step-main">? Analyst Targets <span style="opacity:.45;font-size:.58rem">(main sheet)</span></div>
+    <div class="ls" id="step-close">⬜ Close Prices <span style="opacity:.45;font-size:.58rem">(gid=628580815)</span></div>
+    <div class="ls" id="step-open">⬜ Open Prices <span style="opacity:.45;font-size:.58rem">(gid=1220929174)</span></div>
+    <div class="ls" id="step-high">⬜ High Prices <span style="opacity:.45;font-size:.58rem">(gid=1449708019)</span></div>
+    <div class="ls" id="step-low">⬜ Low Prices <span style="opacity:.45;font-size:.58rem">(gid=2137301959)</span></div>
+    <div class="ls" id="step-volume">⬜ Volume <span style="opacity:.45;font-size:.58rem">(gid=696617267)</span></div>
+    <div class="ls" id="step-pct">⬜ % Returns <span style="opacity:.45;font-size:.58rem">(gid=1042550901)</span></div>
+    <div class="ls" id="step-main">⬜ Analyst Targets <span style="opacity:.45;font-size:.58rem">(main sheet)</span></div>
     </div>
-    <div class="load-msg" id="loadMsg">Starting�</div>
+    <div class="load-msg" id="loadMsg">Starting…</div>
   </div>
 
   <!-- Status -->
   <div class="status-bar" id="statusBar" style="display:none">
     <div class="status-left">
-      <div class="si"><div class="si-lbl">Tickers</div><div class="si-val" id="stTickers">�</div></div>
-      <div class="si"><div class="si-lbl">Signals (4 days)</div><div class="si-val g" id="stSignals">�</div></div>
-      <div class="si"><div class="si-lbl">Today</div><div class="si-val y" id="stToday">�</div></div>
-      <div class="si"><div class="si-lbl">Bars</div><div class="si-val" id="stBars">�</div></div>
+      <div class="si"><div class="si-lbl">Tickers</div><div class="si-val" id="stTickers">—</div></div>
+      <div class="si"><div class="si-lbl">Signals (4 days)</div><div class="si-val g" id="stSignals">—</div></div>
+      <div class="si"><div class="si-lbl">Today</div><div class="si-val y" id="stToday">—</div></div>
+      <div class="si"><div class="si-lbl">Bars</div><div class="si-val" id="stBars">—</div></div>
       <div class="live-tag"><span class="live-dot"></span> Live</div>
     </div>
     <div style="display:flex;gap:.5rem;align-items:center">
-      <span style="font-size:.6rem;color:var(--muted);font-family:'JetBrains Mono',monospace" id="stTime">�</span>
-      <button class="btn" onclick="runScreener()">? Refresh</button>
+      <span style="font-size:.6rem;color:var(--muted);font-family:'JetBrains Mono','Noto Color Emoji','Apple Color Emoji','Segoe UI Emoji','Segoe UI Symbol',monospace" id="stTime">—</span>
+      <button class="btn" onclick="runScreener()">↻ Refresh</button>
     </div>
   </div>
 
-  <!-- Day tabs � default All 4 Days -->
+  <!-- Day tabs — default All 4 Days -->
   <div class="day-tabs" id="dayTabs" style="display:none">
     <button class="day-tab" onclick="setDay(0,this)">Today</button>
     <button class="day-tab" onclick="setDay(1,this)">Yesterday</button>
@@ -249,25 +253,25 @@ td:first-child{text-align:left;padding-left:1.1rem;}
   <!-- Results -->
   <div class="card" id="resultsCard" style="display:none">
     <div class="card-hdr">
-      <span class="card-title">?? Strategy Signals</span>
+      <span class="card-title">🎯 Strategy Signals</span>
       <span class="badge" id="resCount">0 signals</span>
     </div>
     <div class="scroll-wrap" style="max-height:600px">
       <table>
         <thead><tr>
-          <th onclick="srt('ticker')" style="text-align:left;padding-left:1.1rem">Ticker <span class="sa" id="sa-ticker">?</span></th>
-          <th onclick="srt('daysAgo')">Signal <span class="sa" id="sa-daysAgo">?</span></th>
-          <th onclick="srt('price')">Price <span class="sa" id="sa-price">?</span></th>
-          <th onclick="srt('prevPrice')">Prev Close <span class="sa" id="sa-prevPrice">?</span></th>
-          <th onclick="srt('chgPct')">Day % <span class="sa" id="sa-chgPct">?</span></th>
-          <th onclick="srt('ret1m')">1M % <span class="sa" id="sa-ret1m">?</span></th>
-          <th onclick="srt('ret3m')">3M % <span class="sa" id="sa-ret3m">?</span></th>
-          <th onclick="srt('ret6m')">6M % <span class="sa" id="sa-ret6m">?</span></th>
-          <th onclick="srt('targetUpside')">Target Upside <span class="sa" id="sa-targetUpside">?</span></th>
-          <th onclick="srt('target')">Target $ <span class="sa" id="sa-target">?</span></th>
-          <th onclick="srt('roc')">ROC(7) <span class="sa" id="sa-roc">?</span></th>
-          <th onclick="srt('vmi')">VMI <span class="sa" id="sa-vmi">?</span></th>
-          <th onclick="srt('vpci')">VPCI <span class="sa" id="sa-vpci">?</span></th>
+          <th onclick="srt('ticker')" style="text-align:left;padding-left:1.1rem">Ticker <span class="sa" id="sa-ticker">↕</span></th>
+          <th onclick="srt('daysAgo')">Signal <span class="sa" id="sa-daysAgo">↕</span></th>
+          <th onclick="srt('price')">Price <span class="sa" id="sa-price">↕</span></th>
+          <th onclick="srt('prevPrice')">Prev Close <span class="sa" id="sa-prevPrice">↕</span></th>
+          <th onclick="srt('chgPct')">Day % <span class="sa" id="sa-chgPct">↕</span></th>
+          <th onclick="srt('ret1m')">1M % <span class="sa" id="sa-ret1m">↕</span></th>
+          <th onclick="srt('ret3m')">3M % <span class="sa" id="sa-ret3m">↕</span></th>
+          <th onclick="srt('ret6m')">6M % <span class="sa" id="sa-ret6m">↕</span></th>
+          <th onclick="srt('targetUpside')">Target Upside <span class="sa" id="sa-targetUpside">↕</span></th>
+          <th onclick="srt('target')">Target $ <span class="sa" id="sa-target">↕</span></th>
+          <th onclick="srt('roc')">ROC(7) <span class="sa" id="sa-roc">↕</span></th>
+          <th onclick="srt('vmi')">VMI <span class="sa" id="sa-vmi">↕</span></th>
+          <th onclick="srt('vpci')">VPCI <span class="sa" id="sa-vpci">↕</span></th>
           <th>Passes</th>
         </tr></thead>
         <tbody id="resBody"></tbody>
@@ -276,13 +280,13 @@ td:first-child{text-align:left;padding-left:1.1rem;}
   </div>
 
   <div class="foot-note" style="display:none" id="footNote">
-    ROC(7)=(close/close[7]-1)�100 [0,20] | VMI=1+(MFI(14)-RSI(14))/100 [=1.05] | VPCI=VPC_norm�VPR�VM [0,1.5] | Price&lt;$50
+    ROC(7)=(close/close[7]-1)×100 [0,20] | VMI=1+(MFI(14)-RSI(14))/100 [≥1.05] | VPCI=VPC_norm×VPR×VM [0,1.5] | Price&lt;$50
   </div>
 
   <div class="debug-card">
     <div class="debug-hdr" onclick="toggleDebug()">
-      <span class="debug-hdr-title">?? Debug Log</span>
-      <span style="font-size:.62rem;color:var(--muted);font-family:'JetBrains Mono',monospace" id="dbgToggle">? show</span>
+      <span class="debug-hdr-title">🔧 Debug Log</span>
+      <span style="font-size:.62rem;color:var(--muted);font-family:'JetBrains Mono','Noto Color Emoji','Apple Color Emoji','Segoe UI Emoji','Segoe UI Symbol',monospace" id="dbgToggle">▼ show</span>
     </div>
     <div class="debug-body" id="dbgBody">No data yet.</div>
   </div>
@@ -325,8 +329,8 @@ let dbgLines=[];
 function dbg(m){dbgLines.push(m);}
 function toggleDebug(){
   const b=document.getElementById('dbgBody'),t=document.getElementById('dbgToggle');
-  if(b.style.display==='none'||!b.style.display){b.style.display='block';t.textContent='? hide';}
-  else{b.style.display='none';t.textContent='? show';}
+  if(b.style.display==='none'||!b.style.display){b.style.display='block';t.textContent='▲ hide';}
+  else{b.style.display='none';t.textContent='▼ show';}
 }
 
 // CSV
@@ -337,7 +341,7 @@ function parseCSV(text){
   const hdrs=splitLine(lines[0]).map(h=>h.trim());
   const rows=lines.slice(1).map(l=>{const v=splitLine(l),o={};hdrs.forEach((h,i)=>o[h]=(v[i]||'').trim());return o;}).filter(r=>Object.values(r).some(v=>v));
   dbg('parseCSV: '+rows.length+' rows, '+hdrs.length+' cols | h[0]='+hdrs[0]+' h[1]='+hdrs[1]);
-  if(rows.length<5&&hdrs.length>10) dbg('  ?? WARNING: very few rows - sheet may not be fully published');
+  if(rows.length<5&&hdrs.length>10) dbg('  ⚠️ WARNING: very few rows - sheet may not be fully published');
   return {headers:hdrs,rows};
 }
 
@@ -360,7 +364,7 @@ async function fetchSheet(url, stepKey){
       const el=stepEls[stepKey];
       if(el){
         const lbl=el.textContent.replace(/^\S+ /,'').replace(/ \[.*$/, '');
-        el.textContent='? '+lbl+' ['+PN[pi]+'�]';
+        el.textContent='⏳ '+lbl+' ['+PN[pi]+'…]';
       }
     }
     try{
@@ -370,7 +374,7 @@ async function fetchSheet(url, stepKey){
       if(!text||text.length<500){dbg('x '+PN[pi]+': '+text.length+' chars');continue;}
       if(text.trim().startsWith('<')){dbg('x '+PN[pi]+': got HTML');continue;}
       if(!text.includes(',')){dbg('x '+PN[pi]+': not CSV');continue;}
-      // Reject if only 1 data row � OHLCV sheets should have 200+ rows
+      // Reject if only 1 data row — OHLCV sheets should have 200+ rows
       const lineCount=text.trim().split(/[\r\n]+/).length;
       if(lineCount<5){dbg('x '+PN[pi]+': only '+lineCount+' lines');continue;}
       bestProxy=pi;
@@ -382,7 +386,7 @@ async function fetchSheet(url, stepKey){
   return null;
 }
 
-// Parse wide (Close/Open/High/Low/Volume): col0=date, cols=tickers, rows newest?oldest
+// Parse wide (Close/Open/High/Low/Volume): col0=date, cols=tickers, rows newest→oldest
 function parseWide(parsed){
   if(!parsed) return {};
   const {headers,rows}=parsed;
@@ -399,7 +403,7 @@ function parseWide(parsed){
       const val=parseFloat(raw.replace(/[$, ]/g,''));
       if(!isNaN(val)&&val>=0) series.push({date,val});
     });
-    series.reverse(); // newest?oldest becomes oldest?newest
+    series.reverse(); // newest→oldest becomes oldest→newest
     if(series.length>0) map[t]=series;
   });
   const tkCount=Object.keys(map).length;
@@ -504,8 +508,8 @@ function runStrategy(ticker,series,pctData,mainRow){
 }
 
 // Format
-const f$=n=>n==null?'�':'$'+Math.abs(n).toFixed(2);
-const pill=n=>{if(n==null)return'<span class="pill neu">�</span>';return`<span class="pill ${n>=0?'pos':'neg'}">${n>=0?'+':''}${n.toFixed(2)}%</span>`;}
+const f$=n=>n==null?'—':'$'+Math.abs(n).toFixed(2);
+const pill=n=>{if(n==null)return'<span class="pill neu">—</span>';return`<span class="pill ${n>=0?'pos':'neg'}">${n>=0?'+':''}${n.toFixed(2)}%</span>`;}
 const dayLbl=['Today','Yesterday','2d ago','3d ago'];
 
 // Render
@@ -519,7 +523,7 @@ function renderTable(){
   document.getElementById('resCount').textContent=data.length+' signal'+(data.length!==1?'s':'');
   const tb=document.getElementById('resBody');
   if(!data.length){
-    tb.innerHTML=`<tr><td colspan="14"><div class="empty"><div class="empty-icon">??</div><div class="empty-t">No signals found</div><div class="empty-s">Strategy filters found no matches in last 4 days</div></div></td></tr>`;
+    tb.innerHTML=`<tr><td colspan="14"><div class="empty"><div class="empty-icon">🔍</div><div class="empty-t">No signals found</div><div class="empty-s">Strategy filters found no matches in last 4 days</div></div></td></tr>`;
     return;
   }
   tb.innerHTML=data.map(s=>{
@@ -533,17 +537,17 @@ function renderTable(){
       <td>${pill(s.ret1m)}</td>
       <td>${pill(s.ret3m)}</td>
       <td>${pill(s.ret6m)}</td>
-      <td><span class="pill ${tuC}">${s.targetUpside==null?'�':(s.targetUpside>=0?'+':'')+s.targetUpside.toFixed(1)+'%'}</span></td>
+      <td><span class="pill ${tuC}">${s.targetUpside==null?'—':(s.targetUpside>=0?'+':'')+s.targetUpside.toFixed(1)+'%'}</span></td>
       <td class="pv m">${f$(s.target)}</td>
-      <td class="pv ${s.passROC?'g':'r'}">${s.roc??'�'}</td>
-      <td class="pv ${s.passVMI?'g':'r'}">${s.vmi??'�'}</td>
-      <td class="pv ${s.passVPCI?'g':'r'}">${s.vpci??'�'}</td>
-      <td><span class="sig-badge">? ALL</span></td>
+      <td class="pv ${s.passROC?'g':'r'}">${s.roc??'—'}</td>
+      <td class="pv ${s.passVMI?'g':'r'}">${s.vmi??'—'}</td>
+      <td class="pv ${s.passVPCI?'g':'r'}">${s.vpci??'—'}</td>
+      <td><span class="sig-badge">✓ ALL</span></td>
     </tr>`;
   }).join('');
 }
 function setDay(d,btn){dayFilter=d;document.querySelectorAll('.day-tab').forEach(b=>b.classList.remove('active'));btn.classList.add('active');renderTable();}
-function srt(col){if(sortCol===col)sortDir*=-1;else{sortCol=col;sortDir=1;}document.querySelectorAll('.sa').forEach(e=>{e.className='sa';e.textContent='?';});const el=document.getElementById('sa-'+col);if(el){el.className='sa on';el.textContent=sortDir>0?'?':'?';}renderTable();}
+function srt(col){if(sortCol===col)sortDir*=-1;else{sortCol=col;sortDir=1;}document.querySelectorAll('.sa').forEach(e=>{e.className='sa';e.textContent='↕';});const el=document.getElementById('sa-'+col);if(el){el.className='sa on';el.textContent=sortDir>0?'↑':'↓';}renderTable();}
 
 // Step tracker
 const stepEls={};
@@ -554,17 +558,17 @@ function initSteps(){
     if(!el)return;
     // Keep label, reset icon
     const txt=el.textContent.replace(/^[^ ]+ /,"");
-    el.textContent="? "+txt;
+    el.textContent="⬜ "+txt;
     el.className="ls";
     stepEls[k]=el;
   });
 }
 function setStep(n,state,extra=''){
   const el=stepEls[n];if(!el)return;
-  const icons={loading:'?',done:'?',fail:'?',skip:'?'};
+  const icons={loading:'⏳',done:'✅',fail:'❌',skip:'⚪'};
   el.className='ls '+(state==='loading'?'active':state==='done'?'done':state==='fail'?'fail':'');
   const cur=el.textContent.replace(/^[^a-zA-Z]+ /,'');
-  el.textContent=(icons[state]||'?')+' '+cur+(extra?' ['+extra+']':'');
+  el.textContent=(icons[state]||'⬜')+' '+cur+(extra?' ['+extra+']':'');
 }
 
 async function runScreener(){
@@ -575,16 +579,16 @@ async function runScreener(){
   document.getElementById('resultsCard').style.display='none';
   document.getElementById('footNote').style.display='none';
   document.getElementById('errBox').style.display='none';
-  document.getElementById('dbgBody').textContent='Loading�';
+  document.getElementById('dbgBody').textContent='Loading…';
   initSteps();
   const isLocal=location.protocol==='file:'||location.protocol==='content:';
   document.getElementById('warnLocal').style.display=isLocal?'block':'none';
   const msg=t=>document.getElementById('loadMsg').textContent=t;
   async function load(key){
     const url=SHEETS[key];if(!url||url==='null'){setStep(key,'skip');return null;}
-    setStep(key,'loading');msg('Fetching '+key+'�');
+    setStep(key,'loading');msg('Fetching '+key+'…');
     let res=await fetchSheet(url, key);
-    if(!res&&key==='close'){dbg('Retrying close�');await new Promise(r=>setTimeout(r,1000));res=await fetchSheet(url, key);}
+    if(!res&&key==='close'){dbg('Retrying close…');await new Promise(r=>setTimeout(r,1000));res=await fetchSheet(url, key);}
     if(res){
       const info=res.rows.length+'r x '+res.headers.length+'c';
       setStep(key,'done',info);
@@ -596,24 +600,24 @@ async function runScreener(){
   }
   try{
     // Fetch all sheets in parallel for speed
-    msg('Fetching all 7 sheets simultaneously � watch status below�');
+    msg('Fetching all 7 sheets simultaneously — watch status below…');
     const [closeP,openP,highP,lowP,volP,pctP,mainP] = await Promise.all([
       load('close'), load('open'), load('high'), load('low'),
       load('volume'), load('pct'), load('main')
     ]);
     if(!closeP){
       document.getElementById('errBox').style.display='block';
-      document.getElementById('errBox').innerHTML='? <strong>Close price sheet failed to load.</strong> Check debug log.';
+      document.getElementById('errBox').innerHTML='❌ <strong>Close price sheet failed to load.</strong> Check debug log.';
       document.getElementById('loadCard').style.display='none';
       showResults(); return;
     }
-    msg('Parsing data�');
+    msg('Parsing data…');
     const cMap=parseWide(closeP),oMap=parseWide(openP||closeP),hMap=parseWide(highP||closeP);
     const lMap=parseWide(lowP||closeP),vMap=parseWide(volP||{headers:[],rows:[]});
     const pctLookup=parsePct(pctP),mainLookup=parseMain(mainP);
     const tickers=Object.keys(cMap);
     dbg('Tickers: '+tickers.length+' | Vol: '+Object.keys(vMap).length);
-    msg('Computing indicators for '+tickers.length+' tickers�');
+    msg('Computing indicators for '+tickers.length+' tickers…');
     let maxBars=0;
     tickers.forEach(ticker=>{
       const series=mergeSeries(ticker,cMap,oMap,hMap,lMap,vMap);

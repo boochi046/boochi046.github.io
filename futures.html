@@ -5,9 +5,9 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Market Futures</title>
 
-<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@300;400;500&family=Noto+Color+Emoji&display=swap" rel="stylesheet">
 <style>
-/* -- THEME -- */
+/* ── THEME ── */
 [data-theme="dark"]{
   --bg:#080c14;--bg2:#0d1220;--surface:#111827;--surface2:#1a2236;
   --border:#1e2d45;--border2:#263450;
@@ -15,7 +15,7 @@
   --green:#10b981;--red:#ef4444;--yellow:#f59e0b;--orange:#f97316;
   --text:#f1f5f9;--text2:#cbd5e1;--muted:#64748b;--muted2:#475569;
   --sidebar-bg:#0a1020;--card-glow:rgba(59,130,246,.06);
-  --mono:'JetBrains Mono',monospace;
+  --mono:'JetBrains Mono','Noto Color Emoji','Apple Color Emoji','Segoe UI Emoji','Segoe UI Symbol',monospace;
 }
 [data-theme="light"]{
   --bg:#f0f4f8;--bg2:#e8edf4;--surface:#fff;--surface2:#f8fafc;
@@ -24,16 +24,16 @@
   --green:#059669;--red:#dc2626;--yellow:#d97706;--orange:#ea580c;
   --text:#0f172a;--text2:#1e293b;--muted:#64748b;--muted2:#94a3b8;
   --sidebar-bg:#e2e8f0;--card-glow:rgba(37,99,235,.04);
-  --mono:'JetBrains Mono',monospace;
+  --mono:'JetBrains Mono','Noto Color Emoji','Apple Color Emoji','Segoe UI Emoji','Segoe UI Symbol',monospace;
 }
 *{margin:0;padding:0;box-sizing:border-box;}
 html{scroll-behavior:smooth;}
-body{background:var(--bg);color:var(--text);font-family:'Space Grotesk',sans-serif;min-height:100vh;display:flex;transition:background .3s,color .3s;}
+body{background:var(--bg);color:var(--text);font-family:'Space Grotesk','Noto Color Emoji','Apple Color Emoji','Segoe UI Emoji','Segoe UI Symbol',sans-serif;min-height:100vh;display:flex;transition:background .3s,color .3s;}
 body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
   background-image:linear-gradient(rgba(59,130,246,.03) 1px,transparent 1px),linear-gradient(90deg,rgba(59,130,246,.03) 1px,transparent 1px);
   background-size:48px 48px;}
 
-/* -- SIDEBAR -- */
+/* ── SIDEBAR ── */
 .sidebar{
   width:210px;flex-shrink:0;background:var(--sidebar-bg);border-right:1px solid var(--border);
   display:flex;flex-direction:column;position:sticky;top:0;height:100vh;overflow-y:auto;
@@ -43,9 +43,13 @@ body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
 .sidebar::-webkit-scrollbar-thumb{background:var(--border2);}
 .sb-brand{
   padding:1.1rem 1.2rem .8rem;font-size:1rem;font-weight:700;letter-spacing:-.03em;
-  background:linear-gradient(135deg,var(--accent),var(--accent2));
-  -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+  display:flex;align-items:center;gap:.45rem;
   border-bottom:1px solid var(--border);
+}
+.sb-brand svg{flex-shrink:0;color:var(--accent);}
+.sb-brand-tx{
+  background:linear-gradient(135deg,var(--accent),var(--accent2));
+  -webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;
 }
 .sb-nav{padding:.5rem 0;flex:1;}
 .sb-section{padding:.35rem 1.1rem .2rem;font-size:.57rem;font-weight:700;text-transform:uppercase;letter-spacing:.12em;color:var(--muted2);margin-top:.4rem;}
@@ -59,35 +63,35 @@ body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
 
 .sb-footer{padding:.75rem 1rem;border-top:1px solid var(--border);margin-top:auto;}
 .theme-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:.4rem;}
-.theme-lbl{font-size:.62rem;color:var(--muted);font-family:'JetBrains Mono',monospace;}
+.theme-lbl{font-size:.62rem;color:var(--muted);font-family:'JetBrains Mono','Noto Color Emoji','Apple Color Emoji','Segoe UI Emoji','Segoe UI Symbol',monospace;}
 .theme-toggle{width:32px;height:18px;background:var(--border2);border-radius:100px;cursor:pointer;position:relative;transition:background .3s;border:none;flex-shrink:0;}
 .theme-toggle::after{content:'';position:absolute;top:2px;left:2px;width:14px;height:14px;background:var(--muted);border-radius:50%;transition:all .3s;}
 [data-theme="light"] .theme-toggle{background:var(--accent);}
 [data-theme="light"] .theme-toggle::after{left:16px;background:#fff;}
-.sb-time{font-size:.6rem;color:var(--muted);font-family:'JetBrains Mono',monospace;}
+.sb-time{font-size:.6rem;color:var(--muted);font-family:'JetBrains Mono','Noto Color Emoji','Apple Color Emoji','Segoe UI Emoji','Segoe UI Symbol',monospace;}
 
-/* -- MAIN -- */
+/* ── MAIN ── */
 .main{flex:1;min-width:0;position:relative;z-index:1;padding:1.5rem 2rem;overflow-x:hidden;}
 
-/* -- SHARED COMPONENTS -- */
+/* ── SHARED COMPONENTS ── */
 .page-title{font-size:1.5rem;font-weight:700;letter-spacing:-.04em;margin-bottom:.3rem;}
 .page-title .acc{background:linear-gradient(135deg,var(--accent),var(--accent2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;}
-.page-sub{font-size:.7rem;color:var(--muted);font-family:'JetBrains Mono',monospace;margin-bottom:1.25rem;}
+.page-sub{font-size:.7rem;color:var(--muted);font-family:'JetBrains Mono','Noto Color Emoji','Apple Color Emoji','Segoe UI Emoji','Segoe UI Symbol',monospace;margin-bottom:1.25rem;}
 .card{background:var(--surface);border:1px solid var(--border);border-radius:14px;overflow:hidden;transition:border-color .2s;}
 .card:hover{border-color:var(--border2);}
 .card-hdr{display:flex;align-items:center;justify-content:space-between;padding:.8rem 1.2rem;border-bottom:1px solid var(--border);}
 .card-title{font-size:.72rem;font-weight:600;text-transform:uppercase;letter-spacing:.09em;color:var(--muted);}
-.badge{font-size:.63rem;font-weight:600;font-family:'JetBrains Mono',monospace;padding:.12rem .45rem;border-radius:4px;background:rgba(59,130,246,.1);color:var(--accent);border:1px solid rgba(59,130,246,.2);}
+.badge{font-size:.63rem;font-weight:600;font-family:'JetBrains Mono','Noto Color Emoji','Apple Color Emoji','Segoe UI Emoji','Segoe UI Symbol',monospace;padding:.12rem .45rem;border-radius:4px;background:rgba(59,130,246,.1);color:var(--accent);border:1px solid rgba(59,130,246,.2);}
 .badge.g{background:rgba(16,185,129,.1);color:var(--green);border-color:rgba(16,185,129,.2);}
 .badge.r{background:rgba(239,68,68,.1);color:var(--red);border-color:rgba(239,68,68,.2);}
-.live-tag{display:inline-flex;align-items:center;gap:.35rem;background:rgba(16,185,129,.1);border:1px solid rgba(16,185,129,.25);color:var(--green);padding:.22rem .65rem;border-radius:100px;font-size:.65rem;font-family:'JetBrains Mono',monospace;}
+.live-tag{display:inline-flex;align-items:center;gap:.35rem;background:rgba(16,185,129,.1);border:1px solid rgba(16,185,129,.25);color:var(--green);padding:.22rem .65rem;border-radius:100px;font-size:.65rem;font-family:'JetBrains Mono','Noto Color Emoji','Apple Color Emoji','Segoe UI Emoji','Segoe UI Symbol',monospace;}
 .live-dot{width:5px;height:5px;background:var(--green);border-radius:50%;animation:pulse 2s infinite;}
 @keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
-.btn{padding:.32rem .85rem;border-radius:7px;font-size:.71rem;font-weight:500;cursor:pointer;transition:all .2s;font-family:'Space Grotesk',sans-serif;border:1px solid var(--border2);background:var(--surface);color:var(--text2);}
+.btn{padding:.32rem .85rem;border-radius:7px;font-size:.71rem;font-weight:500;cursor:pointer;transition:all .2s;font-family:'Space Grotesk','Noto Color Emoji','Apple Color Emoji','Segoe UI Emoji','Segoe UI Symbol',sans-serif;border:1px solid var(--border2);background:var(--surface);color:var(--text2);}
 .btn:hover{border-color:var(--accent);color:var(--accent);}
 
 /* Pills */
-.pill{display:inline-block;padding:.1rem .42rem;border-radius:4px;font-size:.65rem;font-weight:700;font-family:'JetBrains Mono',monospace;}
+.pill{display:inline-block;padding:.1rem .42rem;border-radius:4px;font-size:.65rem;font-weight:700;font-family:'JetBrains Mono','Noto Color Emoji','Apple Color Emoji','Segoe UI Emoji','Segoe UI Symbol',monospace;}
 .pill.pos{background:rgba(16,185,129,.12);color:var(--green);}
 .pill.neg{background:rgba(239,68,68,.12);color:var(--red);}
 .pill.neu{background:var(--surface2);color:var(--muted);}
@@ -107,8 +111,8 @@ tbody tr:hover{background:var(--surface2);}
 tbody tr:last-child{border:none;}
 td{padding:.55rem .9rem;text-align:right;vertical-align:middle;white-space:nowrap;}
 td:first-child{text-align:left;padding-left:1.1rem;}
-.tkr{background:rgba(139,92,246,.12);border:1px solid rgba(139,92,246,.25);color:#a78bfa;padding:.08rem .42rem;border-radius:4px;font-size:.65rem;font-weight:700;font-family:'JetBrains Mono',monospace;display:inline-block;min-width:44px;text-align:center;}
-.pv{font-family:'JetBrains Mono',monospace;font-size:.67rem;}
+.tkr{background:rgba(139,92,246,.12);border:1px solid rgba(139,92,246,.25);color:#a78bfa;padding:.08rem .42rem;border-radius:4px;font-size:.65rem;font-weight:700;font-family:'JetBrains Mono','Noto Color Emoji','Apple Color Emoji','Segoe UI Emoji','Segoe UI Symbol',monospace;display:inline-block;min-width:44px;text-align:center;}
+.pv{font-family:'JetBrains Mono','Noto Color Emoji','Apple Color Emoji','Segoe UI Emoji','Segoe UI Symbol',monospace;font-size:.67rem;}
 .pv.g{color:var(--green);}.pv.r{color:var(--red);}.pv.m{color:var(--muted);}
 .pass-dots{display:inline-flex;gap:2px;margin-left:.4rem;vertical-align:middle;}
 .pd{width:5px;height:5px;border-radius:50%;background:var(--border2);display:inline-block;}
@@ -116,7 +120,7 @@ td:first-child{text-align:left;padding-left:1.1rem;}
 
 /* Day tabs */
 .day-tabs{display:flex;gap:.35rem;margin-bottom:1rem;flex-wrap:wrap;}
-.day-tab{padding:.25rem .75rem;font-size:.7rem;font-weight:600;border-radius:6px;cursor:pointer;border:1px solid var(--border2);background:transparent;color:var(--muted);font-family:'Space Grotesk',sans-serif;transition:all .2s;}
+.day-tab{padding:.25rem .75rem;font-size:.7rem;font-weight:600;border-radius:6px;cursor:pointer;border:1px solid var(--border2);background:transparent;color:var(--muted);font-family:'Space Grotesk','Noto Color Emoji','Apple Color Emoji','Segoe UI Emoji','Segoe UI Symbol',sans-serif;transition:all .2s;}
 .day-tab.active{background:rgba(59,130,246,.12);border-color:var(--accent);color:var(--accent);}
 .day-tab:hover:not(.active){color:var(--text);}
 
@@ -124,9 +128,9 @@ td:first-child{text-align:left;padding-left:1.1rem;}
 .load-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:1.25rem 1.5rem;margin-bottom:1rem;}
 .load-title{font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);margin-bottom:.85rem;}
 .load-steps{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:.3rem;}
-.ls{font-size:.67rem;color:var(--muted);font-family:'JetBrains Mono',monospace;padding:.18rem 0;}
+.ls{font-size:.67rem;color:var(--muted);font-family:'JetBrains Mono','Noto Color Emoji','Apple Color Emoji','Segoe UI Emoji','Segoe UI Symbol',monospace;padding:.18rem 0;}
 .ls.done{color:var(--green);}.ls.active{color:var(--accent);}.ls.fail{color:var(--red);}
-.load-msg{font-size:.73rem;color:var(--accent);font-family:'JetBrains Mono',monospace;margin-top:.65rem;}
+.load-msg{font-size:.73rem;color:var(--accent);font-family:'JetBrains Mono','Noto Color Emoji','Apple Color Emoji','Segoe UI Emoji','Segoe UI Symbol',monospace;margin-top:.65rem;}
 .spinner{display:inline-block;width:9px;height:9px;border:2px solid var(--border2);border-top-color:var(--accent);border-radius:50%;animation:spin .7s linear infinite;margin-right:.3rem;vertical-align:middle;}
 @keyframes spin{to{transform:rotate(360deg)}}
 
@@ -139,28 +143,28 @@ td:first-child{text-align:left;padding-left:1.1rem;}
 .status-left{display:flex;align-items:center;gap:1.1rem;flex-wrap:wrap;}
 .si{display:flex;flex-direction:column;gap:.1rem;}
 .si-lbl{font-size:.55rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);}
-.si-val{font-size:.82rem;font-weight:700;font-family:'JetBrains Mono',monospace;}
+.si-val{font-size:.82rem;font-weight:700;font-family:'JetBrains Mono','Noto Color Emoji','Apple Color Emoji','Segoe UI Emoji','Segoe UI Symbol',monospace;}
 .si-val.g{color:var(--green);}.si-val.y{color:var(--yellow);}.si-val.r{color:var(--red);}
 
 /* Signals table */
-.sig-badge{display:inline-flex;align-items:center;padding:.1rem .45rem;border-radius:4px;font-size:.61rem;font-weight:700;font-family:'JetBrains Mono',monospace;background:rgba(16,185,129,.1);border:1px solid rgba(16,185,129,.2);color:var(--green);}
+.sig-badge{display:inline-flex;align-items:center;padding:.1rem .45rem;border-radius:4px;font-size:.61rem;font-weight:700;font-family:'JetBrains Mono','Noto Color Emoji','Apple Color Emoji','Segoe UI Emoji','Segoe UI Symbol',monospace;background:rgba(16,185,129,.1);border:1px solid rgba(16,185,129,.2);color:var(--green);}
 .day-badge{background:rgba(245,158,11,.1);border:1px solid rgba(245,158,11,.2);color:var(--yellow);}
 .empty{padding:3rem;text-align:center;color:var(--muted);}
 .empty-icon{font-size:2rem;margin-bottom:.6rem;}
 .empty-t{font-size:.9rem;font-weight:600;color:var(--text2);margin-bottom:.3rem;}
-.empty-s{font-size:.7rem;font-family:'JetBrains Mono',monospace;}
+.empty-s{font-size:.7rem;font-family:'JetBrains Mono','Noto Color Emoji','Apple Color Emoji','Segoe UI Emoji','Segoe UI Symbol',monospace;}
 
 /* Debug */
 .debug-card{margin-top:.85rem;background:var(--surface);border:1px solid var(--border2);border-radius:11px;overflow:hidden;}
 .debug-hdr{padding:.6rem 1rem;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;cursor:pointer;}
 .debug-hdr-title{font-size:.65rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.1em;}
-.debug-body{display:none;padding:.75rem 1rem;font-size:.63rem;font-family:'JetBrains Mono',monospace;color:var(--text2);line-height:1.9;max-height:350px;overflow-y:auto;white-space:pre-wrap;}
-.foot-note{margin-top:.85rem;padding:.75rem 1rem;background:var(--surface);border:1px solid var(--border);border-radius:10px;font-size:.63rem;color:var(--muted);font-family:'JetBrains Mono',monospace;line-height:1.8;}
+.debug-body{display:none;padding:.75rem 1rem;font-size:.63rem;font-family:'JetBrains Mono','Noto Color Emoji','Apple Color Emoji','Segoe UI Emoji','Segoe UI Symbol',monospace;color:var(--text2);line-height:1.9;max-height:350px;overflow-y:auto;white-space:pre-wrap;}
+.foot-note{margin-top:.85rem;padding:.75rem 1rem;background:var(--surface);border:1px solid var(--border);border-radius:10px;font-size:.63rem;color:var(--muted);font-family:'JetBrains Mono','Noto Color Emoji','Apple Color Emoji','Segoe UI Emoji','Segoe UI Symbol',monospace;line-height:1.8;}
 
 /* Strategy pills */
 .strat-box{background:var(--surface);border:1px solid var(--border2);border-radius:12px;padding:.75rem 1rem;margin-bottom:1.1rem;display:flex;gap:.4rem;flex-wrap:wrap;align-items:center;}
 .strat-lbl{font-size:.58rem;font-weight:700;text-transform:uppercase;letter-spacing:.12em;color:var(--muted);margin-right:.2rem;}
-.sp{display:inline-flex;align-items:center;gap:.3rem;background:var(--surface2);border:1px solid var(--border2);border-radius:5px;padding:.22rem .55rem;font-size:.64rem;font-weight:500;font-family:'JetBrains Mono',monospace;color:var(--accent);white-space:nowrap;}
+.sp{display:inline-flex;align-items:center;gap:.3rem;background:var(--surface2);border:1px solid var(--border2);border-radius:5px;padding:.22rem .55rem;font-size:.64rem;font-weight:500;font-family:'JetBrains Mono','Noto Color Emoji','Apple Color Emoji','Segoe UI Emoji','Segoe UI Symbol',monospace;color:var(--accent);white-space:nowrap;}
 
 @media(max-width:768px){.sidebar{display:none}.main{padding:1rem}}
 </style>
@@ -185,21 +189,21 @@ iframe{display:block;border:none;width:100%;}
 <body>
 <div class="app">
   <aside class="sidebar">
-    <div class="sb-brand">? PORTFOLIO</div>
+    <div class="sb-brand"><svg width="15" height="15" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M8 1l7 7-7 7-7-7 7-7z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/><path d="M8 5l3 3-3 3-3-3 3-3z" fill="currentColor"/></svg><span class="sb-brand-tx">PORTFOLIO</span></div>
     <nav class="sb-nav">
       <div class="sb-section">Pages</div>
-    <a href="index.html" class="sb-link">?? Dashboard</a>
-    <a href="futures.html" class="sb-link active">?? Futures</a>
-    <a href="screener-analyst.html" class="sb-link">?? Top Analyst</a>
-    <a href="screener-score.html" class="sb-link">?? Top Score</a>
-    <a href="screener-penny.html" class="sb-link">?? Penny Stocks</a>
+    <a href="index.html" class="sb-link">📊 Dashboard</a>
+    <a href="futures.html" class="sb-link active">📈 Futures</a>
+    <a href="screener-analyst.html" class="sb-link">🏅 Top Analyst</a>
+    <a href="screener-score.html" class="sb-link">🏆 Top Score</a>
+    <a href="screener-penny.html" class="sb-link">💎 Penny Stocks</a>
     </nav>
     <div class="sb-footer">
       <div class="theme-row">
         <span class="theme-lbl" id="themeLabel">DARK</span>
         <button class="theme-toggle" onclick="toggleTheme()"></button>
       </div>
-      <div class="sb-time" id="sbTime">�</div>
+      <div class="sb-time" id="sbTime">—</div>
     </div>
   </aside>
 <div class="main" style="max-width:1500px">
@@ -244,10 +248,10 @@ iframe{display:block;border:none;width:100%;}
   </div>
 
   <!-- MARKET OVERVIEW -->
-  <div class="section-label">?? Market Overview</div>
+  <div class="section-label">📊 Market Overview</div>
   <div class="widget-card">
     <div class="widget-card-hdr">
-      <span class="widget-card-title">Equity Indices � Futures � Commodities � Bonds � Forex � Crypto</span>
+      <span class="widget-card-title">Equity Indices · Futures · Commodities · Bonds · Forex · Crypto</span>
     </div>
     <div class="widget-body">
       <div class="tradingview-widget-container">
@@ -341,7 +345,7 @@ iframe{display:block;border:none;width:100%;}
 
     <!-- HEAT MAP -->
     <div class="widget-card">
-      <div class="widget-card-hdr"><span class="widget-card-title">?? S&P 500 Heat Map</span></div>
+      <div class="widget-card-hdr"><span class="widget-card-title">📈 S&P 500 Heat Map</span></div>
       <div class="widget-body">
         <div class="tradingview-widget-container">
           <div class="tradingview-widget-container__widget"></div>
@@ -370,7 +374,7 @@ iframe{display:block;border:none;width:100%;}
 
     <!-- ECONOMIC CALENDAR -->
     <div class="widget-card">
-      <div class="widget-card-hdr"><span class="widget-card-title">?? Economic Calendar</span></div>
+      <div class="widget-card-hdr"><span class="widget-card-title">📅 Economic Calendar</span></div>
       <div class="widget-body">
         <div class="tradingview-widget-container">
           <div class="tradingview-widget-container__widget"></div>
@@ -395,7 +399,7 @@ iframe{display:block;border:none;width:100%;}
   <div class="two-col">
 
     <div class="widget-card">
-      <div class="widget-card-hdr"><span class="widget-card-title">?? Forex Cross Rates</span></div>
+      <div class="widget-card-hdr"><span class="widget-card-title">💱 Forex Cross Rates</span></div>
       <div class="widget-body">
         <div class="tradingview-widget-container">
           <div class="tradingview-widget-container__widget"></div>
@@ -415,7 +419,7 @@ iframe{display:block;border:none;width:100%;}
     </div>
 
     <div class="widget-card">
-      <div class="widget-card-hdr"><span class="widget-card-title">? Crypto Market</span></div>
+      <div class="widget-card-hdr"><span class="widget-card-title">₿ Crypto Market</span></div>
       <div class="widget-body">
         <div class="tradingview-widget-container">
           <div class="tradingview-widget-container__widget"></div>
@@ -438,7 +442,7 @@ iframe{display:block;border:none;width:100%;}
   </div>
 
   <!-- MINI CHARTS ROW: Key futures -->
-  <div class="section-label">?? Key Futures Charts</div>
+  <div class="section-label">📉 Key Futures Charts</div>
   <div class="three-col">
 
     <div class="widget-card">
@@ -520,7 +524,7 @@ iframe{display:block;border:none;width:100%;}
   </div>
 
   <div style="text-align:center;font-size:.62rem;color:var(--muted);padding:.75rem;border:1px solid var(--border);border-radius:10px;font-family:var(--mono)">
-    Real-time data via TradingView � Charts delayed ~15 min for non-TradingView accounts
+    Real-time data via TradingView · Charts delayed ~15 min for non-TradingView accounts
   </div>
 
   </div><!-- /main -->
@@ -546,7 +550,7 @@ function toggleTheme(){
 })();
 function updateSbTime(txt){const el=document.getElementById('sbTime');if(el)el.textContent=txt;}
 
-// -- TradingView widgets: re-theme on toggle ----------------------------------
+// ── TradingView widgets: re-theme on toggle ──────────────────────────────────
 // The embed scripts render once with a fixed colorTheme, so to follow the
 // dark/light toggle we capture each widget's config and rebuild it.
 const tvWidgets=[];
