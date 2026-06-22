@@ -268,12 +268,15 @@ td:first-child{text-align:left;padding-left:1.1rem;}
           <th onclick="srt('daysAgo')">Signal <span class="sa" id="sa-daysAgo">↕</span></th>
           <th onclick="srt('price')">Buy Price <span class="sa" id="sa-price">↕</span></th>
           <th onclick="srt('chgPct')">Day % <span class="sa" id="sa-chgPct">↕</span></th>
+          <th onclick="srt('m1')">1M % <span class="sa" id="sa-m1">↕</span></th>
+          <th onclick="srt('m3')">3M % <span class="sa" id="sa-m3">↕</span></th>
+          <th onclick="srt('m6')">6M % <span class="sa" id="sa-m6">↕</span></th>
           <th onclick="srt('elo')">Elegant Osc <span class="sa" id="sa-elo">↕</span></th>
           <th onclick="srt('decyc')">Decycler Osc <span class="sa" id="sa-decyc">↕</span></th>
           <th onclick="srt('stop')">Stop −40% <span class="sa" id="sa-stop">↕</span></th>
           <th onclick="srt('target')">Target +100% <span class="sa" id="sa-target">↕</span></th>
           <th onclick="srt('sector')" style="text-align:left">Sector <span class="sa" id="sa-sector">↕</span></th>
-          <th>Confirm</th>
+          <th onclick="srt('eoDir')">Confirm <span class="sa" id="sa-eoDir">↕</span></th>
         </tr></thead>
         <tbody id="resBody"></tbody>
       </table>
@@ -491,17 +494,20 @@ function runEhlers(ticker,wl,P,dates,sector){
     if(!(pELO&&pDEC&&pPr)) continue;
     const prevElo=ELO[i-1];
     const rising=!isNaN(prevElo)&&elo>prevElo;   // optional "dip stabilising" confirm
+    const eoDir=isNaN(prevElo)?0:(elo>prevElo?1:(elo<prevElo?-1:0));  // EO slope: +1 up / 0 flat / -1 down
     const prev=P[i-1];
+    const ret=k=>{const j=i-k; return (j>=0 && P[j]>0)? +((price/P[j]-1)*100).toFixed(2) : null;};  // % gain vs k trading days before signal bar
     out.push({
       ticker,
       daysAgo:da, date:dates[i], price:+price.toFixed(2), sector:sector||null,
+      m1:ret(21), m3:ret(63), m6:ret(126),
       elo:+elo.toFixed(4), decyc:+decyc.toFixed(3),
       stop:+(price*0.60).toFixed(2),     // initial stop -40%
       target:+(price*2.00).toFixed(2),   // take-profit +100%
       beTrig:+(price*1.30).toFixed(2),   // breakeven trigger +30%
       beStop:+(price*1.05).toFixed(2),   // raised stop +5%
       chgPct: prev>0?(price-prev)/prev*100:null,
-      confirm:rising, passELO:pELO, passDEC:pDEC, passPr:pPr
+      confirm:rising, eoDir, passELO:pELO, passDEC:pDEC, passPr:pPr
     });
   }
   return out;
@@ -523,7 +529,7 @@ function renderTable(){
   document.getElementById('resCount').textContent=data.length+' signal'+(data.length!==1?'s':'');
   const tb=document.getElementById('resBody');
   if(!data.length){
-    tb.innerHTML=`<tr><td colspan="10"><div class="empty"><div class="empty-icon">\uD83C\uDF0A</div><div class="empty-t">No signals found</div><div class="empty-s">No below-trend dips with negative momentum under $50 in the last 4 days</div></div></td></tr>`;
+    tb.innerHTML=`<tr><td colspan="13"><div class="empty"><div class="empty-icon">\uD83C\uDF0A</div><div class="empty-t">No signals found</div><div class="empty-s">No below-trend dips with negative momentum under $50 in the last 4 days</div></div></td></tr>`;
     return;
   }
   tb.innerHTML=data.map(s=>{
@@ -533,12 +539,15 @@ function renderTable(){
       <td><span class="sig-badge day-badge">${dayLbl[s.daysAgo]||s.daysAgo+'d'}</span></td>
       <td><strong>$${s.price.toFixed(2)}</strong></td>
       <td>${pill(s.chgPct)}</td>
+      <td>${pill(s.m1)}</td>
+      <td>${pill(s.m3)}</td>
+      <td>${pill(s.m6)}</td>
       <td class="osc-cell neg">${s.elo.toFixed(4)}</td>
       <td class="osc-cell neg">${s.decyc.toFixed(2)}%</td>
       <td><span class="stop-pill" title="Initial stop \u221240% from entry">$${s.stop.toFixed(2)}</span></td>
       <td><span class="tgt-pill" title="Take-profit +100% from entry">$${s.target.toFixed(2)}</span></td>
       <td style="text-align:left">${sec}</td>
-      <td>${s.confirm?'<span class="sig-badge">\u2713 Rising</span>':'<span class="pill neu">flat/down</span>'}</td>
+      <td>${s.eoDir>0?'<span class="sig-badge">\u25B2 Rising</span>':s.eoDir<0?'<span class="pill neg">\u25BC Falling</span>':'<span class="pill neu">\u25AC Flat</span>'}</td>
     </tr>`;
   }).join('');
 }
