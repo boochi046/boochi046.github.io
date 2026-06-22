@@ -272,6 +272,7 @@ td:first-child{text-align:left;padding-left:1.1rem;}
           <th onclick="srt('roc')">ROC(7) <span class="sa" id="sa-roc">↕</span></th>
           <th onclick="srt('vmi')">VMI <span class="sa" id="sa-vmi">↕</span></th>
           <th onclick="srt('vpci')">VPCI <span class="sa" id="sa-vpci">↕</span></th>
+          <th onclick="srt('sector')" style="text-align:left">Sector <span class="sa" id="sa-sector">↕</span></th>
           <th>Passes</th>
         </tr></thead>
         <tbody id="resBody"></tbody>
@@ -452,6 +453,15 @@ function parseMain(parsed){
   dbg('parseMain: '+Object.keys(lookup).length+' tickers');
   return lookup;
 }
+// Pull a sector value from a main-sheet row, tolerant of the exact column name
+function getSector(row){
+  if(!row) return null;
+  const bad=v=>!v||v==='Unavailable'||v==='-'||v==='N/A'||v==='#N/A';
+  for(const k of Object.keys(row)){ if(/sector/i.test(k)){const v=(row[k]||'').toString().trim(); if(!bad(v)) return v;} }
+  for(const k of Object.keys(row)){ if(/industry/i.test(k)){const v=(row[k]||'').toString().trim(); if(!bad(v)) return v;} }
+  return null;
+}
+function esc(s){return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
 
 // Merge OHLCV
 function mergeSeries(ticker,cMap,oMap,hMap,lMap,vMap){
@@ -461,7 +471,16 @@ function mergeSeries(ticker,cMap,oMap,hMap,lMap,vMap){
   (hMap[ticker]||[]).forEach(x=>hm[x.date]=x.val);
   (lMap[ticker]||[]).forEach(x=>lm[x.date]=x.val);
   (vMap[ticker]||[]).forEach(x=>vm[x.date]=x.val);
-  return cArr.map(x=>{return{date:x.date,c:x.val,o:om[x.date]||x.val,h:hm[x.date]||x.val,l:lm[x.date]||x.val,v:vm[x.date]||0};}). filter(x=>x.c>0);
+  let merged=cArr.map(x=>{return{date:x.date,c:x.val,o:om[x.date]||x.val,h:hm[x.date]||x.val,l:lm[x.date]||x.val,v:vm[x.date]||0};}).filter(x=>x.c>0);
+  // VPCI fix: if the Volume tab's dates don't string-match the Close tab, the date-keyed merge yields
+  // 0 volume -> hasVol false -> VPCI=NaN ("N/A" on every row). Fallback: align volume by position when
+  // the Close and Volume series have equal length (identical underlying date rows).
+  const vArr=vMap[ticker]||[];
+  if(vArr.length===cArr.length && !cArr.some(x=>(vm[x.date]||0)>0)){
+    merged=cArr.map((x,i)=>({date:x.date,c:x.val,o:om[x.date]||x.val,h:hm[x.date]||x.val,l:lm[x.date]||x.val,v:vArr[i]?vArr[i].val:0})).filter(x=>x.c>0);
+    dbg('volMerge: '+ticker+' aligned volume by position ('+vArr.length+' bars)');
+  }
+  return merged;
 }
 
 // Indicators
@@ -502,7 +521,7 @@ function runStrategy(ticker,series,pctData,mainRow){
     out.push({ticker,daysAgo:da,price:cl,prevPrice:prev,chgPct:prev&&prev>0?(cl-prev)/prev*100:null,
       ret1m:r1m,ret3m:r3m,ret6m:r6m,target:tgt,targetUpside:tgtUp,
       roc:isNaN(roc)?null:+roc.toFixed(2),vmi:+vmi.toFixed(2),vpci:isNaN(vpci)?null:+vpci.toFixed(4),
-      passROC:pR,passVMI:pV,passVPCI:pP,passPrice:pPr});
+      sector:getSector(mainRow),passROC:pR,passVMI:pV,passVPCI:pP,passPrice:pPr});
   }
   return out;
 }
@@ -523,7 +542,7 @@ function renderTable(){
   document.getElementById('resCount').textContent=data.length+' signal'+(data.length!==1?'s':'');
   const tb=document.getElementById('resBody');
   if(!data.length){
-    tb.innerHTML=`<tr><td colspan="14"><div class="empty"><div class="empty-icon">🔍</div><div class="empty-t">No signals found</div><div class="empty-s">Strategy filters found no matches in last 4 days</div></div></td></tr>`;
+    tb.innerHTML=`<tr><td colspan="15"><div class="empty"><div class="empty-icon">🔍</div><div class="empty-t">No signals found</div><div class="empty-s">Strategy filters found no matches in last 4 days</div></div></td></tr>`;
     return;
   }
   tb.innerHTML=data.map(s=>{
@@ -542,6 +561,7 @@ function renderTable(){
       <td class="pv ${s.passROC?'g':'r'}">${s.roc??'—'}</td>
       <td class="pv ${s.passVMI?'g':'r'}">${s.vmi??'—'}</td>
       <td class="pv ${s.passVPCI?'g':'r'}">${s.vpci??'—'}</td>
+      <td style="text-align:left">${s.sector?'<span style=\'font-size:.68rem;color:var(--text2)\'>'+esc(s.sector)+'</span>':'<span style=\'opacity:.4\'>—</span>'}</td>
       <td><span class="sig-badge">✓ ALL</span></td>
     </tr>`;
   }).join('');
