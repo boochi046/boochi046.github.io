@@ -266,17 +266,18 @@ td:first-child{text-align:left;padding-left:1.1rem;}
         <thead><tr>
           <th onclick="srt('ticker')" style="text-align:left;padding-left:1.1rem">Ticker <span class="sa" id="sa-ticker">↕</span></th>
           <th onclick="srt('daysAgo')">Signal <span class="sa" id="sa-daysAgo">↕</span></th>
+          <th onclick="srt('eoDir')">Confirm <span class="sa" id="sa-eoDir">↕</span></th>
           <th onclick="srt('price')">Buy Price <span class="sa" id="sa-price">↕</span></th>
           <th onclick="srt('chgPct')">Day % <span class="sa" id="sa-chgPct">↕</span></th>
           <th onclick="srt('m1')">1M % <span class="sa" id="sa-m1">↕</span></th>
           <th onclick="srt('m3')">3M % <span class="sa" id="sa-m3">↕</span></th>
           <th onclick="srt('m6')">6M % <span class="sa" id="sa-m6">↕</span></th>
+          <th onclick="srt('targetUpside')">Target Upside <span class="sa" id="sa-targetUpside">↕</span></th>
           <th onclick="srt('elo')">Elegant Osc <span class="sa" id="sa-elo">↕</span></th>
           <th onclick="srt('decyc')">Decycler Osc <span class="sa" id="sa-decyc">↕</span></th>
           <th onclick="srt('stop')">Stop −40% <span class="sa" id="sa-stop">↕</span></th>
           <th onclick="srt('target')">Target +100% <span class="sa" id="sa-target">↕</span></th>
           <th onclick="srt('sector')" style="text-align:left">Sector <span class="sa" id="sa-sector">↕</span></th>
-          <th onclick="srt('eoDir')">Confirm <span class="sa" id="sa-eoDir">↕</span></th>
         </tr></thead>
         <tbody id="resBody"></tbody>
       </table>
@@ -436,6 +437,14 @@ function getSector(row){
   }
   return null;
 }
+// Pull the analyst price-target upside (%) from a main-sheet row, tolerant of the exact column name
+function getTargetUpside(row){
+  if(!row) return null;
+  const bad=v=>v===undefined||v===null||(''+v).trim()===''||v==='Unavailable'||v==='-'||v==='N/A'||v==='#N/A';
+  const cand=["Top Analysts' Price Target - upside/downside","Analysts' Price Target - upside/downside","Price Target Upside %","Target Upside %","Target Upside"];
+  for(const k of cand){ if(k in row && !bad(row[k])){const n=parseFloat(String(row[k]).replace(/[%,\s]/g,'')); if(!isNaN(n)) return n;} }
+  return null;
+}
 
 // ---- Ehlers indicators ----
 // Decycler Oscillator: DO = 100*(P-Decycler)/P, N=30
@@ -480,7 +489,7 @@ function elegantOsc(P){
 }
 
 // ---- Strategy ----
-function runEhlers(ticker,wl,P,dates,sector){
+function runEhlers(ticker,wl,P,dates,sector,tgtUp){
   const n=P.length;
   if(n<40) return [];
   const DEC=decyclerOsc(P,30), ELO=elegantOsc(P);
@@ -501,6 +510,7 @@ function runEhlers(ticker,wl,P,dates,sector){
       ticker,
       daysAgo:da, date:dates[i], price:+price.toFixed(2), sector:sector||null,
       m1:ret(21), m3:ret(63), m6:ret(126),
+      targetUpside:(tgtUp==null?null:tgtUp),
       elo:+elo.toFixed(4), decyc:+decyc.toFixed(3),
       stop:+(price*0.60).toFixed(2),     // initial stop -40%
       target:+(price*2.00).toFixed(2),   // take-profit +100%
@@ -529,25 +539,27 @@ function renderTable(){
   document.getElementById('resCount').textContent=data.length+' signal'+(data.length!==1?'s':'');
   const tb=document.getElementById('resBody');
   if(!data.length){
-    tb.innerHTML=`<tr><td colspan="13"><div class="empty"><div class="empty-icon">\uD83C\uDF0A</div><div class="empty-t">No signals found</div><div class="empty-s">No below-trend dips with negative momentum under $50 in the last 4 days</div></div></td></tr>`;
+    tb.innerHTML=`<tr><td colspan="14"><div class="empty"><div class="empty-icon">\uD83C\uDF0A</div><div class="empty-t">No signals found</div><div class="empty-s">No below-trend dips with negative momentum under $50 in the last 4 days</div></div></td></tr>`;
     return;
   }
   tb.innerHTML=data.map(s=>{
     const sec=s.sector?`<span class="sector-tx">${esc(s.sector)}</span>`:'<span style="opacity:.4">\u2014</span>';
+    const tuC=s.targetUpside==null?'neu':s.targetUpside>=0?'pos':'neg';
     return`<tr>
       <td><span class="tkr">${esc(s.ticker)}</span><span class="pass-dots"><span class="pd ${s.passELO?'on':''}" title="Elegant Osc &lt; 0"></span><span class="pd ${s.passDEC?'on':''}" title="Decycler Osc &lt; 0"></span><span class="pd ${s.passPr?'on':''}" title="Price &lt; $50"></span></span></td>
       <td><span class="sig-badge day-badge">${dayLbl[s.daysAgo]||s.daysAgo+'d'}</span></td>
+      <td>${s.eoDir>0?'<span class="sig-badge">\u25B2 Rising</span>':s.eoDir<0?'<span class="pill neg">\u25BC Falling</span>':'<span class="pill neu">\u25AC Flat</span>'}</td>
       <td><strong>$${s.price.toFixed(2)}</strong></td>
       <td>${pill(s.chgPct)}</td>
       <td>${pill(s.m1)}</td>
       <td>${pill(s.m3)}</td>
       <td>${pill(s.m6)}</td>
+      <td><span class="pill ${tuC}">${s.targetUpside==null?'\u2014':(s.targetUpside>=0?'+':'')+s.targetUpside.toFixed(1)+'%'}</span></td>
       <td class="osc-cell neg">${s.elo.toFixed(4)}</td>
       <td class="osc-cell neg">${s.decyc.toFixed(2)}%</td>
       <td><span class="stop-pill" title="Initial stop \u221240% from entry">$${s.stop.toFixed(2)}</span></td>
       <td><span class="tgt-pill" title="Take-profit +100% from entry">$${s.target.toFixed(2)}</span></td>
       <td style="text-align:left">${sec}</td>
-      <td>${s.eoDir>0?'<span class="sig-badge">\u25B2 Rising</span>':s.eoDir<0?'<span class="pill neg">\u25BC Falling</span>':'<span class="pill neu">\u25AC Flat</span>'}</td>
     </tr>`;
   }).join('');
 }
@@ -610,8 +622,9 @@ async function runScreener(){
         const arr=cMap[t];
         const P=arr.map(x=>x.val), dates=arr.map(x=>x.date);
         const sector=getSector(mainLookup[t]||null);
+        const tgtUp=getTargetUpside(mainLookup[t]||null);
         if(sector) withSector++;
-        const sigs=runEhlers(t, wl, P, dates, sector);
+        const sigs=runEhlers(t, wl, P, dates, sector, tgtUp);
         if(sigs.length){hits+=sigs.length; allSignals.push(...sigs);}
       });
       totalSignals+=hits; wlOK++;
