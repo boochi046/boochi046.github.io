@@ -207,14 +207,15 @@ td:first-child{text-align:left;padding-left:1.1rem;}
     <span style="opacity:.5">📄</span> <strong style="color:var(--text2)">screener-ehlers-score.html</strong> <span style="opacity:.5">· 🏆 Top Score</span>
   </div>
   <div class="page-title">🌊 <span class="acc">Dip-Reversion</span> · Top Score</div>
-  <div class="page-sub">🏆 Top Score · low-lag Ehlers oscillators · 4-day lookback · buy below-trend dips</div>
+  <div class="page-sub">🏆 Top Score · combined A (dip-on-volume) + B (top-3/day by VPCI) · 4-day lookback</div>
 
   <div class="strat-box">
-    <span class="strat-lbl">Entry:</span>
+    <span class="strat-lbl">Combined A+B:</span>
     <span class="sp">📉 Elegant Osc &lt; 0</span>
     <span class="sp">🌀 Decycler Osc &lt; 0</span>
     <span class="sp">💰 Price &lt; $50</span>
-    <span class="sp">✅ Confirm: EO rising</span>
+    <span class="sp">⭐ A: Vol ≥ 1.5× &amp; ROC(7) 0–20</span>
+    <span class="sp">📊 B: fill to top-3/day by VPCI</span>
     <span class="sp">🛑 Stop −40%</span>
     <span class="sp">🎯 Target +100%</span>
   </div>
@@ -226,7 +227,7 @@ td:first-child{text-align:left;padding-left:1.1rem;}
   <div class="load-card" id="loadCard">
     <div class="load-title"><span class="spinner"></span> Loading Top Score · Dip-Reversion</div>
     <div class="load-steps" id="loadSteps">
-    <div class="ls" id="step-score">⬜ 🏆 Top Score <span style="opacity:.45;font-size:.58rem">(close gid=1283231042 + sector)</span></div>
+    <div class="ls" id="step-score">⬜ 🏆 Top Score <span style="opacity:.45;font-size:.58rem">(close + volume + sector)</span></div>
     </div>
     <div class="load-msg" id="loadMsg">Starting…</div>
   </div>
@@ -235,9 +236,9 @@ td:first-child{text-align:left;padding-left:1.1rem;}
   <div class="status-bar" id="statusBar" style="display:none">
     <div class="status-left">
       <div class="si"><div class="si-lbl">Tickers Scanned</div><div class="si-val" id="stTickers">—</div></div>
-      <div class="si"><div class="si-lbl">Signals (4 days)</div><div class="si-val g" id="stSignals">—</div></div>
+      <div class="si"><div class="si-lbl">Daily Picks</div><div class="si-val g" id="stSignals">—</div></div>
       <div class="si"><div class="si-lbl">Today</div><div class="si-val y" id="stToday">—</div></div>
-      <div class="si"><div class="si-lbl">Confirmed</div><div class="si-val" id="stWl">—</div></div>
+      <div class="si"><div class="si-lbl">A-list</div><div class="si-val" id="stWl">—</div></div>
       <div class="live-tag"><span class="live-dot"></span> Live</div>
     </div>
     <div style="display:flex;gap:.5rem;align-items:center">
@@ -266,9 +267,13 @@ td:first-child{text-align:left;padding-left:1.1rem;}
         <thead><tr>
           <th onclick="srt('ticker')" style="text-align:left;padding-left:1.1rem">Ticker <span class="sa" id="sa-ticker">↕</span></th>
           <th onclick="srt('daysAgo')">Signal <span class="sa" id="sa-daysAgo">↕</span></th>
+          <th onclick="srt('tier')">Setup <span class="sa" id="sa-tier">↕</span></th>
           <th onclick="srt('eoDir')">Confirm <span class="sa" id="sa-eoDir">↕</span></th>
           <th onclick="srt('price')">Buy Price <span class="sa" id="sa-price">↕</span></th>
           <th onclick="srt('chgPct')">Day % <span class="sa" id="sa-chgPct">↕</span></th>
+          <th onclick="srt('roc')">ROC(7) <span class="sa" id="sa-roc">↕</span></th>
+          <th onclick="srt('volRatio')">Vol × <span class="sa" id="sa-volRatio">↕</span></th>
+          <th onclick="srt('vpci')">VPCI <span class="sa" id="sa-vpci">↕</span></th>
           <th onclick="srt('m1')">1M % <span class="sa" id="sa-m1">↕</span></th>
           <th onclick="srt('m3')">3M % <span class="sa" id="sa-m3">↕</span></th>
           <th onclick="srt('m6')">6M % <span class="sa" id="sa-m6">↕</span></th>
@@ -285,7 +290,7 @@ td:first-child{text-align:left;padding-left:1.1rem;}
   </div>
 
   <div class="foot-note" style="display:none" id="footNote">
-    Elegant Osc = SuperSmoother( tanh( (P−P[2]) / RMS(Δ,8) ), 10 ) ∈ [−1,+1] | Decycler Osc = 100×(P−Decycler₃₀)/P (%) | Buy at next open (T+1) · Initial stop −40% · Take-profit +100% · Breakeven: once +30%, raise stop to +5% · Max hold 126d. <strong>In-sample backtest — walk-forward validation required before sizing real capital.</strong>
+    ★ Option A (take all): Elegant Osc&lt;0, Decycler Osc&lt;0, Volume ≥1.5× 20d-avg, ROC(7) 0–20%, price&lt;$50. B (fill to 3/day, ranked by VPCI desc): Elegant Osc&lt;0, Decycler Osc&lt;0, price&lt;$50. Buy next open (T+1) · stop −40% · target +100% · breakeven +30%→+5% · max hold 126d. <strong>In-sample backtest — walk-forward validation required before sizing real capital.</strong>
   </div>
 
   <div class="debug-card">
@@ -324,10 +329,10 @@ const ANALYST_MAIN = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRxlFkcZpt
 
 const WATCHLISTS = [
   { key:'score', name:'Top Score', emoji:'🏆', color:'#f59e0b',
-    close: BASE_SCORE.replace('GID','1283231042'), main: BASE_SCORE.replace('GID','0') },
+    close: BASE_SCORE.replace('GID','1283231042'), volume: BASE_SCORE.replace('GID','1289012452'), main: BASE_SCORE.replace('GID','0') },
 ];
 
-let allSignals=[], dayFilter=-1, sortCol='daysAgo', sortDir=1;
+let allSignals=[], dayFilter=-1, sortCol='order', sortDir=1;
 let dbgLines=[];
 function dbg(m){dbgLines.push(m);}
 function toggleDebug(){
@@ -487,12 +492,18 @@ function elegantOsc(P){
   const IF=d.map((dv,i)=>{const rr=r[i];if(isNaN(rr)||rr===0)return 0;return Math.tanh(dv/rr);});
   return superSmoother(IF,10);
 }
+// SMA + volume-weighted MA (for VPCI ranking and volume ratio)
+function sma(a,p){return a.map((_,i)=>i<p-1?NaN:a.slice(i-p+1,i+1).reduce((s,v)=>s+v,0)/p);}
+function vwma(C,V,p){return C.map((_,i)=>{if(i<p-1)return NaN;const c=C.slice(i-p+1,i+1),v=V.slice(i-p+1,i+1),sv=v.reduce((a,b)=>a+b,0);return sv>0?c.reduce((a,x,j)=>a+x*v[j],0)/sv:sma(C,p)[i];});}
 
 // ---- Strategy ----
-function runEhlers(ticker,wl,P,dates,sector,tgtUp){
+function runEhlers(ticker,wl,P,V,dates,sector,tgtUp){
   const n=P.length;
   if(n<40) return [];
+  const lp=Math.min(50,Math.max(20,n-4)), sp=Math.min(10,Math.max(5,Math.floor(n*0.15)));
   const DEC=decyclerOsc(P,30), ELO=elegantOsc(P);
+  const s50=sma(P,lp), s10=sma(P,sp), vw50=vwma(P,V,lp), vw10=vwma(P,V,sp), vs10=sma(V,sp), vs50=sma(V,lp), v20=sma(V,20);
+  const hasVol=V.some(v=>v>0);
   const out=[];
   for(let da=0;da<=3;da++){
     const i=n-1-da;
@@ -500,25 +511,46 @@ function runEhlers(ticker,wl,P,dates,sector,tgtUp){
     const elo=ELO[i], decyc=DEC[i], price=P[i];
     if(isNaN(elo)||isNaN(decyc)||!(price>0)) continue;
     const pELO=elo<0, pDEC=decyc<0, pPr=price<50;
-    if(!(pELO&&pDEC&&pPr)) continue;
+    if(!(pELO&&pDEC&&pPr)) continue;                        // base dip gate (Option B)
+    const roc=(i>=7&&P[i-7]>0)?((price/P[i-7])-1)*100:null; // ROC(7): 7-day trend
+    const volRatio=(hasVol&&!isNaN(v20[i])&&v20[i]>0)? V[i]/v20[i] : null;
+    const vpc=vw50[i]-s50[i], vpr=s10[i]>0?vw10[i]/s10[i]:NaN, vm2=vs50[i]>0?vs10[i]/vs50[i]:NaN;
+    let vpci=(!isNaN(vpc)&&!isNaN(vpr)&&!isNaN(vm2)&&s50[i]>0)?(vpc/s50[i])*vpr*vm2:null;
+    if(vpci!=null&&isNaN(vpci)) vpci=null;
+    const pVol=volRatio!=null&&volRatio>=1.5;              // Option A: volume surge >=1.5x
+    const pRoc=roc!=null&&roc>0&&roc<20;                   // Option A: ROC(7) in (0,20)
+    const tier=(pVol&&pRoc)?'A':'B';
     const prevElo=ELO[i-1];
-    const rising=!isNaN(prevElo)&&elo>prevElo;   // optional "dip stabilising" confirm
-    const eoDir=isNaN(prevElo)?0:(elo>prevElo?1:(elo<prevElo?-1:0));  // EO slope: +1 up / 0 flat / -1 down
+    const rising=!isNaN(prevElo)&&elo>prevElo;
+    const eoDir=isNaN(prevElo)?0:(elo>prevElo?1:(elo<prevElo?-1:0));
     const prev=P[i-1];
-    const ret=k=>{const j=i-k; return (j>=0 && P[j]>0)? +((price/P[j]-1)*100).toFixed(2) : null;};  // % gain vs k trading days before signal bar
+    const ret=k=>{const j=i-k; return (j>=0 && P[j]>0)? +((price/P[j]-1)*100).toFixed(2) : null;};
     out.push({
-      ticker,
+      ticker, tier,
       daysAgo:da, date:dates[i], price:+price.toFixed(2), sector:sector||null,
+      roc:(roc==null?null:+roc.toFixed(2)), volRatio:(volRatio==null?null:+volRatio.toFixed(2)),
+      vpci:(vpci==null?null:+vpci.toFixed(4)), pVol, pRoc,
       m1:ret(21), m3:ret(63), m6:ret(126),
       targetUpside:(tgtUp==null?null:tgtUp),
       elo:+elo.toFixed(4), decyc:+decyc.toFixed(3),
-      stop:+(price*0.60).toFixed(2),     // initial stop -40%
-      target:+(price*2.00).toFixed(2),   // take-profit +100%
-      beTrig:+(price*1.30).toFixed(2),   // breakeven trigger +30%
-      beStop:+(price*1.05).toFixed(2),   // raised stop +5%
+      stop:+(price*0.60).toFixed(2), target:+(price*2.00).toFixed(2),
+      beTrig:+(price*1.30).toFixed(2), beStop:+(price*1.05).toFixed(2),
       chgPct: prev>0?(price-prev)/prev*100:null,
       confirm:rising, eoDir, passELO:pELO, passDEC:pDEC, passPr:pPr
     });
+  }
+  return out;
+}
+// Combined daily selection (playbook section 6): take every Option A, then fill to 3/day with best Option B by VPCI
+function selectDaily(cands){
+  const out=[]; let ord=0;
+  for(let da=0; da<=3; da++){
+    const day=cands.filter(s=>s.daysAgo===da);
+    const A=day.filter(s=>s.tier==='A');
+    const B=day.filter(s=>s.tier==='B').sort((x,y)=>((y.vpci==null?-1e9:y.vpci)-(x.vpci==null?-1e9:x.vpci)));
+    const sel=A.concat(B.slice(0, Math.max(0, 3-A.length)));
+    sel.forEach(s=>{ s.order=ord++; });
+    out.push(...sel);
   }
   return out;
 }
@@ -536,21 +568,29 @@ function renderTable(){
     if(bv==null) bv=sortDir>0?Infinity:-Infinity;
     return typeof av==='string'?sortDir*av.localeCompare(bv):sortDir*(av-bv);
   });
-  document.getElementById('resCount').textContent=data.length+' signal'+(data.length!==1?'s':'');
+  document.getElementById('resCount').textContent=data.length+' pick'+(data.length!==1?'s':'');
   const tb=document.getElementById('resBody');
   if(!data.length){
-    tb.innerHTML=`<tr><td colspan="14"><div class="empty"><div class="empty-icon">\uD83C\uDF0A</div><div class="empty-t">No signals found</div><div class="empty-s">No below-trend dips with negative momentum under $50 in the last 4 days</div></div></td></tr>`;
+    tb.innerHTML=`<tr><td colspan="18"><div class="empty"><div class="empty-icon">\uD83C\uDF0A</div><div class="empty-t">No picks found</div><div class="empty-s">No qualifying dips under $50 in the last 4 days</div></div></td></tr>`;
     return;
   }
   tb.innerHTML=data.map(s=>{
     const sec=s.sector?`<span class="sector-tx">${esc(s.sector)}</span>`:'<span style="opacity:.4">\u2014</span>';
     const tuC=s.targetUpside==null?'neu':s.targetUpside>=0?'pos':'neg';
+    const setup=s.tier==='A'?'<span class="sig-badge" title="Option A: confirmed dip-on-volume (Vol\u22651.5\u00d7, ROC 0\u201320)">\u2605 A</span>':'<span class="pill neu" title="Option B: base dip, kept top-3/day by VPCI">B</span>';
+    const rocCell=s.roc==null?'<span class="pill neu">\u2014</span>':`<span class="pill ${s.pRoc?'pos':'neu'}">${s.roc>=0?'+':''}${s.roc.toFixed(1)}%</span>`;
+    const volCell=s.volRatio==null?'<span class="pill neu">\u2014</span>':`<span class="pill ${s.pVol?'pos':'neu'}">${s.volRatio.toFixed(2)}\u00d7</span>`;
+    const vpciCell=s.vpci==null?'<span style="opacity:.4">\u2014</span>':`<span class="osc-cell" style="color:${s.vpci>=0?'var(--green)':'var(--red)'}">${s.vpci.toFixed(3)}</span>`;
     return`<tr>
       <td><span class="tkr">${esc(s.ticker)}</span><span class="pass-dots"><span class="pd ${s.passELO?'on':''}" title="Elegant Osc &lt; 0"></span><span class="pd ${s.passDEC?'on':''}" title="Decycler Osc &lt; 0"></span><span class="pd ${s.passPr?'on':''}" title="Price &lt; $50"></span></span></td>
       <td><span class="sig-badge day-badge">${dayLbl[s.daysAgo]||s.daysAgo+'d'}</span></td>
+      <td>${setup}</td>
       <td>${s.eoDir>0?'<span class="sig-badge">\u25B2 Rising</span>':s.eoDir<0?'<span class="pill neg">\u25BC Falling</span>':'<span class="pill neu">\u25AC Flat</span>'}</td>
       <td><strong>$${s.price.toFixed(2)}</strong></td>
       <td>${pill(s.chgPct)}</td>
+      <td>${rocCell}</td>
+      <td>${volCell}</td>
+      <td>${vpciCell}</td>
       <td>${pill(s.m1)}</td>
       <td>${pill(s.m3)}</td>
       <td>${pill(s.m6)}</td>
@@ -609,27 +649,40 @@ async function runScreener(){
       if(!closeP){await new Promise(r=>setTimeout(r,800)); closeP=await fetchSheet(wl.close, wl.key, 5);}
       if(!closeP){ setStep(wl.key,'fail','close FAILED'); dbg('FAIL close: '+wl.name); continue; }
 
-      msg('Fetching '+wl.name+' sector data\u2026');
+      msg('Fetching '+wl.name+' volume\u2026');
+      const volP=wl.volume?await fetchSheet(wl.volume, wl.key, 5):null;
+      if(!volP) dbg('note: '+wl.name+' volume unavailable \u2014 Option A (vol\u22651.5\u00d7) & VPCI rank disabled; base dips still listed');
+
+      msg('Fetching '+wl.name+' sector / targets\u2026');
       const mainP=await fetchSheet(wl.main, wl.key, 2);   // main may be wide/short; tolerate fewer lines
-      if(!mainP) dbg('note: '+wl.name+' sector sheet unavailable \u2014 sector will show as \u2014');
+      if(!mainP) dbg('note: '+wl.name+' main sheet unavailable \u2014 sector / target upside will show as \u2014');
 
       const cMap=parseWide(closeP);
+      const vMap=parseWide(volP);
       const mainLookup=parseMain(mainP);
       const tickers=Object.keys(cMap);
       totalTickers+=tickers.length;
-      let hits=0, withSector=0;
+      let cands=[], withSector=0, volTickers=0;
       tickers.forEach(t=>{
         const arr=cMap[t];
         const P=arr.map(x=>x.val), dates=arr.map(x=>x.date);
+        // align volume to close by date; fall back to position when lengths match (tab date strings can differ)
+        const vArr=vMap[t]||[]; const vm={}; vArr.forEach(x=>vm[x.date]=x.val);
+        let Vv=arr.map(x=>vm[x.date]||0);
+        if(vArr.length===arr.length && !Vv.some(v=>v>0)) Vv=arr.map((x,idx)=>vArr[idx]?vArr[idx].val:0);
+        if(Vv.some(v=>v>0)) volTickers++;
         const sector=getSector(mainLookup[t]||null);
         const tgtUp=getTargetUpside(mainLookup[t]||null);
         if(sector) withSector++;
-        const sigs=runEhlers(t, wl, P, dates, sector, tgtUp);
-        if(sigs.length){hits+=sigs.length; allSignals.push(...sigs);}
+        const sigs=runEhlers(t, wl, P, Vv, dates, sector, tgtUp);
+        if(sigs.length) cands.push(...sigs);
       });
-      totalSignals+=hits; wlOK++;
-      setStep(wl.key,'done',tickers.length+'tk \u00b7 '+hits+' sig');
-      dbg(wl.name+': '+tickers.length+' tickers, '+hits+' signals, sector on '+withSector);
+      const selected=selectDaily(cands);
+      const aCount=selected.filter(s=>s.tier==='A').length;
+      totalSignals+=selected.length; wlOK++;
+      allSignals.push(...selected);
+      setStep(wl.key,'done',tickers.length+'tk \u00b7 '+selected.length+' picks \u00b7 '+aCount+' A');
+      dbg(wl.name+': '+tickers.length+' tickers, '+cands.length+' base dips \u2192 '+selected.length+' selected ('+aCount+' A-list), vol on '+volTickers+', sector on '+withSector);
     }
 
     if(wlOK===0){
@@ -643,7 +696,7 @@ async function runScreener(){
     document.getElementById('stTickers').textContent=totalTickers;
     document.getElementById('stSignals').textContent=totalSignals;
     document.getElementById('stToday').textContent=allSignals.filter(s=>s.daysAgo===0).length;
-    document.getElementById('stWl').textContent=allSignals.filter(s=>s.confirm).length;
+    document.getElementById('stWl').textContent=allSignals.filter(s=>s.tier==='A').length;
     const tlabel='Updated: '+new Date().toLocaleTimeString();
     document.getElementById('stTime').textContent=tlabel;
     updateSbTime(tlabel);
