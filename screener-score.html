@@ -187,15 +187,15 @@ td:first-child{text-align:left;padding-left:1.1rem;}
       <span style="opacity:.5">📄</span> <strong style="color:var(--text2)">screener-score.html</strong> <span style="opacity:.5">· 🏆 Top Score Screener</span>
     </div>
     <div class="page-title">🏆 <span class="acc">Top Score</span> Screener</div>
-    <div class="page-sub">~300+ tickers · 4-day lookback · ROC(7) · VMI · VPCI · Price &lt; $50 · Price &gt; SMA(50)</div>
+    <div class="page-sub">~300+ tickers · 4-day lookback · Flow Surge Ranked · Top 3 Isolation</div>
 
     <div class="strat-box">
-      <span class="strat-lbl">Strategy Rules:</span>
+      <span class="strat-lbl">Rules:</span>
       <span class="sp">📈 ROC(7): 0 &lt; x &lt; 20</span>
       <span class="sp">⚡ VMI ≥ 1.05</span>
       <span class="sp">💧 VPCI: 0 &lt; x &lt; 1.5</span>
-      <span class="sp">💰 Price &lt; $50</span>
-      <span class="sp">📊 Price &gt; 50 SMA</span>
+      <span class="sp">💰 Price &lt; $50 &amp; &gt; 50 SMA</span>
+      <span class="sp">🌊 Flow Surge Rank</span>
       <span class="sp">🎯 Target: +75% | Stop: -25%</span>
     </div>
 
@@ -204,7 +204,7 @@ td:first-child{text-align:left;padding-left:1.1rem;}
 
     <!-- Load Progress Card -->
     <div class="load-card" id="loadCard">
-      <div class="load-title"><span class="spinner"></span> Loading Top Score Datasets</div>
+      <div class="load-title"><span class="spinner"></span> Loading Datasets</div>
       <div class="load-steps" id="loadSteps">
         <div class="ls" id="step-close">⬜ Close Prices <span style="opacity:.45;font-size:.58rem">(gid=1283231042)</span></div>
         <div class="ls" id="step-open">⬜ Open Prices <span style="opacity:.45;font-size:.58rem">(gid=1419154816)</span></div>
@@ -221,14 +221,14 @@ td:first-child{text-align:left;padding-left:1.1rem;}
     <div class="status-bar" id="statusBar" style="display:none">
       <div class="status-left">
         <div class="si"><div class="si-lbl">Tickers</div><div class="si-val" id="stTickers">—</div></div>
-        <div class="si"><div class="si-lbl">Ranked Setups (4D)</div><div class="si-val g" id="stSignals">—</div></div>
-        <div class="si"><div class="si-lbl">New Today</div><div class="si-val y" id="stToday">—</div></div>
+        <div class="si"><div class="si-lbl">Top 3 Setups</div><div class="si-val g" id="stSignals">—</div></div>
+        <div class="si"><div class="si-lbl">Today's Picks</div><div class="si-val y" id="stToday">—</div></div>
         <div class="si"><div class="si-lbl">Historical Bars</div><div class="si-val" id="stBars">—</div></div>
-        <div class="live-tag"><span class="live-dot"></span> Active</div>
+        <div class="live-tag"><span class="live-dot"></span> Cached / Live</div>
       </div>
       <div style="display:flex;gap:.5rem;align-items:center">
         <span style="font-size:.6rem;color:var(--muted);font-family:'JetBrains Mono',monospace" id="stTime">—</span>
-        <button class="btn" onclick="runScreener()">↻ Refresh</button>
+        <button class="btn" onclick="runScreener(true)">↻ Force Refresh</button>
       </div>
     </div>
 
@@ -238,13 +238,13 @@ td:first-child{text-align:left;padding-left:1.1rem;}
       <button class="day-tab" onclick="setDay(1,this)">Yesterday</button>
       <button class="day-tab" onclick="setDay(2,this)">2 Days Ago</button>
       <button class="day-tab" onclick="setDay(3,this)">3 Days Ago</button>
-      <button class="day-tab active" onclick="setDay(-1,this)">All 4 Days</button>
+      <button class="day-tab active" onclick="setDay(-1,this)">All 4 Days (Top 3/Day)</button>
     </div>
 
     <!-- Results Table Card -->
     <div class="card" id="resultsCard" style="display:none">
       <div class="card-hdr">
-        <span class="card-title">🎯 Validated Strategy Setups</span>
+        <span class="card-title">🎯 Top 3 Isolated Setups Per Day</span>
         <span class="badge" id="resCount">0 signals</span>
       </div>
       <div class="scroll-wrap" style="max-height:600px">
@@ -252,16 +252,17 @@ td:first-child{text-align:left;padding-left:1.1rem;}
           <thead><tr>
             <th onclick="srt('ticker')" style="text-align:left;padding-left:1.1rem">Ticker <span class="sa" id="sa-ticker">↕</span></th>
             <th onclick="srt('daysAgo')">Signal <span class="sa" id="sa-daysAgo">↕</span></th>
+            <th onclick="srt('flowSurge')" style="color:var(--accent)">Flow Surge <span class="sa on" id="sa-flowSurge">▼</span></th>
             <th onclick="srt('price')">Price <span class="sa" id="sa-price">↕</span></th>
-            <th onclick="srt('prevPrice')">Prev Close <span class="sa" id="sa-prevPrice">↕</span></th>
             <th onclick="srt('chgPct')">Day % <span class="sa" id="sa-chgPct">↕</span></th>
+            <th onclick="srt('volSurge')">Vol Surge <span class="sa" id="sa-volSurge">↕</span></th>
             <th onclick="srt('ret1m')">1M % <span class="sa" id="sa-ret1m">↕</span></th>
             <th onclick="srt('ret3m')">3M % <span class="sa" id="sa-ret3m">↕</span></th>
             <th onclick="srt('ret6m')">6M % <span class="sa" id="sa-ret6m">↕</span></th>
             <th onclick="srt('targetUpside')">Target Upside <span class="sa" id="sa-targetUpside">↕</span></th>
             <th onclick="srt('target')">Target $ <span class="sa" id="sa-target">↕</span></th>
             <th onclick="srt('roc')">ROC(7) <span class="sa" id="sa-roc">↕</span></th>
-            <th onclick="srt('vmi')" style="color:var(--accent)">VMI <span class="sa" id="sa-vmi">↕</span></th>
+            <th onclick="srt('vmi')">VMI <span class="sa" id="sa-vmi">↕</span></th>
             <th onclick="srt('vpci')">VPCI <span class="sa" id="sa-vpci">↕</span></th>
             <th>Passes</th>
           </tr></thead>
@@ -271,7 +272,7 @@ td:first-child{text-align:left;padding-left:1.1rem;}
     </div>
 
     <div class="foot-note" style="display:none" id="footNote">
-      ROC(7)=(Close/Close[7d ago] - 1)×100 [0,20] | VMI=1+(MFI(14)-RSI(14))/100 [≥1.05] | VPCI=VPC×VPR×VM/SMA(50) [0,1.5] | Price &lt; $50 &amp; &gt; SMA(50)
+      Ranking Formula: Flow Surge = (VMI - 1.0) × (Volume / 20-Day Avg Volume) | Isolated strictly to Top 3 per session | Price &lt; $50 &amp; &gt; 50 SMA
     </div>
 
     <!-- Debug Log -->
@@ -314,7 +315,7 @@ function toggleDebug() {
   t.textContent = open ? '▼ show' : '▲ hide';
 }
 
-// ── SCREENER CONFIGURATION & LOGIC ──
+// ── SCREENER CONFIGURATION & CACHE ──
 const SHEET_ID = 'YOUR_GOOGLE_SHEET_ID_HERE'; // Replace with your Google Sheet ID
 
 const GIDS = {
@@ -327,9 +328,12 @@ const GIDS = {
   main:   '0'
 };
 
+const CACHE_KEY = 'top_score_flow_surge_v2';
+const CACHE_EXPIRY_MS = 4 * 60 * 60 * 1000; // 4 hours
+
 let allSignals = [];
 let currentDayFilter = -1;
-let sortCol = 'vmi', sortAsc = false;
+let sortCol = 'flowSurge', sortAsc = false; // Default: Rank by highest Flow Surge
 
 function getCsvUrl(gid) {
   return `https://docs.google.com/spreadsheets/d/${SHEET_ID}/export?format=csv&gid=${gid}`;
@@ -364,7 +368,7 @@ function parseCsvText(text) {
     for (let j = 1; j < row.length; j++) {
       const ticker = headers[j];
       const val = parseFloat(row[j]);
-      if (data[ticker]) data[ticker].push(isNaN(val) ? null : val);
+      data[ticker].push(isNaN(val) ? null : val);
     }
   }
   return { dates, data, headers: headers.slice(1), rawLines: lines };
@@ -460,10 +464,29 @@ function calcVPCI(closes, vols, shortP = 10, longP = 50) {
   return vpci;
 }
 
-async function runScreener() {
+async function runScreener(forceRefresh = false) {
   if (location.protocol === 'file:') {
     document.getElementById('warnLocal').style.display = 'block';
   }
+
+  // Fast cache restoration
+  if (!forceRefresh) {
+    const cached = localStorage.getItem(CACHE_KEY);
+    if (cached) {
+      try {
+        const { timestamp, signals, tickersCount, barsCount } = JSON.parse(cached);
+        if (Date.now() - timestamp < CACHE_EXPIRY_MS) {
+          allSignals = signals;
+          displayScreenerData(tickersCount, allSignals.length, barsCount, new Date(timestamp));
+          renderTable();
+          return;
+        }
+      } catch (e) {
+        localStorage.removeItem(CACHE_KEY);
+      }
+    }
+  }
+
   try {
     document.getElementById('loadCard').style.display = 'block';
     document.getElementById('statusBar').style.display = 'none';
@@ -471,11 +494,14 @@ async function runScreener() {
     document.getElementById('resultsCard').style.display = 'none';
     document.getElementById('errBox').style.display = 'none';
 
-    logDebug("Starting CSV fetches...");
-    const [cRaw, oRaw, hRaw, lRaw, vRaw, pctRaw, mainRaw] = await Promise.all([
+    logDebug("Fetching data sheets in two batches...");
+    const [cRaw, oRaw, hRaw] = await Promise.all([
       fetchCsv(GIDS.close, 'step-close'),
       fetchCsv(GIDS.open, 'step-open'),
-      fetchCsv(GIDS.high, 'step-high'),
+      fetchCsv(GIDS.high, 'step-high')
+    ]);
+
+    const [lRaw, vRaw, pctRaw, mainRaw] = await Promise.all([
       fetchCsv(GIDS.low, 'step-low'),
       fetchCsv(GIDS.volume, 'step-volume'),
       fetchCsv(GIDS.pct, 'step-pct'),
@@ -483,19 +509,20 @@ async function runScreener() {
     ]);
 
     const meta = parseMetadata(mainRaw, pctRaw);
-    allSignals = [];
     const tickers = cRaw.headers;
     const len = cRaw.dates.length;
 
+    // Group signals by day to isolate the top 3 per session
+    const dayGroups = { 0: [], 1: [], 2: [], 3: [] };
+
     tickers.forEach(t => {
       const c = cRaw.data[t], h = hRaw.data[t], l = lRaw.data[t], v = vRaw.data[t];
-      if (!c || c.filter(x => x !== null).length < 60) return;
+      if (!c || c.filter(x => x !== null).length < 65) return;
 
       const rsi = calcRSI(c, 14);
       const mfi = calcMFI(h, l, c, v, 14);
       const vpci = calcVPCI(c, v, 10, 50);
 
-      // Check last 4 trading sessions (0 = Today, 1 = Yesterday, 2 = 2d ago, 3 = 3d ago)
       for (let daysAgo = 0; daysAgo < 4; daysAgo++) {
         const idx = len - 1 - daysAgo;
         if (idx < 50 || c[idx] === null) continue;
@@ -506,22 +533,33 @@ async function runScreener() {
         const vp = vpci[idx];
         const sma50 = c.slice(idx - 49, idx + 1).reduce((a, b) => a + b, 0) / 50;
 
-        // Core Rules + 50 SMA Optimization
-        const passPrice = price < 50;
-        const passROC   = roc7 > 0 && roc7 < 20;
-        const passVMI   = vmi >= 1.05;
-        const passVPCI  = vp > 0 && vp < 1.5;
-        const passTrend = price > sma50;
+        // 20-day Volume MA and Vol Surge
+        const vSlice = v.slice(idx - 20, idx);
+        const vma20 = vSlice.reduce((a, b) => a + b, 0) / (vSlice.length || 1);
+        const volSurge = vma20 > 0 ? v[idx] / vma20 : 0;
+        const dollarVol = price * v[idx];
 
-        if (passPrice && passROC && passVMI && passVPCI && passTrend) {
+        // Core Strategy Rules + 50 SMA + Liquidity Guards
+        const passPrice  = price < 50;
+        const passROC    = roc7 > 0 && roc7 < 20;
+        const passVMI    = vmi >= 1.05;
+        const passVPCI   = vp > 0 && vp < 1.5;
+        const passTrend  = price > sma50;
+        const passLiquid = v[idx] >= 100000 && dollarVol >= 5000000;
+
+        if (passPrice && passROC && passVMI && passVPCI && passTrend && passLiquid) {
           const tMeta = meta[t] || {};
-          allSignals.push({
+          const flowSurge = (vmi - 1.0) * volSurge;
+
+          dayGroups[daysAgo].push({
             ticker: t,
             daysAgo: daysAgo,
             date: cRaw.dates[idx],
             price: price,
             prevPrice: c[idx - 1] || price,
             chgPct: c[idx - 1] ? ((price - c[idx - 1]) / c[idx - 1]) * 100 : 0,
+            volSurge: volSurge,
+            flowSurge: flowSurge,
             roc: roc7,
             vmi: vmi,
             vpci: vp,
@@ -531,32 +569,48 @@ async function runScreener() {
             target: tMeta.target || null,
             targetUpside: tMeta.upside !== undefined ? tMeta.upside * 100 : null
           });
-          break; // De-duplicate to display the most recent qualified entry
         }
       }
     });
 
-    document.getElementById('loadCard').style.display = 'none';
-    document.getElementById('statusBar').style.display = 'flex';
-    document.getElementById('dayTabs').style.display = 'flex';
-    document.getElementById('resultsCard').style.display = 'block';
-    document.getElementById('footNote').style.display = 'block';
+    // ── ISOLATE TO TOP 3 PER DAY BY FLOW SURGE ──
+    allSignals = [];
+    for (let d = 0; d < 4; d++) {
+      dayGroups[d].sort((a, b) => b.flowSurge - a.flowSurge);
+      allSignals.push(...dayGroups[d].slice(0, 3));
+    }
 
-    document.getElementById('stTickers').textContent = tickers.length;
-    document.getElementById('stSignals').textContent = allSignals.length;
-    document.getElementById('stToday').textContent = allSignals.filter(s => s.daysAgo === 0).length;
-    document.getElementById('stBars').textContent = len;
-    const now = new Date();
-    document.getElementById('stTime').textContent = now.toLocaleTimeString();
-    updateSbTime(now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }));
+    // Cache Results
+    localStorage.setItem(CACHE_KEY, JSON.stringify({
+      timestamp: Date.now(),
+      signals: allSignals,
+      tickersCount: tickers.length,
+      barsCount: len
+    }));
 
+    displayScreenerData(tickers.length, allSignals.length, len, new Date());
     renderTable();
   } catch (err) {
     document.getElementById('loadCard').style.display = 'none';
     const eb = document.getElementById('errBox');
     eb.style.display = 'block';
-    eb.innerHTML = `<strong>Error loading screener data:</strong> ${err.message}<br><small>Ensure Google Sheet is published to web and CORS is accessible.</small>`;
+    eb.innerHTML = `<strong>Error loading screener data:</strong> ${err.message}<br><small>Google export rate limit or CORS error. Try refreshing in a minute.</small>`;
   }
+}
+
+function displayScreenerData(tickersCount, signalsCount, barsCount, dateObj) {
+  document.getElementById('loadCard').style.display = 'none';
+  document.getElementById('statusBar').style.display = 'flex';
+  document.getElementById('dayTabs').style.display = 'flex';
+  document.getElementById('resultsCard').style.display = 'block';
+  document.getElementById('footNote').style.display = 'block';
+
+  document.getElementById('stTickers').textContent = tickersCount;
+  document.getElementById('stSignals').textContent = signalsCount;
+  document.getElementById('stToday').textContent = allSignals.filter(s => s.daysAgo === 0).length;
+  document.getElementById('stBars').textContent = barsCount;
+  document.getElementById('stTime').textContent = dateObj.toLocaleTimeString();
+  updateSbTime(dateObj.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }));
 }
 
 function setDay(d, btn) {
@@ -596,10 +650,10 @@ function renderTable() {
     return sortAsc ? (va > vb ? 1 : -1) : (va < vb ? 1 : -1);
   });
 
-  document.getElementById('resCount').textContent = `${filtered.length} ranked setups`;
+  document.getElementById('resCount').textContent = `${filtered.length} isolated setups`;
 
   if (filtered.length === 0) {
-    tbody.innerHTML = `<tr><td colspan="14" class="empty"><div class="empty-icon">🔍</div><div class="empty-t">No setups matched strategy rules</div><div class="empty-s">Try selecting "All 4 Days" or refreshing data</div></td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="15" class="empty"><div class="empty-icon">🔍</div><div class="empty-t">No setups qualified</div><div class="empty-s">Try selecting "All 4 Days" or refreshing</div></td></tr>`;
     return;
   }
 
@@ -607,23 +661,24 @@ function renderTable() {
     <tr>
       <td><span class="tkr">${s.ticker}</span></td>
       <td><span class="pill ${s.daysAgo === 0 ? 'pos' : 'neu'}">${s.daysAgo === 0 ? 'Today' : s.daysAgo + 'd ago'}</span></td>
+      <td class="pv g" style="font-weight:700;color:var(--accent)">${s.flowSurge.toFixed(3)}</td>
       <td class="pv">$${s.price.toFixed(2)}</td>
-      <td class="pv">$${s.prevPrice.toFixed(2)}</td>
       <td class="pv ${s.chgPct >= 0 ? 'g' : 'r'}">${fmt(s.chgPct)}</td>
+      <td class="pv">${s.volSurge.toFixed(2)}x</td>
       <td class="pv ${s.ret1m >= 0 ? 'g' : 'r'}">${fmt(s.ret1m)}</td>
       <td class="pv ${s.ret3m >= 0 ? 'g' : 'r'}">${fmt(s.ret3m)}</td>
       <td class="pv ${s.ret6m >= 0 ? 'g' : 'r'}">${fmt(s.ret6m)}</td>
       <td class="pv ${s.targetUpside >= 0 ? 'g' : 'm'}">${fmt(s.targetUpside)}</td>
       <td class="pv">${s.target ? '$' + s.target.toFixed(2) : '—'}</td>
       <td class="pv g">${s.roc.toFixed(1)}%</td>
-      <td class="pv g" style="font-weight:700;color:var(--accent)">${s.vmi.toFixed(2)}</td>
+      <td class="pv g">${s.vmi.toFixed(2)}</td>
       <td class="pv g">${s.vpci.toFixed(4)}</td>
-      <td><span class="pass-dots"><span class="pd on"></span><span class="pd on"></span><span class="pd on"></span><span class="pd on"></span><span class="pd on"></span></span></td>
+      <td><span class="pass-dots"><span class="pd on"></span><span class="pd on"></span><span class="pd on"></span><span class="pd on"></span></span></td>
     </tr>
   `).join('');
 }
 
-document.addEventListener('DOMContentLoaded', runScreener);
+document.addEventListener('DOMContentLoaded', () => runScreener(false));
 </script>
 </body>
 </html>
