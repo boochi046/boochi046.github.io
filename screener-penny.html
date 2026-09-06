@@ -328,7 +328,7 @@ const GIDS = {
   main:   '0'
 };
 
-const CACHE_KEY = 'penny_flow_surge_v5';
+const CACHE_KEY = 'penny_flow_surge_v6';
 const CACHE_EXPIRY_MS = 4 * 60 * 60 * 1000; // 4 hours
 
 let allSignals = [];
@@ -434,16 +434,24 @@ function parseMetadata(mainRaw, pctRaw) {
     const rows = mainRaw.rawLines;
     const h = rows[0].map(x => x.toLowerCase());
     const tkrIdx = h.findIndex(x => x === 'ticker');
-    const ptIdx = h.findIndex(x => x.includes('analyst price target') && !x.includes('%'));
-    const upIdx = h.findIndex(x => x.trim() === 'analyst price target %');
+    const column = name => h.findIndex(x => x.trim() === name);
+    const pairs = [
+      [column('analyst price target'), column('analyst price target %')],
+      [column('best price target upside'), column("top analysts' price target - upside/downside")]
+    ];
     for (let i = 1; i < rows.length; i++) {
-      const tkr = rows[i][tkrIdx];
-      if (tkr) {
-        meta[tkr] = {
-          target: ptIdx >= 0 ? parseSheetNumber(rows[i][ptIdx]) : null,
-          upside: upIdx >= 0 ? parseSheetNumber(rows[i][upIdx]) : null
-        };
+      const tkr = (rows[i][tkrIdx] || '').trim().toUpperCase();
+      if (!tkr) continue;
+      let selected = {target:null, upside:null};
+      for (const [priceIdx, upsideIdx] of pairs) {
+        const target = priceIdx >= 0 ? parseSheetNumber(rows[i][priceIdx]) : null;
+        const upside = upsideIdx >= 0 ? parseSheetNumber(rows[i][upsideIdx]) : null;
+        if (target !== null || upside !== null) {
+          selected = {target, upside};
+          break;
+        }
       }
+      meta[tkr] = selected;
     }
   }
   if (pctRaw && pctRaw.rawLines) {
