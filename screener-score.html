@@ -328,7 +328,7 @@ const GIDS = {
   main:   '0'
 };
 
-const CACHE_KEY = 'top_score_flow_surge_v3';
+const CACHE_KEY = 'top_score_flow_surge_v4';
 const CACHE_EXPIRY_MS = 4 * 60 * 60 * 1000; // 4 hours
 
 let allSignals = [];
@@ -340,26 +340,50 @@ function getCsvUrl(gid) {
   return `${BASE_PUB_URL}?gid=${gid}&single=true&output=csv`;
 }
 
+const CSV_ROUTES = [
+  ['direct', url => url],
+  ['dashboard proxy', url => 'https://script.google.com/macros/s/AKfycbx-abu6CxsA4AcaQUoNLiXMoLO8SStapS843H3PGpeRSBTyPcZ75FAwtPSORBJBnSjf/exec?url=' + encodeURIComponent(url)],
+  ['allorigins', url => 'https://api.allorigins.win/raw?url=' + encodeURIComponent(url)]
+];
+
 async function fetchCsv(gid, stepId) {
   const step = document.getElementById(stepId);
+  const label = stepId.replace('step-', '');
   if (step) step.className = 'ls active';
-  try {
-    const res = await fetch(getCsvUrl(gid));
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    const text = await res.text();
-    const parsed = parseCsvText(text);
-    if (['step-close', 'step-open', 'step-high', 'step-low', 'step-volume'].includes(stepId)) {
-      if (parsed.dates.length < 65 || !Object.values(parsed.data).some(a => a.filter(Number.isFinite).length >= 65)) {
-        throw new Error(stepId.replace('step-', '') + ' sheet is still loading or has fewer than 65 usable history rows. Wait for the Google Sheet to finish calculating, then Force Refresh.');
+  const errors = [];
+  let incomplete = false;
+  for (const [name, route] of CSV_ROUTES) {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 12000);
+    try {
+      logDebug('Fetching ' + label + ' via ' + name);
+      const res = await fetch(route(getCsvUrl(gid) + '&refresh=' + Date.now()), {
+        signal: controller.signal, cache: 'no-store'
+      });
+      if (!res.ok) throw new Error('HTTP ' + res.status);
+      const parsed = parseCsvText(await res.text());
+      if (['close', 'high', 'low', 'volume'].includes(label)) {
+        if (parsed.dates.length < 65 || !Object.values(parsed.data).some(a => a.filter(Number.isFinite).length >= 65)) {
+          incomplete = true;
+          throw new Error('published sheet is still loading or has fewer than 65 usable history rows');
+        }
       }
+      if (step) step.className = 'ls done';
+      logDebug(label + ': loaded via ' + name + ' (' + parsed.dates.length + ' history rows)');
+      return parsed;
+    } catch (err) {
+      const reason = err.name === 'AbortError' ? 'request timed out' : err.message;
+      errors.push(name + ': ' + reason);
+      logDebug(label + ' / ' + name + ': ' + reason);
+    } finally {
+      clearTimeout(timer);
     }
-    if (step) step.className = 'ls done';
-    return parsed;
-  } catch (err) {
-    if (step) step.className = 'ls fail';
-    logDebug(`Error fetching gid=${gid}: ${err.message}`);
-    throw err;
   }
+  if (step) step.className = 'ls fail';
+  throw new Error(label + ': ' + (incomplete
+    ? 'Google Sheets returned incomplete history. Open the source spreadsheet and check its formulas/publication, then Retry.'
+    : 'Unable to download data through the available connections. Check your connection and Retry.')
+    + ' (' + errors.join('; ') + ')');
 }
 
 function parseCsvText(text) {
@@ -512,7 +536,9 @@ function calcVPCI(closes, vols, shortP = 10, longP = 50) {
   return vpci;
 }
 
+let screenerRunning = false;
 async function runScreener(forceRefresh = false) {
+  if (screenerRunning) return;
   if (location.protocol === 'file:') {
     document.getElementById('warnLocal').style.display = 'block';
   }
@@ -535,26 +561,30 @@ async function runScreener(forceRefresh = false) {
     }
   }
 
+  screenerRunning = true;
   try {
+    document.getElementById('dbgBody').textContent = 'Initializing screener…';
+    document.getElementById('footNote').style.display = 'none';
     document.getElementById('loadCard').style.display = 'block';
     document.getElementById('statusBar').style.display = 'none';
     document.getElementById('dayTabs').style.display = 'none';
     document.getElementById('resultsCard').style.display = 'none';
     document.getElementById('errBox').style.display = 'none';
 
-    logDebug("Fetching datasets in two batches from Google Sheet...");
-    const [cRaw, oRaw, hRaw] = await Promise.all([
-      fetchCsv(GIDS.close, 'step-close'),
-      fetchCsv(GIDS.open, 'step-open'),
-      fetchCsv(GIDS.high, 'step-high')
+    const openStep = document.getElementById('step-open');
+    openStep.className = 'ls';
+    openStep.textContent = '— Open Prices (not used by this strategy)';
+    logDebug('Loading required price and volume history…');
+    const requiredKeys = ['close', 'high', 'low', 'volume'];
+    const required = await Promise.allSettled(requiredKeys.map(key => fetchCsv(GIDS[key], 'step-' + key)));
+    const failures = required.filter(r => r.status === 'rejected');
+    if (failures.length) throw new Error(failures.map(r => r.reason.message).join(' | '));
+    const [cRaw, hRaw, lRaw, vRaw] = required.map(r => r.value);
+    // Display-only metadata must not prevent valid history from being screened.
+    const optional = await Promise.allSettled([
+      fetchCsv(GIDS.pct, 'step-pct'), fetchCsv(GIDS.main, 'step-main')
     ]);
-
-    const [lRaw, vRaw, pctRaw, mainRaw] = await Promise.all([
-      fetchCsv(GIDS.low, 'step-low'),
-      fetchCsv(GIDS.volume, 'step-volume'),
-      fetchCsv(GIDS.pct, 'step-pct'),
-      fetchCsv(GIDS.main, 'step-main')
-    ]);
+    const [pctRaw, mainRaw] = optional.map(r => r.status === 'fulfilled' ? r.value : null);
 
     hRaw.data = alignHistory(hRaw, cRaw.dates);
     lRaw.data = alignHistory(lRaw, cRaw.dates);
@@ -650,6 +680,8 @@ async function runScreener(forceRefresh = false) {
     const retry = document.createElement('button');
     retry.className = 'btn'; retry.textContent = 'Retry';
     retry.onclick = () => runScreener(true); eb.appendChild(retry);
+  } finally {
+    screenerRunning = false;
   }
 }
 
