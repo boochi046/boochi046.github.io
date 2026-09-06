@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="en" data-theme="dark">
 <head>
+<style>.topbar{flex-wrap:wrap;gap:.5rem}.topbar-right{flex-wrap:wrap}.scroll tfoot td{font-weight:700;background:var(--surface)} @media(max-width:700px){div[style*="1fr 280px"]{grid-template-columns:1fr!important}.filter-bar{flex-wrap:wrap}}</style>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Portfolio Dashboard</title>
@@ -334,7 +335,7 @@ td:first-child{text-align:left;padding-left:1.1rem;}
     <div class="topbar">
       <div class="page-title">My <span class="acc">Portfolio</span></div>
       <div class="topbar-right">
-        <div class="live-tag"><span class="live-dot"></span> Live via Wishsheet</div>
+        <div class="live-tag"><span class="live-dot"></span> Latest fetched · Wishsheet</div>
         <span id="lastUpdatedTop" style="font-size:.65rem;color:var(--muted);font-family:'JetBrains Mono','Noto Color Emoji','Apple Color Emoji','Segoe UI Emoji','Segoe UI Symbol',monospace">—</span>
       </div>
     </div>
@@ -368,10 +369,11 @@ td:first-child{text-align:left;padding-left:1.1rem;}
       </div>
     </div>
 
-    <!-- Sharpe + Risk Metrics -->
+    <div class="kpi-row"><div class="kpi"><div class="kpi-label">Realized P&amp;L · FIFO</div><div class="kpi-value" id="new-realized">—</div><div class="kpi-sub">Before fees; matched sales only</div></div><div class="kpi"><div class="kpi-label">Cash balance</div><div class="kpi-value">—</div><div class="kpi-sub">Cash ledger required</div></div></div>
+<!-- Sharpe + Risk Metrics -->
     <div class="sharpe-card" id="performance">
       <div class="card-hdr" style="padding:0 0 .5rem">
-        <span class="card-title">📐 Risk-Adjusted Metrics</span>
+        <span class="card-title">📐 Exposure & Data Quality</span>
         <span class="badge" id="sharpe-badge">—</span>
       </div>
       <div class="sharpe-grid" id="sharpeGrid"></div>
@@ -384,7 +386,7 @@ td:first-child{text-align:left;padding-left:1.1rem;}
           <span class="card-title">Open Holdings</span>
           <span class="badge" id="holdingsBadge">—</span>
         </div>
-        <div class="filter-bar">
+        <div class="filter-bar"><input id="holdingSearch" aria-label="Search holdings" placeholder="Search ticker or company" oninput="renderHoldings(curFilter)" style="background:var(--surface);color:var(--text);border:1px solid var(--border);padding:.4rem;border-radius:6px">
           <button class="fbtn active" onclick="filterH('all',this)">All</button>
           <button class="fbtn" onclick="filterH('Tech',this)">Tech</button>
           <button class="fbtn" onclick="filterH('Airline',this)">Airlines</button>
@@ -396,7 +398,7 @@ td:first-child{text-align:left;padding-left:1.1rem;}
           <table style="min-width:1100px">
             <thead><tr id="holdingsHead">
               <th onclick="sortHoldings('name')" style="cursor:pointer;user-select:none;position:sticky;left:0;background:var(--surface);z-index:3">Stock <span class="sort-icon" data-col="name">↕</span></th>
-              <th onclick="sortHoldings('units')" style="cursor:pointer;user-select:none">Units <span class="sort-icon" data-col="units">↕</span></th>
+              <th onclick="sortHoldings('days')" title="Calendar days since oldest remaining FIFO purchase; excludes fully sold lots">Holding Days</th><th onclick="sortHoldings('retTotal')" style="cursor:pointer;user-select:none">Holding Gain/Loss % <span class="sort-icon" data-col="retTotal">↕</span></th><th onclick="sortHoldings('weight')">Weight %</th><th onclick="sortHoldings('mkt')">Market Value</th><th onclick="sortHoldings('units')" style="cursor:pointer;user-select:none">Units <span class="sort-icon" data-col="units">↕</span></th>
               <th onclick="sortHoldings('avg')" style="cursor:pointer;user-select:none">Avg Cost <span class="sort-icon" data-col="avg">↕</span></th>
               <th onclick="sortHoldings('live')" style="cursor:pointer;user-select:none">Live <span class="sort-icon" data-col="live">↕</span></th>
               <th onclick="sortHoldings('prevDay')" style="cursor:pointer;user-select:none">Prev Close <span class="sort-icon" data-col="prevDay">↕</span></th>
@@ -406,22 +408,23 @@ td:first-child{text-align:left;padding-left:1.1rem;}
               <th onclick="sortHoldings('ret3m')" style="cursor:pointer;user-select:none">3M % <span class="sort-icon" data-col="ret3m">↕</span></th>
               <th onclick="sortHoldings('ret6m')" style="cursor:pointer;user-select:none">6M % <span class="sort-icon" data-col="ret6m">↕</span></th>
               <th onclick="sortHoldings('pnl')" style="cursor:pointer;user-select:none">Unreal P&amp;L <span class="sort-icon" data-col="pnl">↕</span></th>
-              <th onclick="sortHoldings('retTotal')" style="cursor:pointer;user-select:none">Total % <span class="sort-icon" data-col="retTotal">↕</span></th>
+              
             </tr></thead>
-            <tbody id="holdingsBody"></tbody>
+            <tbody id="holdingsBody"></tbody><tfoot id="holdingsTotals"></tfoot>
           </table>
         </div>
       </div>
     </div>
 
-    <!-- Winners / Losers (below chart) -->
+    <div class="filter-bar"><label>Rank holdings: <select id="rankMode" onchange="renderWL(allHoldings)"><option value="return">Holding return %</option><option value="dollars">Unrealized P&amp;L $</option><option value="daily">Daily contribution $</option></select></label></div>
+<!-- Winners / Losers (below chart) -->
     <div class="wl-row">
       <div class="wl-card">
-        <div class="card-hdr"><span class="card-title">🏆 Top Winners</span><span class="badge">by return %</span></div>
+        <div class="card-hdr"><span class="card-title">🏆 Top Winners</span></div>
         <div id="winnersList"></div>
       </div>
       <div class="wl-card">
-        <div class="card-hdr"><span class="card-title">📉 Top Losers</span><span class="badge">by return %</span></div>
+        <div class="card-hdr"><span class="card-title">📉 Top Losers</span></div>
         <div id="losersList"></div>
       </div>
     </div>
@@ -430,9 +433,9 @@ td:first-child{text-align:left;padding-left:1.1rem;}
     <div style="display:grid;grid-template-columns:1fr 280px;gap:1rem;margin-bottom:1.25rem">
       <div class="perf-card" style="margin-bottom:0">
         <div class="perf-hdr">
-          <span class="card-title">📊 Portfolio Performance</span>
+          <span class="card-title">📊 Capital Deployed</span>
           <div class="perf-tabs">
-            <button class="ptab active" onclick="setPerfView('cost',this)">Cost Basis</button>
+            <button class="ptab active" onclick="setPerfView('cost',this)">Purchases</button>
             <button class="ptab" onclick="setPerfView('trades',this)">Trade Count</button>
           </div>
         </div>
@@ -445,8 +448,7 @@ td:first-child{text-align:left;padding-left:1.1rem;}
           <canvas class="donut-chart" id="sectorChart" style="width:100px;height:100px"></canvas>
           <div class="legend" id="sectorLegend"></div>
         </div>
-        <div class="card-hdr"><span class="card-title">Investment Timeline</span></div>
-        <div class="chart-sm" style="height:130px"><canvas id="timelineChart"></canvas></div>
+        <div class="data-note">Allocation uses current market values. Missing quotes are excluded and flagged.</div>
       </div>
     </div>
 
@@ -454,7 +456,7 @@ td:first-child{text-align:left;padding-left:1.1rem;}
     <div class="bottom-grid" id="pnl">
       <div class="card">
         <div class="card-hdr">
-          <span class="card-title">Realized P&amp;L by Trade</span>
+          <span class="card-title">Realized P&amp;L by Ticker (FIFO)</span>
           <span class="badge" id="realizedBadge" style="color:var(--green);background:rgba(16,185,129,.1);border-color:rgba(16,185,129,.2)">—</span>
         </div>
         <div class="pnl-list" id="pnlList"></div>
@@ -483,7 +485,8 @@ td:first-child{text-align:left;padding-left:1.1rem;}
       </div>
     </div>
 
-    <!-- News -->
+    <div class="card" style="margin:1rem 0;padding:1rem"><div class="card-title">Performance &amp; Trading</div><div id="tradeMetrics" class="data-note"></div><p class="data-note">XIRR, time-weighted return, benchmark comparison, drawdown and true Sharpe: unavailable until dated deposits/withdrawals, cash balances and portfolio valuation history are supplied. Purchases are not external deposits. Allocation drift requires your chosen target weights. Holding gains exclude dividends and fees.</p><div id="ledgerWarnings" class="data-note"></div></div>
+<!-- News -->
     <div class="news-card" id="news">
       <div class="card-hdr">
         <span class="card-title">📰 Portfolio News</span>
@@ -523,7 +526,7 @@ function toggleTheme(){
   h.setAttribute('data-theme',dark?'light':'dark');
   document.getElementById('themeLabel').textContent=dark?'LIGHT':'DARK';
   localStorage.setItem('theme',dark?'light':'dark');
-  if(allHoldings.length){renderSectorChart(allHoldings);renderPerfChart(perfBuyRows,perfView);renderTimeline(perfBuyRows);}
+  if(allHoldings.length){renderSectorChart(allHoldings);renderPerfChart(perfBuyRows,perfView);}
 }
 (()=>{
   const s=localStorage.getItem('theme')||'dark';
@@ -541,37 +544,24 @@ function splitLine(l){
   r.push(c);return r;
 }
 function parseCSV(text){
-  const lines=text.trim().split(/\r?\n/).filter(l=>l.trim());
-  const hdrs=splitLine(lines[0]).map(h=>h.trim());
-  return lines.slice(1).map(l=>{
-    const v=splitLine(l);const o={};
-    hdrs.forEach((h,i)=>o[h]=(v[i]||'').trim());
-    return o;
-  });
+ if(text.trim().startsWith('<'))throw new Error('Expected CSV, received HTML');
+ const rows=[];let row=[],cell='',q=false;
+ for(let i=0;i<text.length;i++){const ch=text[i];if(ch==='"'){if(q&&text[i+1]==='"'){cell+='"';i++;}else q=!q;}else if(ch===','&&!q){row.push(cell.trim());cell='';}else if((ch==='\n'||ch==='\r')&&!q){if(ch==='\r'&&text[i+1]==='\n')i++;row.push(cell.trim());if(row.some(Boolean))rows.push(row);row=[];cell='';}else cell+=ch;}
+ if(q)throw new Error('Incomplete CSV');row.push(cell.trim());if(row.some(Boolean))rows.push(row);
+ if(rows.length<2)throw new Error('CSV has no data rows');const headers=rows.shift();if(!headers.includes('Ticker'))throw new Error('Ticker column missing');
+ return rows.map(r=>Object.fromEntries(headers.map((h,i)=>[h,r[i]||''])));
 }
 
 // ── FETCH with proxy chain ────────────────────────────────────────────────────
 function updateSbTime(t){const el=document.getElementById('sbTime');if(el)el.textContent=t;}
 
 async function fetchRaw(url){
-  const proxies=[
-    u=>u,
-    u=>`https://corsproxy.io/?${encodeURIComponent(u)}`,
-    u=>`https://api.allorigins.win/raw?url=${encodeURIComponent(u)}`,
-    u=>`https://thingproxy.freeboard.io/fetch/${u}`,
-    u=>`https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(u)}`,
-  ];
-  const tout=ms=>new Promise((_,r)=>setTimeout(()=>r(new Error('timeout')),ms));
-  for(const p of proxies){
-    try{
-      const r=await Promise.race([fetch(p(url),{cache:'no-store'}),tout(12000)]);
-      if(!r.ok) continue;
-      const t=await r.text();
-      if(!t||t.length<50||t.trim().startsWith('<')||!t.includes(',')) continue;
-      return t;
-    }catch(e){continue;}
-  }
-  throw new Error('All proxies failed — check Google Sheet is published as CSV');
+ const routes=[u=>u,u=>'https://corsproxy.io/?'+encodeURIComponent(u),u=>'https://api.allorigins.win/raw?url='+encodeURIComponent(u),u=>'https://api.codetabs.com/v1/proxy?quest='+encodeURIComponent(u)];
+ for(const route of routes){const controller=new AbortController();const timer=setTimeout(()=>controller.abort(),12000);try{
+ const response=await fetch(route(url),{cache:'no-store',signal:controller.signal});if(!response.ok)continue;const text=await response.text();
+ if(!text||text.trim().startsWith('<')||!text.includes(','))continue;return text;
+ }catch(error){}finally{clearTimeout(timer);}}
+ throw new Error('Data download failed. Check the published Google Sheet and try again.');
 }
 async function fetchCSV(url,stepId){
   const el=document.getElementById(stepId);
@@ -588,43 +578,8 @@ async function fetchCSV(url,stepId){
 }
 
 // ── REALIZED P&L ──────────────────────────────────────────────────────────────
-function computeRealized(buyRows,sellRows){
-  const bm={};
-  buyRows.forEach(r=>{
-    const t=(r.Ticker||'').trim().toUpperCase();
-    const u=parseFloat(r.UNITS||r.Units||0),p=parseFloat(r.PRICES||r.Price||0);
-    if(!t||!u||!p)return;
-    if(!bm[t])bm[t]={units:0,cost:0};
-    bm[t].units+=u;bm[t].cost+=u*p;
-  });
-  const real={};
-  sellRows.forEach(r=>{
-    const t=(r.Ticker||'').trim().toUpperCase();
-    const u=parseFloat(r.UNITS||r.Units||0),p=parseFloat(r.PRICES||r.Price||0);
-    if(!t||!u||!p)return;
-    const avg=bm[t]?bm[t].cost/bm[t].units:0;
-    if(!real[t])real[t]={pnl:0};
-    real[t].pnl+=u*p-avg*u;
-  });
-  return real;
-}
-
 // ── SHARPE RATIO ──────────────────────────────────────────────────────────────
 // Computed from available period returns across holdings
-function computeSharpe(holdings){
-  // Use 1M returns if available, else total return as proxy
-  const returns=holdings
-    .filter(h=>h.ret1m!==null||h.retTotal!==null)
-    .map(h=>h.ret1m!==null?h.ret1m/100:h.retTotal/100);
-  if(returns.length<3)return null;
-  const n=returns.length;
-  const mean=returns.reduce((a,b)=>a+b,0)/n;
-  const variance=returns.reduce((s,r)=>s+Math.pow(r-mean,2),0)/(n-1);
-  const std=Math.sqrt(variance);
-  const riskFreeMonthly=0.045/12; // ~4.5% annual risk free
-  return std>0?(mean-riskFreeMonthly)/std:null;
-}
-
 // ── FORMAT ────────────────────────────────────────────────────────────────────
 const esc=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const fmt=n=>'$'+Math.abs(n).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
@@ -644,26 +599,13 @@ function pillHtml(v,decimals=2){
 let chartSector=null,chartTimeline=null,chartPerf=null;
 const COLORS=['#3b82f6','#8b5cf6','#10b981','#f59e0b','#ef4444','#f97316','#06b6d4','#ec4899'];
 
-function renderSectorChart(holdings){
-  const s={};holdings.forEach(h=>{s[h.sector]=(s[h.sector]||0)+h.cost;});
-  const total=Object.values(s).reduce((a,b)=>a+b,0);
-  const lbs=Object.keys(s),vs=lbs.map(x=>s[x]);
-  if(chartSector)chartSector.destroy();
-  chartSector=new Chart(document.getElementById('sectorChart').getContext('2d'),{
-    type:'doughnut',data:{labels:lbs,datasets:[{data:vs,backgroundColor:COLORS,borderWidth:0,hoverOffset:4}]},
-    options:{cutout:'70%',plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>` ${c.label}: ${(c.raw/total*100).toFixed(1)}%`}}},animation:{duration:700}}
-  });
-  const leg=document.getElementById('sectorLegend');leg.innerHTML='';
-  lbs.forEach((l,i)=>{leg.innerHTML+=`<div class="leg-item"><div class="leg-dot" style="background:${COLORS[i]}"></div><span>${l}</span><span class="leg-pct">${(vs[i]/total*100).toFixed(1)}%</span></div>`;});
-}
-
 function renderTimeline(buyRows){
   const cc=getCC();
   const ev=buyRows.map(r=>{
-    const raw=(r.DATE||r.Date||'').trim();let d=new Date(raw);
-    if(isNaN(d)){const p=raw.split('/');if(p.length===3)d=new Date(`${p[2].length===2?'20'+p[2]:p[2]}-${p[1].padStart(2,'0')}-${p[0].padStart(2,'0')}`);}
+    const raw=(r.DATE||r.Date||'').trim();let d=ledgerDate(raw)||new Date(NaN);
+
     return{date:d,cost:parseFloat(r.UNITS||r.Units||0)*parseFloat(r.PRICES||r.Price||0)};
-  }).filter(e=>e.date&&!isNaN(e.date)&&e.cost>0).sort((a,b)=>a.date-b.date);
+  }).filter(e=>e.date&&!isNaN(e.date)&&e.date<=new Date()&&e.cost>0).sort((a,b)=>a.date-b.date);
   let cum=0;const mo={};
   ev.forEach(e=>{cum+=e.cost;mo[e.date.toISOString().slice(0,7)]=cum;});
   if(chartTimeline)chartTimeline.destroy();
@@ -681,10 +623,10 @@ function setPerfView(v,btn){perfView=v;document.querySelectorAll('.ptab').forEac
 function renderPerfChart(buyRows,view){
   const cc=getCC();
   const ev=buyRows.map(r=>{
-    const raw=(r.DATE||r.Date||'').trim();let d=new Date(raw);
-    if(isNaN(d)){const p=raw.split('/');if(p.length===3)d=new Date(`${p[2].length===2?'20'+p[2]:p[2]}-${p[1].padStart(2,'0')}-${p[0].padStart(2,'0')}`);}
+    const raw=(r.DATE||r.Date||'').trim();let d=ledgerDate(raw)||new Date(NaN);
+
     return{date:d,cost:parseFloat(r.UNITS||r.Units||0)*parseFloat(r.PRICES||r.Price||0),count:1};
-  }).filter(e=>e.date&&!isNaN(e.date)&&e.cost>0).sort((a,b)=>a.date-b.date);
+  }).filter(e=>e.date&&!isNaN(e.date)&&e.date<=new Date()&&e.cost>0).sort((a,b)=>a.date-b.date);
   let cum=0,cc2=0;const mo={};
   ev.forEach(e=>{cum+=e.cost;cc2+=e.count;const k=e.date.toISOString().slice(0,7);mo[k]={cost:cum,count:cc2};});
   const labs=Object.keys(mo),vals=labs.map(k=>view==='cost'?mo[k].cost:mo[k].count);
@@ -703,7 +645,7 @@ function renderPerfChart(buyRows,view){
   document.getElementById('perfStats').innerHTML=`
     <div class="ps"><div class="ps-label">Total Deployed</div><div class="ps-val">$${Math.round(totalC).toLocaleString()}</div></div>
     <div class="ps"><div class="ps-label">Trades</div><div class="ps-val">${ev.length}</div></div>
-    <div class="ps"><div class="ps-label">Avg/Trade</div><div class="ps-val">$${Math.round(totalC/ev.length).toLocaleString()}</div></div>
+    <div class="ps"><div class="ps-label">Avg/Trade</div><div class="ps-val">$${Math.round(ev.length?totalC/ev.length:0).toLocaleString()}</div></div>
     <div class="ps"><div class="ps-label">Since</div><div class="ps-val">${fd?fd.toLocaleDateString('en-US',{month:'short',year:'numeric'}):'—'}</div></div>
     <div class="ps"><div class="ps-label">Duration</div><div class="ps-val">${months} mo</div></div>
     <div class="ps"><div class="ps-label">Avg/Month</div><div class="ps-val">$${Math.round(totalC/months).toLocaleString()}</div></div>`;
@@ -726,73 +668,9 @@ function sortHoldings(col){
 
 // ── HOLDINGS TABLE ────────────────────────────────────────────────────────────
 let allHoldings=[],curFilter='all';
-function renderHoldings(filter){
-  curFilter=filter;
-  const tbody=document.getElementById('holdingsBody');tbody.innerHTML='';
-  let list=filter==='all'?[...allHoldings]:allHoldings.filter(h=>h.sector===filter);
-  // Sort
-  list.sort((a,b)=>{
-    let av,bv;
-    const nullVal = sortDir>0?-Infinity:Infinity;
-    if(sortCol==='name'){av=a.ticker;bv=b.ticker;return sortDir*(av<bv?-1:av>bv?1:0);}
-    else if(sortCol==='units'){av=a.units;bv=b.units;}
-    else if(sortCol==='avg'){av=a.avg;bv=b.avg;}
-    else if(sortCol==='live'){av=a.live||0;bv=b.live||0;}
-    else if(sortCol==='prevDay'){av=a.prevDay??nullVal;bv=b.prevDay??nullVal;}
-    else if(sortCol==='mkt'){av=a.live?a.live*a.units:0;bv=b.live?b.live*b.units:0;}
-    else if(sortCol==='pnl'){av=a.live?a.live*a.units-a.cost:nullVal;bv=b.live?b.live*b.units-b.cost:nullVal;}
-    else if(sortCol==='todayPnl'){av=a.todayPnl??nullVal;bv=b.todayPnl??nullVal;}
-    else if(sortCol==='retToday'){av=a.retToday??nullVal;bv=b.retToday??nullVal;}
-    else if(sortCol==='ret1m'){av=a.ret1m??nullVal;bv=b.ret1m??nullVal;}
-    else if(sortCol==='ret3m'){av=a.ret3m??nullVal;bv=b.ret3m??nullVal;}
-    else if(sortCol==='ret6m'){av=a.ret6m??nullVal;bv=b.ret6m??nullVal;}
-    else{av=a.retTotal??nullVal;bv=b.retTotal??nullVal;}
-    return sortDir*(av-bv);
-  });
-  list.forEach(h=>{
-    const mkt=h.live!==null?h.live*h.units:null;
-    const pnl=mkt!==null?mkt-h.cost:null;
-    const todayPnl=(h.live!==null&&h.prevDay!==null)?(h.live-h.prevDay)*h.units:null;
-    tbody.innerHTML+=`<tr>
-      <td><span class="tkr">${esc(h.ticker)}</span> <span class="stock-name">${esc(h.name)}</span></td>
-      <td class="neu">${h.units.toLocaleString()}</td>
-      <td class="neu">${fmt(h.avg)}</td>
-      <td>${h.live!==null?`<strong>${fmt(h.live)}</strong>`:'<span class="neu">—</span>'}</td>
-      <td class="neu">${h.prevDay!==null?fmt(h.prevDay):'—'}</td>
-      <td class="${todayPnl===null?'neu':todayPnl>=0?'pos':'neg'}">${todayPnl===null?'—':(todayPnl>=0?'+':'-')+fmt(todayPnl)}</td>
-      <td>${pillHtml(h.retToday)}</td>
-      <td>${pillHtml(h.ret1m)}</td>
-      <td>${pillHtml(h.ret3m)}</td>
-      <td>${pillHtml(h.ret6m)}</td>
-      <td class="${pnl===null?'neu':pnl>=0?'pos':'neg'}">${pnl===null?'—':(pnl>=0?'+':'-')+fmt(pnl)}</td>
-      <td>${pillHtml(h.retTotal)}</td>
-    </tr>`;
-  });
-}
 function filterH(f,btn){document.querySelectorAll('.fbtn').forEach(b=>b.classList.remove('active'));btn.classList.add('active');renderHoldings(f);}
 
 // ── WINNERS / LOSERS ──────────────────────────────────────────────────────────
-function renderWL(holdings){
-  const wr=holdings.filter(h=>h.retTotal!==null).sort((a,b)=>b.retTotal-a.retTotal);
-  const maxAbs=Math.max(...wr.map(h=>Math.abs(h.retTotal)),1);
-  function rList(items,elId){
-    const el=document.getElementById(elId);el.innerHTML='';
-    items.forEach((h,i)=>{
-      const bw=(Math.abs(h.retTotal)/maxAbs*100).toFixed(1);
-      const cls=h.retTotal>=0?'pos':'neg';const bc=h.retTotal>=0?'var(--green)':'var(--red)';
-      el.innerHTML+=`<div class="wl-item">
-        <span class="wl-rank">${i+1}</span>
-        <span class="wl-ticker">${esc(h.ticker)}</span>
-        <span class="wl-name">${esc(h.name)}</span>
-        <div class="wl-bar-w"><div class="wl-bar-f" style="width:${bw}%;background:${bc}"></div></div>
-        <span class="wl-pct ${cls}">${fmtPct(h.retTotal)}</span>
-      </div>`;
-    });
-  }
-  rList(wr.slice(0,5),'winnersList');
-  rList([...wr].reverse().slice(0,5),'losersList');
-}
-
 // ── P&L BARS ──────────────────────────────────────────────────────────────────
 function renderPnlBars(realized){
   const sorted=Object.entries(realized).map(([t,r])=>({t,pnl:r.pnl})).sort((a,b)=>b.pnl-a.pnl);
@@ -825,44 +703,6 @@ function renderLedgers(buyRows,sellRows){
 }
 
 // ── SHARPE DISPLAY ────────────────────────────────────────────────────────────
-function renderSharpe(holdings,totalCost,totalMkt,unreal,totalRealized){
-  const sharpe=computeSharpe(holdings);
-  const retPct=totalCost>0?(totalMkt-totalCost)/totalCost*100:0;
-  const rets1m=holdings.filter(h=>h.ret1m!==null).map(h=>h.ret1m);
-  const rets3m=holdings.filter(h=>h.ret3m!==null).map(h=>h.ret3m);
-
-  const avg1m=rets1m.length?rets1m.reduce((a,b)=>a+b,0)/rets1m.length:null;
-  const avg3m=rets3m.length?rets3m.reduce((a,b)=>a+b,0)/rets3m.length:null;
-  const bestHolder=holdings.filter(h=>h.retTotal!==null).sort((a,b)=>b.retTotal-a.retTotal)[0];
-  const worstHolder=holdings.filter(h=>h.retTotal!==null).sort((a,b)=>a.retTotal-b.retTotal)[0];
-
-  const sharpeLabel=sharpe===null?'N/A':sharpe>2?'Excellent':sharpe>1?'Good':sharpe>0?'Acceptable':'Poor';
-  const sharpeColor=sharpe===null?'var(--muted)':sharpe>2?'var(--green)':sharpe>1?'var(--accent)':sharpe>0?'var(--yellow)':'var(--red)';
-  document.getElementById('sharpe-badge').textContent=sharpe===null?'Need more data':`Sharpe: ${sharpe.toFixed(2)} — ${sharpeLabel}`;
-  document.getElementById('sharpe-badge').style.color=sharpeColor;
-
-  const sbSharpeEl=document.getElementById('sb-sharpe');
-  if(sbSharpeEl){sbSharpeEl.textContent=sharpe===null?'N/A':sharpe.toFixed(2);sbSharpeEl.style.color=sharpeColor;}
-
-  document.getElementById('sharpeGrid').innerHTML=`
-    <div class="sharpe-item" title="Cross-sectional proxy: dispersion of holdings' 1M returns vs a 4.5% annual risk-free rate. Not a true time-series Sharpe ratio (that needs a history of portfolio returns).">
-      <div class="sharpe-val" style="color:${sharpeColor}">${sharpe===null?'N/A':sharpe.toFixed(2)}</div>
-      <div class="sharpe-lbl">Sharpe (proxy)</div>
-    </div>
-    <div class="sharpe-item">
-      <div class="sharpe-val ${retPct>=0?'pos':'neg'}">${fmtPct(retPct)}</div>
-      <div class="sharpe-lbl">Total Return</div>
-    </div>
-    <div class="sharpe-item">
-      <div class="sharpe-val ${avg1m===null?'':avg1m>=0?'pos':'neg'}">${avg1m===null?'—':fmtPct(avg1m)}</div>
-      <div class="sharpe-lbl">Avg 1M Return</div>
-    </div>
-    <div class="sharpe-item">
-      <div class="sharpe-val ${avg3m===null?'':avg3m>=0?'pos':'neg'}">${avg3m===null?'—':fmtPct(avg3m)}</div>
-      <div class="sharpe-lbl">Avg 3M Return</div>
-    </div>`;
-}
-
 // ── NEWS ──────────────────────────────────────────────────────────────────────
 async function loadNews(tickers){
   const nl=document.getElementById('newsList');
@@ -913,7 +753,9 @@ function setKpi(id,val,cls=''){const el=document.getElementById(id);if(el){el.te
 function setAll(ids,val,cls){ids.forEach(id=>setKpi(id,val,cls));}
 
 // ── MAIN LOAD ─────────────────────────────────────────────────────────────────
+let dashboardLoading=false;
 async function loadAll(silent=false){
+  if(dashboardLoading)return; dashboardLoading=true;
   if(!silent){
     ['step1','step2','step3','step4'].forEach(id=>{
       const el=document.getElementById(id);el.className='load-step';
@@ -933,6 +775,7 @@ async function loadAll(silent=false){
 
     const s4=document.getElementById('step4');
     s4.classList.add('active');s4.textContent=s4.textContent.replace('⬜','⏳');
+    if(!priceRows.some(r=>numberValue(r.Price??r['Live Price'])!==null&&numberValue(r['Remaining Qty']??r.Qty)>0))throw new Error('Prices sheet has no usable holdings; it may still be loading.');
     perfBuyRows=buyRows;
 
     // ── Build holdings — auto-detect period columns ──────────────────────────
@@ -942,17 +785,17 @@ async function loadAll(silent=false){
       .filter(r=>(r.Ticker||'').trim())
       .map(r=>{
         const ticker=r.Ticker.trim().toUpperCase();
-        const live=parseFloat(r.Price||r['Live Price']||0)||null;
-        const avg=parseFloat(r['Average Price']||r['Avg Price']||0);
-        const units=parseFloat(r['Remaining Qty']||r.Qty||0);
+        const live=numberValue(r.Price??r['Live Price']);
+        const avg=numberValue(r['Average Price']??r['Avg Price'])??0;
+        const units=numberValue(r['Remaining Qty']??r.Qty)??0;
         const cost=avg*units;
 
         // Exact column names from Wishsheet export
-        const prevDay = parseFloat(r['Previous Day']||0)||null;
+        const prevDay = numberValue(r['Previous Day']);
         // %1Month, %3Month, %^Month are decimals (e.g. -0.03 = -3%)
-        const raw1m = r['%1Month']!==undefined && r['%1Month']!=='' ? parseFloat(r['%1Month']) : null;
-        const raw3m = r['%3Month']!==undefined && r['%3Month']!=='' ? parseFloat(r['%3Month']) : null;
-        const raw6m = r['%^Month']!==undefined && r['%^Month']!=='' ? parseFloat(r['%^Month']) : null;
+        const raw1m = r['%1Month']!==undefined && r['%1Month']!=='' ? numberValue(r['%1Month']) : null;
+        const raw3m = r['%3Month']!==undefined && r['%3Month']!=='' ? numberValue(r['%3Month']) : null;
+        const raw6m = r['%^Month']!==undefined && r['%^Month']!=='' ? numberValue(r['%^Month']) : null;
 
         // Convert decimals to percentages
         const ret1m  = raw1m !== null ? raw1m * 100 : null;
@@ -971,7 +814,7 @@ async function loadAll(silent=false){
     const realized=computeRealized(buyRows,sellRows);
     const totalRealized=Object.values(realized).reduce((s,r)=>s+r.pnl,0);
     const totalCost=allHoldings.reduce((s,h)=>s+h.cost,0);
-    const totalMkt=allHoldings.reduce((s,h)=>s+(h.live?h.live*h.units:h.cost),0);
+    const totalMkt=allHoldings.reduce((s,h)=>s+(h.live!==null?h.live*h.units:0),0);
     const unreal=totalMkt-totalCost;
     const unrealPct=totalCost>0?unreal/totalCost*100:0;
     const totalPnl=unreal+totalRealized;
@@ -1017,18 +860,19 @@ async function loadAll(silent=false){
     document.getElementById('holdingsBadge').textContent=allHoldings.length+' positions';
     document.getElementById('realizedBadge').textContent='Total: '+realStr;
 
+    enrichHoldings(allHoldings);
     renderSharpe(allHoldings,totalCost,totalMkt,unreal,totalRealized);
     renderWL(allHoldings);
-    renderPerfChart(buyRows,'cost');
+    renderPerfChart(buyRows,perfView);
     renderHoldings(curFilter);
     renderSectorChart(allHoldings);
-    renderTimeline(buyRows);
+
     renderPnlBars(realized);
     renderLedgers(buyRows,sellRows);
 
     s4.classList.remove('active');s4.classList.add('done');
     s4.textContent=s4.textContent.replace('⏳','✅');
-    const t='Updated: '+new Date().toLocaleTimeString();
+    const t='Fetched: '+new Date().toLocaleTimeString()+' · quote time not supplied';
     const luEl=document.getElementById('lastUpdated');if(luEl)luEl.textContent=t;
     updateSbTime(t);
     const lutEl=document.getElementById('lastUpdatedTop');if(lutEl)lutEl.textContent=t;
@@ -1039,7 +883,7 @@ async function loadAll(silent=false){
       document.getElementById('mainContent').style.display='flex';
     }
 
-    loadNews(allHoldings.map(h=>h.ticker));
+    loadNews([...allHoldings].sort((a,b)=>(b.live||0)*b.units-(a.live||0)*a.units).map(h=>h.ticker));
   }catch(err){
     if(!silent){
       document.getElementById('loadingOverlay').style.display='none';
@@ -1048,15 +892,101 @@ async function loadAll(silent=false){
       b.style.display='block';
       b.innerHTML=`⚠️ <strong>Failed to load:</strong> ${esc(err.message)}<br><small>Must be on GitHub Pages. Ensure Google Sheet is published as CSV.</small>`;
     }else{
-      console.warn('Silent refresh failed:',err.message);
+      const b=document.getElementById('errorBanner'); b.style.display='block'; b.textContent='Refresh failed; displayed values may be stale. '+err.message;
     }
-  }
+  } finally { dashboardLoading=false; }
 }
 
 function switchTab(n,el){
   document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
   document.querySelectorAll('.tab-content').forEach(t=>t.classList.remove('active'));
   el.classList.add('active');document.getElementById('tab-'+n).classList.add('active');
+}
+
+// Dashboard accounting: FIFO, buy dates M/D/Y and sell dates D/M/Y.
+let ledgerState={lots:{},issues:[],sales:[]};
+function numberValue(v){const t=String(v??'').trim().replace(/[$,%\s]/g,'');return t!==''&&Number.isFinite(Number(t))?Number(t):null;}
+function ledgerDate(raw,sell=false){
+ const str=String(raw||'').trim(); let y,m,d; let p=str.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+ if(p){[,y,m,d]=p.map(Number);}else{p=str.match(/^(\d{1,2})\/(\d{1,2})\/(\d{2}|\d{4})$/);if(!p)return null;y=Number(p[3]);if(y<100)y+=2000;const first=Number(p[1]),second=Number(p[2]); const dayFirst=first>12?true:second>12?false:sell; m=dayFirst?second:first;d=dayFirst?first:second;}
+ const date=new Date(Date.UTC(y,m-1,d));return date.getUTCFullYear()===y&&date.getUTCMonth()===m-1&&date.getUTCDate()===d?date:null;
+}
+function computeRealized(buys,sells){
+ const lots={},real={},issues=[],sales=[],bad=new Set(),ambiguous=new Set();
+ const events=[];
+ for(const [rows,sell] of [[buys,false],[sells,true]])rows.forEach((r,i)=>{
+  const t=String(r.Ticker||r.TICKER||'').trim().toUpperCase();if(!t)return;
+  const u=numberValue(r.UNITS??r.Units),p=numberValue(r.PRICES??r.Price),date=ledgerDate(r.DATE||r.Date,sell);
+  if(!date||u===null||u<=0||p===null||p<0){issues.push(t+': invalid '+(sell?'sell':'buy')+' row '+(i+1));bad.add(t);return;}
+  if(date>new Date()){issues.push(t+': future transaction date '+(r.DATE||r.Date));bad.add(t);return;}
+  const parts=String(r.DATE||r.Date).split('/').map(Number);if(parts.length===3&&parts[0]<=12&&parts[1]<=12&&parts[0]!==parts[1])ambiguous.add(t);
+  events.push({t,u,p,date,sell,i});
+ });
+ events.sort((a,b)=>a.date-b.date||Number(a.sell)-Number(b.sell)||a.i-b.i);
+ events.forEach(e=>{
+  const arr=lots[e.t]||=([]);if(!e.sell){arr.push({units:e.u,price:e.p,date:e.date});return;}
+  let remaining=e.u,cost=0;
+  while(remaining>1e-8&&arr.length){const lot=arr[0],used=Math.min(remaining,lot.units);cost+=used*lot.price;remaining-=used;lot.units-=used;if(lot.units<1e-8)arr.shift();}
+  if(remaining>1e-8){issues.push(e.t+': sale exceeds earlier purchases by '+remaining.toFixed(4)+' units');bad.add(e.t);return;}
+  sales.push({ticker:e.t,pnl:e.u*e.p-cost,date:e.date});
+ });
+ const validSales=sales.filter(e=>!bad.has(e.ticker));validSales.forEach(e=>{real[e.ticker]||={pnl:0};real[e.ticker].pnl+=e.pnl;});
+ ledgerState={lots,issues,sales:validSales,bad,ambiguous};return real;
+}
+function enrichHoldings(holdings){
+ const total=holdings.reduce((a,h)=>a+(h.live===null?0:h.units*h.live),0);const complete=holdings.every(h=>Number.isFinite(h.live));
+ const now=new Date(),today=Date.UTC(now.getFullYear(),now.getMonth()+0,now.getDate());
+ holdings.forEach(h=>{
+ const lots=ledgerState.lots[h.ticker]||[],qty=lots.reduce((a,l)=>a+l.units,0),match=Math.abs(qty-h.units)<1e-6&&!ledgerState.bad.has(h.ticker);
+ h.days=match&&lots.length?Math.floor((today-lots[0].date.getTime())/86400000):null;if(h.days<0)h.days=null;
+ h.ageEstimated=false;
+ h.ageNote=match?'Oldest remaining FIFO lot; calendar days. Ambiguous dates use M/D/Y for buys and D/M/Y for sells.':'Ledger quantity mismatch or invalid transaction';
+ h.weight=complete&&total>0?h.live*h.units/total*100:null;
+ if(!match)ledgerState.issues.push(h.ticker+': open quantity '+h.units+' differs from usable ledger quantity '+qty.toFixed(4));
+ });
+}
+function renderHoldings(filter){
+ curFilter=filter;const q=(document.getElementById('holdingSearch').value||'').toLowerCase();
+ let list=allHoldings.filter(h=>(filter==='all'||h.sector===filter)&&(!q||(h.ticker+' '+h.name).toLowerCase().includes(q)));
+ const val=h=>({name:h.ticker,mkt:h.live===null?null:h.live*h.units,pnl:h.live===null?null:h.live*h.units-h.cost}[sortCol]??h[sortCol]);
+ list.sort((a,b)=>{const x=val(a),y=val(b);if(x==null)return y==null?0:1;if(y==null)return -1;return sortDir*(typeof x==='string'?x.localeCompare(y):x-y);});
+ const signed=n=>n==null?'—':(n>=0?'+':'−')+fmt(n);
+ document.getElementById('holdingsBody').innerHTML=list.map(h=>{const pnl=h.live===null?null:h.live*h.units-h.cost;return `<tr>
+ <td><span class="tkr">${esc(h.ticker)}</span> <span class="stock-name">${esc(h.name)}</span></td>
+ <td title="${esc(h.ageNote)}">${h.days===null?'—':(h.ageEstimated?'≈ ':'')+h.days.toLocaleString()+' days'}</td><td title="Gain/loss from sheet average cost; excludes fees and dividends">${pillHtml(h.retTotal)}</td><td>${h.weight===null?'—':h.weight.toFixed(2)+'%'}</td><td>${h.live===null?'—':fmt(h.live*h.units)}</td>
+ <td>${h.units.toLocaleString()}</td><td>${fmt(h.avg)}</td><td>${h.live===null?'—':fmt(h.live)}</td><td>${h.prevDay===null?'—':fmt(h.prevDay)}</td>
+ <td class="${pillClass(h.todayPnl)}">${signed(h.todayPnl)}</td><td>${pillHtml(h.retToday)}</td><td>${pillHtml(h.ret1m)}</td><td>${pillHtml(h.ret3m)}</td><td>${pillHtml(h.ret6m)}</td><td class="${pillClass(pnl)}">${signed(pnl)}</td></tr>`;}).join('');
+ const complete=list.every(h=>h.live!==null),sum=list.reduce((a,h)=>a+(h.live===null?0:h.live*h.units),0),cost=list.reduce((a,h)=>a+h.cost,0);
+ document.getElementById('holdingsTotals').innerHTML=`<tr><td colspan="3">Filtered total · ${list.length} holdings</td><td>${complete&&cost>0?fmtPct((sum-cost)/cost*100):'—'}</td><td></td><td>${complete?fmt(sum):'Incomplete'}</td><td colspan="8"></td><td>${complete?signed(sum-cost):'—'}</td></tr>`;
+}
+function renderSharpe(holdings,totalCost,totalMkt,unreal,totalRealized){
+ const known=holdings.filter(h=>h.live!==null),complete=known.length===holdings.length;
+ const weights=holdings.map(h=>h.weight).filter(Number.isFinite).sort((a,b)=>b-a);
+ const top5=complete&&weights.length?weights.slice(0,5).reduce((a,b)=>a+b,0):null;
+ document.getElementById('sharpe-badge').textContent=known.length+'/'+holdings.length+' quotes · timestamp unavailable';
+ const cell=(v,l)=>`<div class="sharpe-item"><div class="sharpe-val">${v}</div><div class="sharpe-lbl">${l}</div></div>`;
+ document.getElementById('sharpeGrid').innerHTML=cell(top5===null?'—':top5.toFixed(1)+'%','Top-five concentration')+cell(weights.length?weights[0].toFixed(1)+'%':'—','Largest position')+cell(known.length+'/'+holdings.length,'Quote coverage')+cell(ledgerState.issues.length,'Ledger issues');
+ setKpi('sb-sharpe','—');setKpi('new-realized',(totalRealized>=0?'+':'−')+fmt(totalRealized));
+ if(!complete){['k-value','sb-value'].forEach(id=>setKpi(id,'Incomplete'));['k-unreal','sb-unreal','k-total','sb-total'].forEach(id=>setKpi(id,'—'));setKpi('k-value-sub',fmt(totalMkt)+' priced holdings only');setKpi('k-unreal-sub','Missing quotes');setKpi('sb-unreal-sub','Missing quotes');}
+ const dayComplete=holdings.every(h=>h.live!==null&&h.prevDay!==null);
+ if(!dayComplete){setKpi('k-today','—');setKpi('sb-today','—');setKpi('k-today-sub','Incomplete previous-close coverage');}
+ else setKpi('k-today-sub','Current shares vs previous close; excludes intraday trades');
+ if(ledgerState.issues.length){setKpi('k-total','—');setKpi('sb-total','—');}
+ const gains=ledgerState.sales.filter(x=>x.pnl>0),losses=ledgerState.sales.filter(x=>x.pnl<0),grossWin=gains.reduce((a,x)=>a+x.pnl,0),grossLoss=-losses.reduce((a,x)=>a+x.pnl,0),n=ledgerState.sales.length;
+ document.getElementById('tradeMetrics').textContent=`Matched sale rows: ${n} · Win rate: ${n?(gains.length/n*100).toFixed(1)+'%':'—'} · Expectancy per sale: ${n?((totalRealized/n>=0?'+':'−')+fmt(totalRealized/n)):'—'} · Profit factor: ${grossLoss>0?(grossWin/grossLoss).toFixed(2):'— (no losses)'} · Before fees; excludes invalid tickers.`;
+ document.getElementById('ledgerWarnings').textContent='FIFO: ambiguous buy dates use confirmed M/D/Y; sell dates use D/M/Y. Same-day buys precede sells; corporate actions must already be reflected in ledger quantities/prices. '+(ledgerState.issues.length?ledgerState.issues.join(' · '):'Ledger quantities reconciled.');
+}
+function renderSectorChart(holdings){
+ const s={};holdings.filter(h=>h.live!==null).forEach(h=>s[h.sector]=(s[h.sector]||0)+h.live*h.units);
+ const lbs=Object.keys(s),vs=Object.values(s),total=vs.reduce((a,b)=>a+b,0);if(chartSector)chartSector.destroy();
+ chartSector=new Chart(document.getElementById('sectorChart').getContext('2d'),{type:'doughnut',data:{labels:lbs,datasets:[{data:vs,backgroundColor:COLORS,borderWidth:0}]},options:{cutout:'70%',plugins:{legend:{display:false}}}});
+ document.getElementById('sectorLegend').innerHTML=lbs.map((l,i)=>`<div class="leg-item"><span class="leg-dot" style="background:${COLORS[i%COLORS.length]}"></span>${esc(l)} <span class="leg-pct">${total?(vs[i]/total*100).toFixed(1):'0'}%</span></div>`).join('');
+}
+function renderWL(holdings){
+ const mode=document.getElementById('rankMode').value;const value=h=>mode==='daily'?h.todayPnl:mode==='dollars'?(h.live===null?null:h.live*h.units-h.cost):h.retTotal;
+ const rows=holdings.filter(h=>Number.isFinite(value(h))).sort((a,b)=>value(b)-value(a));
+ const render=(rows,id)=>document.getElementById(id).innerHTML=rows.map(h=>`<div class="wl-item"><span class="wl-ticker">${esc(h.ticker)}</span><span class="wl-name">${esc(h.name)}</span><span class="${value(h)>=0?'pos':'neg'}">${mode==='return'?fmtPct(value(h)):(value(h)>=0?'+':'−')+fmt(value(h))}</span></div>`).join('')||'<div class="data-note">No matching holdings</div>';
+ render(rows.filter(h=>value(h)>0).slice(0,5),'winnersList');render(rows.filter(h=>value(h)<0).reverse().slice(0,5),'losersList');
 }
 
 loadAll();
