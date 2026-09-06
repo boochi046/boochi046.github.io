@@ -328,7 +328,7 @@ const GIDS = {
   main:   '0'
 };
 
-const CACHE_KEY = 'top_score_flow_surge_v2';
+const CACHE_KEY = 'top_score_flow_surge_v3';
 const CACHE_EXPIRY_MS = 4 * 60 * 60 * 1000; // 4 hours
 
 let allSignals = [];
@@ -347,8 +347,14 @@ async function fetchCsv(gid, stepId) {
     const res = await fetch(getCsvUrl(gid));
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const text = await res.text();
+    const parsed = parseCsvText(text);
+    if (['step-close', 'step-open', 'step-high', 'step-low', 'step-volume'].includes(stepId)) {
+      if (parsed.dates.length < 65 || !Object.values(parsed.data).some(a => a.filter(Number.isFinite).length >= 65)) {
+        throw new Error(stepId.replace('step-', '') + ' sheet is still loading or has fewer than 65 usable history rows. Wait for the Google Sheet to finish calculating, then Force Refresh.');
+      }
+    }
     if (step) step.className = 'ls done';
-    return parseCsvText(text);
+    return parsed;
   } catch (err) {
     if (step) step.className = 'ls fail';
     logDebug(`Error fetching gid=${gid}: ${err.message}`);
@@ -357,22 +363,39 @@ async function fetchCsv(gid, stepId) {
 }
 
 function parseCsvText(text) {
-  const lines = text.trim().split('\n').map(r => r.split(',').map(c => c.trim().replace(/^"|"$/g, '')));
-  const headers = lines[0];
-  const dates = [];
-  const data = {};
-  headers.slice(1).forEach(t => { data[t] = []; });
-  
-  for (let i = 1; i < lines.length; i++) {
-    const row = lines[i];
-    dates.push(row[0]);
-    for (let j = 1; j < row.length; j++) {
-      const ticker = headers[j];
-      const val = parseFloat(row[j]);
-      if (data[ticker]) data[ticker].push(isNaN(val) ? null : val);
-    }
+  if (text.trim().startsWith('<')) throw new Error('Expected CSV data, received HTML');
+  const lines = []; let row = [], cell = '', quoted = false;
+  for (let i = 0; i < text.length; i++) {
+    const ch = text[i];
+    if (ch === '"') {
+      if (quoted && text[i + 1] === '"') { cell += '"'; i++; }
+      else quoted = !quoted;
+    } else if (ch === ',' && !quoted) { row.push(cell.trim()); cell = ''; }
+    else if ((ch === '\n' || ch === '\r') && !quoted) {
+      if (ch === '\r' && text[i + 1] === '\n') i++;
+      row.push(cell.trim()); if (row.some(Boolean)) lines.push(row); row = []; cell = '';
+    } else cell += ch;
   }
-  return { dates, data, headers: headers.slice(1), rawLines: lines };
+  if (quoted) throw new Error('Incomplete CSV response');
+  row.push(cell.trim()); if (row.some(Boolean)) lines.push(row);
+  if (!lines.length) throw new Error('Empty CSV response');
+  const headers = lines[0].map(h => h.replace(/^\uFEFF/, '').trim());
+  const number = value => {
+    const cleaned = (value || '').replace(/[$,%\s]/g, '');
+    return cleaned && Number.isFinite(Number(cleaned)) ? Number(cleaned) : null;
+  };
+  // Only history rows have ISO dates; keep metadata rows intact in rawLines.
+  const history = lines.slice(1).filter(r => /^\d{4}-\d{2}-\d{2}$/.test(r[0]));
+  history.sort((a, b) => a[0].localeCompare(b[0]));
+  const dates = history.map(r => r[0]), data = {};
+  headers.slice(1).forEach((t, j) => { data[t] = history.map(r => number(r[j + 1])); });
+  return { dates, data, headers: headers.slice(1), rawLines: [headers, ...lines.slice(1)] };
+}
+
+function alignHistory(source, dates) {
+  const positions = new Map(source.dates.map((date, i) => [date, i]));
+  return Object.fromEntries(Object.entries(source.data).map(([ticker, values]) =>
+    [ticker, dates.map(date => positions.has(date) ? values[positions.get(date)] : null)]));
 }
 
 function parseMetadata(mainRaw, pctRaw) {
@@ -533,6 +556,10 @@ async function runScreener(forceRefresh = false) {
       fetchCsv(GIDS.main, 'step-main')
     ]);
 
+    hRaw.data = alignHistory(hRaw, cRaw.dates);
+    lRaw.data = alignHistory(lRaw, cRaw.dates);
+    vRaw.data = alignHistory(vRaw, cRaw.dates);
+    logDebug('History: ' + cRaw.dates[0] + ' to ' + cRaw.dates.at(-1));
     const meta = parseMetadata(mainRaw, pctRaw);
     const tickers = cRaw.headers;
     const len = cRaw.dates.length;
@@ -540,7 +567,7 @@ async function runScreener(forceRefresh = false) {
 
     tickers.forEach(t => {
       const c = cRaw.data[t], h = hRaw.data[t], l = lRaw.data[t], v = vRaw.data[t];
-      if (!c || c.filter(x => x !== null).length < 65) return;
+      if (!c || !h || !l || !v || c.filter(Number.isFinite).length < 65) return;
 
       const rsi = calcRSI(c, 14);
       const mfi = calcMFI(h, l, c, v, 14);
@@ -619,7 +646,10 @@ async function runScreener(forceRefresh = false) {
     document.getElementById('loadCard').style.display = 'none';
     const eb = document.getElementById('errBox');
     eb.style.display = 'block';
-    eb.innerHTML = `<strong>Error loading screener data:</strong> ${err.message}<br><small>Check Google Sheet published status and permissions.</small>`;
+    eb.textContent = 'Error loading screener data: ' + err.message;
+    const retry = document.createElement('button');
+    retry.className = 'btn'; retry.textContent = 'Retry';
+    retry.onclick = () => runScreener(true); eb.appendChild(retry);
   }
 }
 
