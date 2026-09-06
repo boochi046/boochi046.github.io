@@ -328,7 +328,7 @@ const GIDS = {
   main:   '0'
 };
 
-const CACHE_KEY = 'top_score_flow_surge_v4';
+const CACHE_KEY = 'top_score_flow_surge_v5';
 const CACHE_EXPIRY_MS = 4 * 60 * 60 * 1000; // 4 hours
 
 let allSignals = [];
@@ -422,6 +422,11 @@ function alignHistory(source, dates) {
     [ticker, dates.map(date => positions.has(date) ? values[positions.get(date)] : null)]));
 }
 
+function parseSheetNumber(value) {
+  const cleaned = String(value ?? '').trim().replace(/[$,%\s]/g, '');
+  return cleaned !== '' && Number.isFinite(Number(cleaned)) ? Number(cleaned) : null;
+}
+
 function parseMetadata(mainRaw, pctRaw) {
   const meta = {};
   if (mainRaw && mainRaw.rawLines) {
@@ -429,13 +434,13 @@ function parseMetadata(mainRaw, pctRaw) {
     const h = rows[0].map(x => x.toLowerCase());
     const tkrIdx = h.findIndex(x => x === 'ticker');
     const ptIdx = h.findIndex(x => x.includes('analyst price target') && !x.includes('%'));
-    const upIdx = h.findIndex(x => x.includes('best price target upside') || x.includes('target upside'));
+    const upIdx = h.findIndex(x => x.trim() === 'analyst price target %');
     for (let i = 1; i < rows.length; i++) {
       const tkr = rows[i][tkrIdx];
       if (tkr) {
         meta[tkr] = {
-          target: ptIdx >= 0 ? parseFloat(rows[i][ptIdx]) || null : null,
-          upside: upIdx >= 0 ? parseFloat(rows[i][upIdx]) || null : null
+          target: ptIdx >= 0 ? parseSheetNumber(rows[i][ptIdx]) : null,
+          upside: upIdx >= 0 ? parseSheetNumber(rows[i][upIdx]) : null
         };
       }
     }
@@ -650,7 +655,7 @@ async function runScreener(forceRefresh = false) {
             ret3m: tMeta.ret3m !== undefined ? tMeta.ret3m * 100 : null,
             ret6m: tMeta.ret6m !== undefined ? tMeta.ret6m * 100 : null,
             target: tMeta.target || null,
-            targetUpside: tMeta.upside !== undefined ? tMeta.upside * 100 : null
+            targetUpside: tMeta.upside ?? null
           });
         }
       }
