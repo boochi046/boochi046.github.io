@@ -363,9 +363,9 @@ td:first-child{text-align:left;padding-left:1.1rem;}
         <div class="kpi-sub" id="k-today-sub">vs previous close</div>
       </div>
       <div class="kpi c5">
-        <div class="kpi-label">🏆 Total P&amp;L</div>
+        <div class="kpi-label" id="totalPnlLabel">🏆 Total P&amp;L</div>
         <div class="kpi-value" id="k-total">—</div>
-        <div class="kpi-sub">Realized + Unrealized</div>
+        <div class="kpi-sub" id="totalPnlNote">Realized + Unrealized</div>
       </div>
     </div>
 
@@ -379,7 +379,8 @@ td:first-child{text-align:left;padding-left:1.1rem;}
       <div class="sharpe-grid" id="sharpeGrid"></div>
     </div>
 
-    <!-- Holdings (full width) -->
+    <div class="card" style="padding:1rem;margin-bottom:1rem"><div class="card-title">Portfolio performance · time-weighted return</div><div id="periodReturns" class="sharpe-grid"></div><p class="data-note">Requires dated portfolio values, including cash, and external cash flows. Individual stock returns are not portfolio returns.</p><label class="data-note">Load valuation history CSV <input type="file" accept=".csv,text/csv" onchange="importPortfolioHistory(this.files[0])"></label><div id="historyStatus" class="data-note">Columns: Date (dd/MM/YYYY), Portfolio Value, Net Flow. Supply daily closing values; Net Flow is deposits minus withdrawals, assumed at day end. Purchases and sales within the account are not external flows.</div></div>
+<!-- Holdings (full width) -->
     <div style="display:grid;grid-template-columns:1fr;gap:1rem;margin-bottom:1rem" id="holdings">
       <div class="card">
         <div class="card-hdr">
@@ -567,7 +568,7 @@ async function fetchCSV(url,stepId){
   const el=document.getElementById(stepId);
   el.classList.add('active');el.textContent=el.textContent.replace('⬜','⏳');
   try{
-    const t=await fetchRaw(url);
+    const t=await fetchRaw(url+(url.includes('?')?'&':'?')+'refresh='+Date.now());
     el.classList.remove('active');el.classList.add('done');
     el.textContent=el.textContent.replace('⏳','✅');
     return parseCSV(t);
@@ -908,7 +909,7 @@ let ledgerState={lots:{},issues:[],sales:[]};
 function numberValue(v){const t=String(v??'').trim().replace(/[$,%\s]/g,'');return t!==''&&Number.isFinite(Number(t))?Number(t):null;}
 function ledgerDate(raw,sell=false){
  const str=String(raw||'').trim(); let y,m,d; let p=str.match(/^(\d{4})-(\d{2})-(\d{2})$/);
- if(p){[,y,m,d]=p.map(Number);}else{p=str.match(/^(\d{1,2})\/(\d{1,2})\/(\d{2}|\d{4})$/);if(!p)return null;y=Number(p[3]);if(y<100)y+=2000;const first=Number(p[1]),second=Number(p[2]); const dayFirst=first>12?true:second>12?false:sell; m=dayFirst?second:first;d=dayFirst?first:second;}
+ if(p){[,y,m,d]=p.map(Number);}else{p=str.match(/^(\d{1,2})\/(\d{1,2})\/(\d{2}|\d{4})$/);if(!p)return null;y=Number(p[3]);if(y<100)y+=2000;const first=Number(p[1]),second=Number(p[2]); const dayFirst=second>12?false:true; m=dayFirst?second:first;d=dayFirst?first:second;}
  const date=new Date(Date.UTC(y,m-1,d));return date.getUTCFullYear()===y&&date.getUTCMonth()===m-1&&date.getUTCDate()===d?date:null;
 }
 function computeRealized(buys,sells){
@@ -940,7 +941,7 @@ function enrichHoldings(holdings){
  const lots=ledgerState.lots[h.ticker]||[],qty=lots.reduce((a,l)=>a+l.units,0),match=Math.abs(qty-h.units)<1e-6&&!ledgerState.bad.has(h.ticker);
  h.days=match&&lots.length?Math.floor((today-lots[0].date.getTime())/86400000):null;if(h.days<0)h.days=null;
  h.ageEstimated=false;
- h.ageNote=match?'Oldest remaining FIFO lot; calendar days. Ambiguous dates use M/D/Y for buys and D/M/Y for sells.':'Ledger quantity mismatch or invalid transaction';
+ h.ageNote=match?'Oldest remaining FIFO lot; calendar days. Dates use dd/MM/YYYY; legacy unambiguous US dates are accepted.':'Ledger quantity mismatch or invalid transaction';
  h.weight=complete&&total>0?h.live*h.units/total*100:null;
  if(!match)ledgerState.issues.push(h.ticker+': open quantity '+h.units+' differs from usable ledger quantity '+qty.toFixed(4));
  });
@@ -952,7 +953,7 @@ function renderHoldings(filter){
  list.sort((a,b)=>{const x=val(a),y=val(b);if(x==null)return y==null?0:1;if(y==null)return -1;return sortDir*(typeof x==='string'?x.localeCompare(y):x-y);});
  const signed=n=>n==null?'—':(n>=0?'+':'−')+fmt(n);
  document.getElementById('holdingsBody').innerHTML=list.map(h=>{const pnl=h.live===null?null:h.live*h.units-h.cost;return `<tr>
- <td><span class="tkr">${esc(h.ticker)}</span> <span class="stock-name">${esc(h.name)}</span></td>
+ <td><span class="tkr">${esc(h.ticker)}</span> <span class="stock-name">${esc(h.name)}</span><div style="font-size:.68rem;margin-top:.35rem;display:flex;gap:.5rem;align-items:center;white-space:normal"><span title="${esc(h.ageNote)}">${h.days===null?'Holding days unavailable':h.days.toLocaleString()+' days held'}</span><span>Gain/loss ${pillHtml(h.retTotal)}</span></div></td>
  <td title="${esc(h.ageNote)}">${h.days===null?'—':(h.ageEstimated?'≈ ':'')+h.days.toLocaleString()+' days'}</td><td title="Gain/loss from sheet average cost; excludes fees and dividends">${pillHtml(h.retTotal)}</td><td>${h.weight===null?'—':h.weight.toFixed(2)+'%'}</td><td>${h.live===null?'—':fmt(h.live*h.units)}</td>
  <td>${h.units.toLocaleString()}</td><td>${fmt(h.avg)}</td><td>${h.live===null?'—':fmt(h.live)}</td><td>${h.prevDay===null?'—':fmt(h.prevDay)}</td>
  <td class="${pillClass(h.todayPnl)}">${signed(h.todayPnl)}</td><td>${pillHtml(h.retToday)}</td><td>${pillHtml(h.ret1m)}</td><td>${pillHtml(h.ret3m)}</td><td>${pillHtml(h.ret6m)}</td><td class="${pillClass(pnl)}">${signed(pnl)}</td></tr>`;}).join('');
@@ -971,10 +972,17 @@ function renderSharpe(holdings,totalCost,totalMkt,unreal,totalRealized){
  const dayComplete=holdings.every(h=>h.live!==null&&h.prevDay!==null);
  if(!dayComplete){setKpi('k-today','—');setKpi('sb-today','—');setKpi('k-today-sub','Incomplete previous-close coverage');}
  else setKpi('k-today-sub','Current shares vs previous close; excludes intraday trades');
- if(ledgerState.issues.length){setKpi('k-total','—');setKpi('sb-total','—');}
+ const excluded=[...ledgerState.bad];
+ setKpi('totalPnlLabel',excluded.length?'Partial P&L':'Total P&L');
+ setKpi('totalPnlNote',excluded.length?'Excludes realized P&L: '+excluded.join(', '):'Realized + Unrealized · before fees');
+ if(excluded.length&&complete){
+   const partial=unreal+totalRealized,display=(partial>=0?'+':'−')+fmt(partial)+'*';
+   setKpi('k-total',display);setKpi('sb-total',display);
+ }
+ if(!complete)setKpi('totalPnlNote','Unavailable: one or more current prices are missing.');
  const gains=ledgerState.sales.filter(x=>x.pnl>0),losses=ledgerState.sales.filter(x=>x.pnl<0),grossWin=gains.reduce((a,x)=>a+x.pnl,0),grossLoss=-losses.reduce((a,x)=>a+x.pnl,0),n=ledgerState.sales.length;
  document.getElementById('tradeMetrics').textContent=`Matched sale rows: ${n} · Win rate: ${n?(gains.length/n*100).toFixed(1)+'%':'—'} · Expectancy per sale: ${n?((totalRealized/n>=0?'+':'−')+fmt(totalRealized/n)):'—'} · Profit factor: ${grossLoss>0?(grossWin/grossLoss).toFixed(2):'— (no losses)'} · Before fees; excludes invalid tickers.`;
- document.getElementById('ledgerWarnings').textContent='FIFO: ambiguous buy dates use confirmed M/D/Y; sell dates use D/M/Y. Same-day buys precede sells; corporate actions must already be reflected in ledger quantities/prices. '+(ledgerState.issues.length?ledgerState.issues.join(' · '):'Ledger quantities reconciled.');
+ document.getElementById('ledgerWarnings').textContent='FIFO: dates use dd/MM/YYYY. Legacy unambiguous US dates are accepted while the published feed updates. Same-day buys precede sells; corporate actions must already be reflected in ledger quantities/prices. '+(ledgerState.issues.length?ledgerState.issues.join(' · '):'Ledger quantities reconciled.');
 }
 function renderSectorChart(holdings){
  const s={};holdings.filter(h=>h.live!==null).forEach(h=>s[h.sector]=(s[h.sector]||0)+h.live*h.units);
@@ -988,6 +996,43 @@ function renderWL(holdings){
  const render=(rows,id)=>document.getElementById(id).innerHTML=rows.map(h=>`<div class="wl-item"><span class="wl-ticker">${esc(h.ticker)}</span><span class="wl-name">${esc(h.name)}</span><span class="${value(h)>=0?'pos':'neg'}">${mode==='return'?fmtPct(value(h)):(value(h)>=0?'+':'−')+fmt(value(h))}</span></div>`).join('')||'<div class="data-note">No matching holdings</div>';
  render(rows.filter(h=>value(h)>0).slice(0,5),'winnersList');render(rows.filter(h=>value(h)<0).reverse().slice(0,5),'losersList');
 }
+
+function calculatePeriodReturns(rows, asOf=new Date()){
+ const data=rows.map(r=>({date:ledgerDate(r.Date),value:numberValue(r['Portfolio Value']),flow:numberValue(r['Net Flow'])}));
+ if(data.some(r=>!r.date||r.value===null||r.value<=0||r.flow===null))throw new Error('Each history row needs a valid date, positive portfolio value and numeric net flow (0 if none).');
+ data.sort((a,b)=>a.date-b.date);
+ if(data.some((r,i)=>i&&+r.date===+data[i-1].date))throw new Error('History has duplicate dates.');
+ const now=Date.UTC(asOf.getFullYear(),asOf.getMonth(),asOf.getDate());
+ if(data.some(r=>+r.date>now))throw new Error('History contains future dates.');
+ return [3,6,12].map(months=>{
+  if(!data.length)return {months,reason:'History required'};
+  const last=data.at(-1),cutoff=new Date(last.date);const day=cutoff.getUTCDate();cutoff.setUTCDate(1);cutoff.setUTCMonth(cutoff.getUTCMonth()-months);const maxDay=new Date(Date.UTC(cutoff.getUTCFullYear(),cutoff.getUTCMonth()+1,0)).getUTCDate();cutoff.setUTCDate(Math.min(day,maxDay));
+  let start=-1;data.forEach((r,i)=>{if(r.date<=cutoff)start=i;});
+  if(start<0||cutoff-data[start].date>4*86400000)return {months,reason:'More history required'};
+  let growth=1;
+  for(let i=start+1;i<data.length;i++){
+   if(data[i].date-data[i-1].date>4*86400000)return {months,reason:'Missing daily valuations'};
+   const factor=(data[i].value-data[i].flow)/data[i-1].value;
+   if(factor<=0)return {months,reason:'Check cash flows and valuations'};
+   growth*=factor;
+  }
+  return {months,value:(growth-1)*100,start:data[start].date,end:last.date};
+ });
+}
+function showPeriodReturns(results){
+ document.getElementById('periodReturns').innerHTML=results.map(r=>'<div class="sharpe-item"><div class="sharpe-val">'+(r.value===undefined?'—':fmtPct(r.value))+'</div><div class="sharpe-lbl">'+(r.months===12?'1 Year':r.months+' Months')+'</div><div class="data-note">'+(r.reason||r.start.toISOString().slice(0,10)+' to '+r.end.toISOString().slice(0,10))+'</div></div>').join('');
+}
+async function importPortfolioHistory(file){
+ if(!file)return;
+ try{
+  const text=await file.text(),lines=text.trim().split(/\r?\n/),headers=splitLine(lines.shift()).map(h=>h.trim());
+  if(!['Date','Portfolio Value','Net Flow'].every(h=>headers.includes(h)))throw new Error('Expected Date, Portfolio Value and Net Flow columns.');
+  const rows=lines.filter(l=>l.trim()).map(l=>{const values=splitLine(l);return Object.fromEntries(headers.map((h,i)=>[h,values[i]]));});
+  const results=calculatePeriodReturns(rows);showPeriodReturns(results);
+  document.getElementById('historyStatus').textContent='Loaded '+rows.length+' daily valuations for this session. Returns assume external cash flows occur at day end.';
+ }catch(e){showPeriodReturns([3,6,12].map(months=>({months,reason:'Invalid history'})));document.getElementById('historyStatus').textContent=e.message;}
+}
+showPeriodReturns([3,6,12].map(months=>({months,reason:'Valuation history required'})));
 
 loadAll();
 setInterval(()=>loadAll(true),5*60*1000);
