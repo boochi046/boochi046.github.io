@@ -953,7 +953,7 @@ function renderHoldings(filter){
  list.sort((a,b)=>{const x=val(a),y=val(b);if(x==null)return y==null?0:1;if(y==null)return -1;return sortDir*(typeof x==='string'?x.localeCompare(y):x-y);});
  const signed=n=>n==null?'—':(n>=0?'+':'−')+fmt(n);
  document.getElementById('holdingsBody').innerHTML=list.map(h=>{const pnl=h.live===null?null:h.live*h.units-h.cost;return `<tr>
- <td><span class="tkr">${esc(h.ticker)}</span> <span class="stock-name">${esc(h.name)}</span><div style="font-size:.68rem;margin-top:.35rem;display:flex;gap:.5rem;align-items:center;white-space:normal"><span title="${esc(h.ageNote)}">${h.days===null?'Holding days unavailable':h.days.toLocaleString()+' days held'}</span><span>Gain/loss ${pillHtml(h.retTotal)}</span></div></td>
+ <td><span class="tkr">${esc(h.ticker)}</span> <span class="stock-name">${esc(h.name)}</span></td>
  <td title="${esc(h.ageNote)}">${h.days===null?'—':(h.ageEstimated?'≈ ':'')+h.days.toLocaleString()+' days'}</td><td title="Gain/loss from sheet average cost; excludes fees and dividends">${pillHtml(h.retTotal)}</td><td>${h.weight===null?'—':h.weight.toFixed(2)+'%'}</td><td>${h.live===null?'—':fmt(h.live*h.units)}</td>
  <td>${h.units.toLocaleString()}</td><td>${fmt(h.avg)}</td><td>${h.live===null?'—':fmt(h.live)}</td><td>${h.prevDay===null?'—':fmt(h.prevDay)}</td>
  <td class="${pillClass(h.todayPnl)}">${signed(h.todayPnl)}</td><td>${pillHtml(h.retToday)}</td><td>${pillHtml(h.ret1m)}</td><td>${pillHtml(h.ret3m)}</td><td>${pillHtml(h.ret6m)}</td><td class="${pillClass(pnl)}">${signed(pnl)}</td></tr>`;}).join('');
