@@ -315,8 +315,8 @@ function toggleDebug() {
   t.textContent = open ? '▼ show' : '▲ hide';
 }
 
-// ── SCREENER CONFIGURATION & CACHE ──
-const SHEET_ID = 'YOUR_GOOGLE_SHEET_ID_HERE'; // Replace with your Google Sheet ID
+// ── PUBLISHED GOOGLE SHEET CONFIGURATION ──
+const BASE_PUB_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRFmzsy7mklmiwzmczqrUswzNM0vAz3BsjS1kODfGlgmqzF-Zw7Zdx5r1NMkZ7TggckHvOwlUk-eCzn/pub';
 
 const GIDS = {
   close:  '1283231042',
@@ -333,10 +333,11 @@ const CACHE_EXPIRY_MS = 4 * 60 * 60 * 1000; // 4 hours
 
 let allSignals = [];
 let currentDayFilter = -1;
-let sortCol = 'flowSurge', sortAsc = false; // Default: Rank by highest Flow Surge
+let sortCol = 'flowSurge', sortAsc = false;
 
+// Correct published CSV URL builder
 function getCsvUrl(gid) {
-  return `https://docs.google.com/spreadsheets/d/${SHEET_ID}/export?format=csv&gid=${gid}`;
+  return `${BASE_PUB_URL}?gid=${gid}&single=true&output=csv`;
 }
 
 async function fetchCsv(gid, stepId) {
@@ -368,7 +369,7 @@ function parseCsvText(text) {
     for (let j = 1; j < row.length; j++) {
       const ticker = headers[j];
       const val = parseFloat(row[j]);
-      data[ticker].push(isNaN(val) ? null : val);
+      if (data[ticker]) data[ticker].push(isNaN(val) ? null : val);
     }
   }
   return { dates, data, headers: headers.slice(1), rawLines: lines };
@@ -410,56 +411,80 @@ function parseMetadata(mainRaw, pctRaw) {
   return meta;
 }
 
-// Indicator Formulas
+// Indicator Calculations
 function calcRSI(series, period = 14) {
   const rsi = new Array(series.length).fill(null);
-  let g = 0, l = 0;
-  for (let i = 1; i <= period; i++) {
+  let g = 0, l = 0, count = 0;
+  for (let i = 1; i < series.length; i++) {
+    if (series[i] === null || series[i - 1] === null) continue;
     const d = series[i] - series[i - 1];
     if (d > 0) g += d; else l -= d;
-  }
-  let ag = g / period, al = l / period;
-  rsi[period] = al === 0 ? 100 : 100 - (100 / (1 + ag / al));
-  for (let i = period + 1; i < series.length; i++) {
-    const d = series[i] - series[i - 1];
-    ag = (ag * (period - 1) + Math.max(0, d)) / period;
-    al = (al * (period - 1) + Math.max(0, -d)) / period;
-    rsi[i] = al === 0 ? 100 : 100 - (100 / (1 + ag / al));
+    count++;
+    if (count === period) {
+      let ag = g / period, al = l / period;
+      rsi[i] = al === 0 ? 100 : 100 - (100 / (1 + ag / al));
+      for (let j = i + 1; j < series.length; j++) {
+        if (series[j] === null || series[j - 1] === null) continue;
+        const diff = series[j] - series[j - 1];
+        ag = (ag * (period - 1) + Math.max(0, diff)) / period;
+        al = (al * (period - 1) + Math.max(0, -diff)) / period;
+        rsi[j] = al === 0 ? 100 : 100 - (100 / (1 + ag / al));
+      }
+      break;
+    }
   }
   return rsi;
 }
 
 function calcMFI(highs, lows, closes, vols, period = 14) {
   const mfi = new Array(closes.length).fill(null);
-  const tp = closes.map((c, i) => (c + highs[i] + lows[i]) / 3);
+  const tp = closes.map((c, i) => (c !== null && highs[i] !== null && lows[i] !== null) ? (c + highs[i] + lows[i]) / 3 : null);
   for (let i = period; i < closes.length; i++) {
-    let pos = 0, neg = 0;
+    let pos = 0, neg = 0, valid = true;
     for (let j = i - period + 1; j <= i; j++) {
+      if (tp[j] === null || tp[j - 1] === null || vols[j] === null) { valid = false; break; }
       const d = tp[j] - tp[j - 1];
       const flow = tp[j] * vols[j];
       if (d > 0) pos += flow; else if (d < 0) neg += flow;
     }
-    mfi[i] = neg === 0 ? 100 : 100 - (100 / (1 + (pos / neg)));
+    if (valid) {
+      mfi[i] = neg === 0 ? 100 : 100 - (100 / (1 + (pos / neg)));
+    }
   }
   return mfi;
 }
 
 function calcVPCI(closes, vols, shortP = 10, longP = 50) {
   const vpci = new Array(closes.length).fill(null);
-  const sma = (arr, p, idx) => arr.slice(idx - p + 1, idx + 1).reduce((a, b) => a + b, 0) / p;
-  const vwma = (pArr, vArr, p, idx) => {
-    let sPV = 0, sV = 0;
-    for (let j = idx - p + 1; j <= idx; j++) {
-      sPV += pArr[j] * vArr[j]; sV += vArr[j];
-    }
-    return sV === 0 ? pArr[idx] : sPV / sV;
+  const sma = (arr, p, idx) => {
+    const sl = arr.slice(idx - p + 1, idx + 1).filter(x => typeof x === 'number' && !isNaN(x));
+    return sl.length >= (p * 0.8) ? sl.reduce((a, b) => a + b, 0) / sl.length : null;
   };
+  const vwma = (pArr, vArr, p, idx) => {
+    let sPV = 0, sV = 0, count = 0;
+    for (let j = idx - p + 1; j <= idx; j++) {
+      if (pArr[j] !== null && vArr[j] !== null) {
+        sPV += pArr[j] * vArr[j]; sV += vArr[j]; count++;
+      }
+    }
+    return (count >= (p * 0.8) && sV > 0) ? sPV / sV : null;
+  };
+
   for (let i = longP; i < closes.length; i++) {
-    const vpc = vwma(closes, vols, shortP, i) - sma(closes, shortP, i);
-    const vpr = vwma(closes, vols, longP, i) / sma(closes, longP, i);
-    const vm  = sma(vols, shortP, i) / sma(vols, longP, i);
+    const vwmaS = vwma(closes, vols, shortP, i);
+    const smaS = sma(closes, shortP, i);
+    const vwmaL = vwma(closes, vols, longP, i);
+    const smaL = sma(closes, longP, i);
+    const volS = sma(vols, shortP, i);
+    const volL = sma(vols, longP, i);
     const sma50 = sma(closes, longP, i);
-    vpci[i] = sma50 === 0 ? 0 : (vpc * vpr * vm) / sma50;
+
+    if (vwmaS !== null && smaS !== null && vwmaL !== null && smaL !== null && volS !== null && volL !== null && sma50) {
+      const vpc = vwmaS - smaS;
+      const vpr = vwmaL / smaL;
+      const vm  = volS / volL;
+      vpci[i] = (vpc * vpr * vm) / sma50;
+    }
   }
   return vpci;
 }
@@ -469,7 +494,7 @@ async function runScreener(forceRefresh = false) {
     document.getElementById('warnLocal').style.display = 'block';
   }
 
-  // Fast cache restoration
+  // Fast cache loading
   if (!forceRefresh) {
     const cached = localStorage.getItem(CACHE_KEY);
     if (cached) {
@@ -494,7 +519,7 @@ async function runScreener(forceRefresh = false) {
     document.getElementById('resultsCard').style.display = 'none';
     document.getElementById('errBox').style.display = 'none';
 
-    logDebug("Fetching data sheets in two batches...");
+    logDebug("Fetching datasets in two batches from Google Sheet...");
     const [cRaw, oRaw, hRaw] = await Promise.all([
       fetchCsv(GIDS.close, 'step-close'),
       fetchCsv(GIDS.open, 'step-open'),
@@ -511,8 +536,6 @@ async function runScreener(forceRefresh = false) {
     const meta = parseMetadata(mainRaw, pctRaw);
     const tickers = cRaw.headers;
     const len = cRaw.dates.length;
-
-    // Group signals by day to isolate the top 3 per session
     const dayGroups = { 0: [], 1: [], 2: [], 3: [] };
 
     tickers.forEach(t => {
@@ -525,27 +548,30 @@ async function runScreener(forceRefresh = false) {
 
       for (let daysAgo = 0; daysAgo < 4; daysAgo++) {
         const idx = len - 1 - daysAgo;
-        if (idx < 50 || c[idx] === null) continue;
+        if (idx < 50 || c[idx] === null || c[idx - 7] === null) continue;
 
         const price = c[idx];
         const roc7 = ((c[idx] - c[idx - 7]) / c[idx - 7]) * 100;
-        const vmi = rsi[idx] && mfi[idx] ? Number((1 + (mfi[idx] - rsi[idx]) / 100).toFixed(2)) : 0;
+        const vmi = (rsi[idx] !== null && mfi[idx] !== null) ? Number((1 + (mfi[idx] - rsi[idx]) / 100).toFixed(2)) : null;
         const vp = vpci[idx];
-        const sma50 = c.slice(idx - 49, idx + 1).reduce((a, b) => a + b, 0) / 50;
+
+        // 50-day SMA
+        const cSlice = c.slice(Math.max(0, idx - 49), idx + 1).filter(x => typeof x === 'number' && !isNaN(x));
+        const sma50 = cSlice.length >= 40 ? cSlice.reduce((a, b) => a + b, 0) / cSlice.length : null;
 
         // 20-day Volume MA and Vol Surge
-        const vSlice = v.slice(idx - 20, idx);
-        const vma20 = vSlice.reduce((a, b) => a + b, 0) / (vSlice.length || 1);
-        const volSurge = vma20 > 0 ? v[idx] / vma20 : 0;
-        const dollarVol = price * v[idx];
+        const vSlice = v.slice(Math.max(0, idx - 20), idx).filter(x => typeof x === 'number' && !isNaN(x));
+        const vma20 = vSlice.length >= 15 ? vSlice.reduce((a, b) => a + b, 0) / vSlice.length : 0;
+        const volSurge = (vma20 > 0 && v[idx] !== null) ? v[idx] / vma20 : 0;
+        const dollarVol = (v[idx] !== null) ? price * v[idx] : 0;
 
-        // Core Strategy Rules + 50 SMA + Liquidity Guards
+        // Strategy Filters
         const passPrice  = price < 50;
         const passROC    = roc7 > 0 && roc7 < 20;
-        const passVMI    = vmi >= 1.05;
-        const passVPCI   = vp > 0 && vp < 1.5;
-        const passTrend  = price > sma50;
-        const passLiquid = v[idx] >= 100000 && dollarVol >= 5000000;
+        const passVMI    = vmi !== null && vmi >= 1.05;
+        const passVPCI   = vp !== null && vp > 0 && vp < 1.5;
+        const passTrend  = sma50 !== null && price > sma50;
+        const passLiquid = v[idx] !== null && v[idx] >= 100000 && dollarVol >= 5000000;
 
         if (passPrice && passROC && passVMI && passVPCI && passTrend && passLiquid) {
           const tMeta = meta[t] || {};
@@ -573,14 +599,13 @@ async function runScreener(forceRefresh = false) {
       }
     });
 
-    // ── ISOLATE TO TOP 3 PER DAY BY FLOW SURGE ──
+    // Isolate strictly to Top 3 per day based on Flow Surge
     allSignals = [];
     for (let d = 0; d < 4; d++) {
       dayGroups[d].sort((a, b) => b.flowSurge - a.flowSurge);
       allSignals.push(...dayGroups[d].slice(0, 3));
     }
 
-    // Cache Results
     localStorage.setItem(CACHE_KEY, JSON.stringify({
       timestamp: Date.now(),
       signals: allSignals,
@@ -594,7 +619,7 @@ async function runScreener(forceRefresh = false) {
     document.getElementById('loadCard').style.display = 'none';
     const eb = document.getElementById('errBox');
     eb.style.display = 'block';
-    eb.innerHTML = `<strong>Error loading screener data:</strong> ${err.message}<br><small>Google export rate limit or CORS error. Try refreshing in a minute.</small>`;
+    eb.innerHTML = `<strong>Error loading screener data:</strong> ${err.message}<br><small>Check Google Sheet published status and permissions.</small>`;
   }
 }
 
@@ -647,6 +672,7 @@ function renderTable() {
 
   filtered.sort((a, b) => {
     let va = a[sortCol] ?? -99999, vb = b[sortCol] ?? -99999;
+    if (va === vb) return 0;
     return sortAsc ? (va > vb ? 1 : -1) : (va < vb ? 1 : -1);
   });
 
