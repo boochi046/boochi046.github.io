@@ -187,7 +187,7 @@ td:first-child{text-align:left;padding-left:1.1rem;}
       <span style="opacity:.5">📄</span> <strong style="color:var(--text2)">screener-analyst.html</strong> <span style="opacity:.5">· 🏅 Top Analyst Screener</span>
     </div>
     <div class="page-title">🏅 <span class="acc">Top Analyst</span> Screener</div>
-    <div class="page-sub">~300+ tickers · 4-day lookback · Flow Surge Ranked · Top 3 Isolation</div>
+    <div class="page-sub">~300+ tickers · 4-day lookback · Flow Surge Ranked · All Qualifying Setups</div>
 
     <div class="strat-box">
       <span class="strat-lbl">Rules:</span>
@@ -221,7 +221,7 @@ td:first-child{text-align:left;padding-left:1.1rem;}
     <div class="status-bar" id="statusBar" style="display:none">
       <div class="status-left">
         <div class="si"><div class="si-lbl">Tickers</div><div class="si-val" id="stTickers">—</div></div>
-        <div class="si"><div class="si-lbl">Top 3 Setups</div><div class="si-val g" id="stSignals">—</div></div>
+        <div class="si"><div class="si-lbl">Qualifying Setups</div><div class="si-val g" id="stSignals">—</div></div>
         <div class="si"><div class="si-lbl">Today's Picks</div><div class="si-val y" id="stToday">—</div></div>
         <div class="si"><div class="si-lbl">Historical Bars</div><div class="si-val" id="stBars">—</div></div>
         <div class="live-tag"><span class="live-dot"></span> Cached / Live</div>
@@ -238,13 +238,13 @@ td:first-child{text-align:left;padding-left:1.1rem;}
       <button class="day-tab" onclick="setDay(1,this)">Yesterday</button>
       <button class="day-tab" onclick="setDay(2,this)">2 Days Ago</button>
       <button class="day-tab" onclick="setDay(3,this)">3 Days Ago</button>
-      <button class="day-tab active" onclick="setDay(-1,this)">All 4 Days (Top 3/Day)</button>
+      <button class="day-tab active" onclick="setDay(-1,this)">All 4 Days</button>
     </div>
 
     <!-- Results Table Card -->
     <div class="card" id="resultsCard" style="display:none">
       <div class="card-hdr">
-        <span class="card-title">🎯 Top 3 Isolated Setups Per Day</span>
+        <span class="card-title">🎯 All Qualifying Setups</span>
         <span class="badge" id="resCount">0 signals</span>
       </div>
       <div class="scroll-wrap" style="max-height:600px">
@@ -272,7 +272,7 @@ td:first-child{text-align:left;padding-left:1.1rem;}
     </div>
 
     <div class="foot-note" style="display:none" id="footNote">
-      Ranking Formula: Flow Surge = (VMI - 1.0) × (Volume / 20-Day Avg Volume) | Isolated strictly to Top 3 per session | Price &lt; $50 &amp; &gt; 50 SMA
+      Ranking Formula: Flow Surge = (VMI - 1.0) × (Volume / 20-Day Avg Volume) | All qualifying setups per session | Price &lt; $50 &amp; &gt; 50 SMA
     </div>
 
     <!-- Debug Log -->
@@ -328,7 +328,7 @@ const GIDS = {
   main:   '0'
 };
 
-const CACHE_KEY = 'top_analyst_flow_surge_v6';
+const CACHE_KEY = 'top_analyst_flow_surge_v6_all_matches';
 const CACHE_EXPIRY_MS = 4 * 60 * 60 * 1000; // 4 hours
 
 let allSignals = [];
@@ -670,11 +670,11 @@ async function runScreener(forceRefresh = false) {
       }
     });
 
-    // Isolate strictly to Top 3 per day based on Flow Surge
+    // Include all qualifying setups per day, ranked by Flow Surge
     allSignals = [];
     for (let d = 0; d < 4; d++) {
       dayGroups[d].sort((a, b) => b.flowSurge - a.flowSurge);
-      allSignals.push(...dayGroups[d].slice(0, 3));
+      allSignals.push(...dayGroups[d]);
     }
 
     localStorage.setItem(CACHE_KEY, JSON.stringify({
@@ -752,7 +752,7 @@ function renderTable() {
     return sortAsc ? (va > vb ? 1 : -1) : (va < vb ? 1 : -1);
   });
 
-  document.getElementById('resCount').textContent = `${filtered.length} isolated setups`;
+  document.getElementById('resCount').textContent = `${filtered.length} qualifying setups`;
 
   if (filtered.length === 0) {
     tbody.innerHTML = `<tr><td colspan="15" class="empty"><div class="empty-icon">🔍</div><div class="empty-t">No setups qualified</div><div class="empty-s">Try selecting "All 4 Days" or refreshing</div></td></tr>`;
