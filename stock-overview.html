@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Stock Briefing · Portfolio</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{color-scheme:dark;--bg:#080c14;--panel:#111827;--tile:#1a2236;--border:#243149;--text:#edf2fa;--muted:#99a8bf;--accent:#73a8ff;--green:#39d6a0;--red:#ff767e;--yellow:#f6c76b}
+[data-theme="light"]{color-scheme:light;--bg:#f0f4f8;--panel:#fff;--tile:#f6f8fc;--border:#dce3ed;--text:#142039;--muted:#53647d;--accent:#245edb;--green:#087852;--red:#bc2537;--yellow:#946006}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font:14px 'Space Grotesk',sans-serif}a{color:var(--accent);text-decoration:none}button,input,select{font:inherit;color:var(--text)}button,select,input{background:var(--tile);border:1px solid var(--border);border-radius:8px;padding:9px 12px}button{cursor:pointer}button:hover,a:hover{opacity:.85}button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
+header{border-bottom:1px solid var(--border);background:var(--panel);padding:16px 24px;display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap}nav{display:flex;gap:18px;flex-wrap:wrap}nav a{color:var(--muted)}nav a[aria-current]{color:var(--accent)}.brand{font-weight:700;letter-spacing:.08em}.controls{display:flex;gap:8px;align-items:center;flex-wrap:wrap}main{max-width:1600px;margin:auto;padding:28px 24px}h1{font-size:32px;letter-spacing:-.05em;margin:0 0 8px}h2,h3{margin:0}p{line-height:1.6}.muted,.sub{color:var(--muted)}.sub{margin:0 0 20px}.eyebrow{font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--accent);margin-bottom:8px}.summary{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin:20px 0}.stat{padding:16px;background:var(--panel);border:1px solid var(--border);border-radius:12px}.stat strong{display:block;font-size:27px;margin-bottom:5px}.stat span{color:var(--muted);font-size:12px}.toolbar{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin:20px 0}.toolbar input{flex:1;min-width:190px}.layout{display:grid;grid-template-columns:minmax(0,1fr) 350px;gap:18px;align-items:start}.cards{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.stock{background:var(--panel);border:1px solid var(--border);border-radius:12px;padding:18px;min-width:0}.stock.selected{border-color:var(--accent)}.stock-top{display:flex;justify-content:space-between;gap:8px;align-items:start}.ticker{font-size:20px;font-weight:700}.name{color:var(--muted);font-size:12px;margin:5px 0 12px;overflow-wrap:anywhere}.badge{display:inline-block;font-size:11px;font-weight:700;border-radius:5px;padding:5px 8px;background:var(--tile);color:var(--muted);white-space:nowrap}.buy{color:var(--green)}.sell{color:var(--red)}.hold{color:var(--yellow)}.metrics{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;border-top:1px solid var(--border);border-bottom:1px solid var(--border);padding:12px 0;margin:12px 0}.metric small{display:block;color:var(--muted);font-size:10px;margin-bottom:5px}.metric b{font:12px 'JetBrains Mono',monospace}.reasons{padding-left:17px;line-height:1.6;font-size:12px;color:var(--muted);margin:12px 0}.stock-foot{display:flex;justify-content:space-between;gap:10px;align-items:center}.stock-foot small{color:var(--muted);font-size:10px}.stock-foot button{font-size:12px;padding:7px 10px}.news{position:sticky;top:16px;background:var(--panel);border:1px solid var(--border);border-radius:12px;padding:20px}.news h2{font-size:20px}.article{display:block;border-top:1px solid var(--border);padding:15px 0;color:var(--text);line-height:1.5}.article small{display:block;color:var(--muted);margin-top:6px;font-size:11px}.research{display:flex;gap:12px;font-size:12px;margin:12px 0;flex-wrap:wrap}.notice{font-size:12px;color:var(--muted);padding:12px 16px;background:var(--panel);border:1px solid var(--border);border-radius:8px;line-height:1.6;white-space:pre-line}.notice.error{border-color:var(--red)}details{background:var(--panel);border:1px solid var(--border);padding:16px;border-radius:10px;margin:22px 0}summary{cursor:pointer;font-weight:600}details p{font-size:13px;color:var(--muted)}.empty{padding:28px;border:1px dashed var(--border);border-radius:10px;color:var(--muted);grid-column:1/-1}.count{font-size:12px;color:var(--muted);margin:0 0 12px}.loading{animation:pulse 1.4s infinite}@keyframes pulse{50%{opacity:.5}}
+@media(min-width:1400px){.cards{grid-template-columns:repeat(3,minmax(0,1fr))}}@media(max-width:1050px){.layout{grid-template-columns:1fr}.news{position:static}}@media(max-width:650px){main{padding:20px 12px}header{padding:14px 12px}.cards{grid-template-columns:1fr}.summary{grid-template-columns:repeat(2,1fr)}h1{font-size:28px}.toolbar select{flex:1}}
+</style>
+</head>
+<body>
+<header><a class="brand" href="index.html">PORTFOLIO</a><nav aria-label="Pages"><a href="index.html">Dashboard</a><a href="stock-overview.html" aria-current="page">Stock Briefing</a><a href="screener-analyst.html">Analyst</a><a href="screener-score.html">Score</a><a href="screener-penny.html">Penny</a><a href="futures.html">Futures</a></nav><div class="controls"><button id="theme" aria-label="Switch colour theme">Theme</button><button id="refresh">Refresh data</button></div></header>
+<main>
+<div class="eyebrow">Your daily research desk</div><h1>Stock Briefing</h1><p class="sub">One place to review every stock in your portfolio and screener feeds. See the setup, understand the signal, and read the news.</p>
+<div id="status" class="notice" role="status" aria-live="polite">Loading stock feeds…</div>
+<section class="summary" aria-label="Signal counts"><div class="stat"><strong id="total">—</strong><span>Stocks covered</span></div><div class="stat"><strong class="buy" id="buys">—</strong><span>Buy watch</span></div><div class="stat"><strong class="hold" id="holds">—</strong><span>Hold / watch</span></div><div class="stat"><strong class="sell" id="sells">—</strong><span>Sell review</span></div></section>
+<div class="toolbar"><input type="search" id="search" aria-label="Search stocks" placeholder="Search ticker or company…"><select id="signal" aria-label="Filter signal"><option value="all">All signals</option><option value="buy">Buy watch</option><option value="hold">Hold / watch</option><option value="sell">Sell review</option><option value="unknown">Insufficient data</option></select><select id="source" aria-label="Filter stock universe"><option value="all">All stocks</option><option value="Portfolio">My holdings</option><option value="Analyst">Analyst feed</option><option value="Score">Score feed</option><option value="Penny">Penny feed</option></select><select id="sort" aria-label="Sort stocks"><option value="ticker">Ticker A–Z</option><option value="strong">Strongest momentum</option><option value="weak">Weakest momentum</option><option value="day">Largest daily move</option></select></div>
+<p id="count" class="count"></p><div class="layout"><section id="cards" class="cards" aria-label="Stock summaries"><div class="empty loading">Building your stock briefing…</div></section><aside id="newsPanel" class="news" aria-label="Selected stock news"><div class="eyebrow">News &amp; research</div><h2 id="newsTitle">Select a stock</h2><p id="newsContext" class="muted">Choose “Read briefing” on any card for its latest available headlines.</p><div id="research" class="research"></div><div id="articles" aria-live="polite"></div></aside></div>
+<details><summary>How to read the signals</summary><p>These are transparent momentum screening rules for research, not personalised trade recommendations or a tested return forecast. Buy watch: the latest close is above the 20-day and 50-day simple moving averages, and the 20-trading-day price change is positive. Sell review: the latest close is below both averages and the 20-day change is negative. Otherwise: Hold / watch. An unowned stock marked Sell review is an avoid / review candidate.</p><p>Signals require 51 consecutive usable closing prices. Missing values, future dates, or a last observation more than seven calendar days old produce Insufficient data. If a ticker appears in several feeds, the newest history is selected; unusable observations suppress the signal. Conflicting source signals are disclosed on its card. Dates identify observations, not a verified live quote time.</p><p>Portfolio-only stocks without screener history show their available portfolio quote and daily move, but no directional signal. Headlines are loaded on demand for the selected ticker and do not affect the signal. This page does not analyse earnings, valuation, debt, filings, or news sentiment; check these before deciding to buy or sell. <a href="https://www.investor.gov/introduction-investing/getting-started/researching-investments" target="_blank" rel="noopener noreferrer">Researching investments · Investor.gov</a></p><p>Feed failures are listed above. Prices and headlines may be delayed. Public proxy services are used when direct downloads fail.</p></details>
+</main>
+<script>
+'use strict';
+const PORTFOLIO='https://docs.google.com/spreadsheets/d/e/2PACX-1vQh_Fl3yAEe2Saea-hIdscgeIdNGc2MFSTm9XiszvRcJC1rRTVtSsMPnoZTDKwDQjoKN-TM_omgn4t2/pub?gid=266612901&single=true&output=csv';
+const FEEDS=[
+ {name:'Analyst',id:'2PACX-1vRxlFkcZptqDRlGKHycKvvjXkvP71aN3ayrb6bfcYVARg1DTtLkEgqXmc48QMw2on7PsVAJdztQxoJ6',gid:'628580815'},
+ {name:'Score',id:'2PACX-1vRFmzsy7mklmiwzmczqrUswzNM0vAz3BsjS1kODfGlgmqzF-Zw7Zdx5r1NMkZ7TggckHvOwlUk-eCzn',gid:'1283231042'},
+ {name:'Penny',id:'2PACX-1vRmr1-VzM4LAjC3NjpATd4RFEIlxPSfYQ1glax4nyO3O8HJxgudL7EsBrDSIORrU-fPXgy7zA0h9Iig',gid:'1367407215'}
+];
+const $=id=>document.getElementById(id);
+const escapeHTML=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+function numeric(v){const s=String(v??'').trim().replace(/[$,%\s]/g,'');return s!==''&&Number.isFinite(Number(s))?Number(s):null;}
+function parseCSV(text){
+ if(text.trim().startsWith('<'))throw Error('Expected CSV, received HTML');
+ const rows=[];let row=[],cell='',quoted=false;
+ for(let i=0;i<text.length;i++){const c=text[i];if(c==='"'){if(quoted&&text[i+1]==='"'){cell+='"';i++;}else quoted=!quoted;}else if(c===','&&!quoted){row.push(cell.trim());cell='';}else if((c==='\n'||c==='\r')&&!quoted){if(c==='\r'&&text[i+1]==='\n')i++;row.push(cell.trim());if(row.some(Boolean))rows.push(row);row=[];cell='';}else cell+=c;}
+ if(quoted)throw Error('Incomplete CSV');row.push(cell.trim());if(row.some(Boolean))rows.push(row);if(rows.length<2)throw Error('No data rows');rows[0][0]=rows[0][0].replace(/^\uFEFF/,'');return rows;
+}
+async function download(url,validate){
+ const routes=[u=>u,u=>'https://api.allorigins.win/raw?url='+encodeURIComponent(u),u=>'https://api.codetabs.com/v1/proxy?quest='+encodeURIComponent(u)];
+ for(const route of routes){const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),10000);try{const res=await fetch(route(url),{signal:controller.signal,cache:'no-store'});if(!res.ok)throw Error('HTTP '+res.status);const text=await res.text();if(!validate(text))throw Error('Unexpected response');return text;}catch(e){}finally{clearTimeout(timer);}}
+ throw Error('Download unavailable');
+}
+function analyseHistory(observations,now=new Date()){
+ const dates=observations.filter(r=>/^\d{4}-\d{2}-\d{2}$/.test(r.date)).sort((a,b)=>a.date.localeCompare(b.date));
+ const last=dates.at(-1);const base={signal:'unknown',reasons:[],price:last?.value??null,date:last?.date??null,day:null,month:null,sma20:null,sma50:null};
+ if(!last){base.reasons=['Closing-price history unavailable.'];return base;}
+ const age=(Date.UTC(now.getFullYear(),now.getMonth(),now.getDate())-Date.parse(last.date+'T00:00:00Z'))/86400000;
+ if(!Number.isFinite(age)||age<0||age>7){base.reasons=[age<0?'History contains a future observation.':'History is stale; refresh the source feed.'];return base;}
+ const window=dates.slice(-51);
+ if(window.length<51||window.some(r=>!Number.isFinite(r.value)||r.value<=0)){base.reasons=['Need 51 consecutive usable closing prices.'];return base;}
+ if(window.some((r,i)=>i&&(Date.parse(r.date)-Date.parse(window[i-1].date)<=0||Date.parse(r.date)-Date.parse(window[i-1].date)>7*86400000))){base.reasons=['History has duplicate dates or a gap longer than seven days.'];return base;}
+ const values=window.map(r=>r.value),price=values.at(-1),mean=n=>values.slice(-n).reduce((a,b)=>a+b,0)/n;
+ base.sma20=mean(20);base.sma50=mean(50);base.day=(price/values.at(-2)-1)*100;base.month=(price/values.at(-21)-1)*100;
+ base.signal=price>base.sma20&&price>base.sma50&&base.month>0?'buy':price<base.sma20&&price<base.sma50&&base.month<0?'sell':'hold';
+ base.reasons=[(price>base.sma20?'Above':price<base.sma20?'Below':'At')+' 20-day average ('+money(base.sma20)+').',(price>base.sma50?'Above':price<base.sma50?'Below':'At')+' 50-day average ('+money(base.sma50)+').','20-trading-day move: '+percent(base.month)+'.'];return base;
+}
+const money=v=>Number.isFinite(v)?'$'+v.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2}):'—';
+const percent=v=>Number.isFinite(v)?(v>0?'+':'')+v.toFixed(2)+'%':'—';
+const labels={buy:'Buy watch',hold:'Hold / watch',sell:'Sell review',unknown:'Insufficient data'};
+let stocks=[],selected=null,newsSequence=0,loading=false;const newsCache=new Map();
+function historyStocks(rows,feed){
+ const header=rows[0],history=rows.slice(1).filter(r=>/^\d{4}-\d{2}-\d{2}$/.test(r[0]));if(!history.length)throw Error('No dated closing prices');
+ return header.slice(1).flatMap((t,j)=>{t=t.trim().toUpperCase();if(!/^[A-Z0-9.^=-]{1,20}$/.test(t))return [];return [{ticker:t,name:t,sources:[feed.name],...analyseHistory(history.map(r=>({date:r[0],value:numeric(r[j+1])})))}];});
+}
+function portfolioStocks(rows){
+ const head=rows[0],objects=rows.slice(1).map(r=>Object.fromEntries(head.map((h,i)=>[h,r[i]])));if(!head.includes('Ticker'))throw Error('Ticker column missing');
+ return objects.flatMap(r=>{const ticker=String(r.Ticker||'').trim().toUpperCase(),units=numeric(r['Remaining Qty']??r.Qty);if(!ticker||!units||units<=0)return [];const price=numeric(r.Price??r['Live Price']),prev=numeric(r['Previous Day']);return [{ticker,name:r['Stock Name']||ticker,sources:['Portfolio'],owned:true,portfolioPrice:price,portfolioDay:price!==null&&prev>0?(price/prev-1)*100:null,signal:'unknown',reasons:['No screener history for this holding.'],price,date:null,day:null,month:null,sma20:null,sma50:null}];});
+}
+function mergeStocks(entries){
+ const map=new Map();entries.forEach(s=>{let old=map.get(s.ticker);if(!old){map.set(s.ticker,{...s,candidates:s.date?[s]:[]});return;}
+ const sources=[...new Set([...old.sources,...s.sources])],candidates=[...old.candidates,...(s.date?[s]:[])],owned=old.owned||s.owned,name=old.name!==old.ticker?old.name:s.name,portfolioPrice=old.portfolioPrice??s.portfolioPrice,portfolioDay=old.portfolioDay??s.portfolioDay;
+ const winner=candidates.sort((a,b)=>String(b.date).localeCompare(String(a.date))||(a.signal==='unknown')-(b.signal==='unknown'))[0]||old;
+ map.set(s.ticker,{...winner,sources,candidates,owned,name,portfolioPrice,portfolioDay});});
+ return [...map.values()].map(s=>({...s,conflict:new Set(s.candidates.filter(c=>c.date===s.date&&c.signal!=='unknown').map(c=>c.signal)).size>1}));
+}
+async function loadStocks(){
+ if(loading)return;loading=true;$('refresh').disabled=true;$('status').className='notice';$('status').textContent='Refreshing portfolio and three screener feeds…';
+ const jobs=[{name:'Portfolio',url:PORTFOLIO,parse:portfolioStocks},...FEEDS.map(f=>({name:f.name,url:'https://docs.google.com/spreadsheets/d/e/'+f.id+'/pub?gid='+f.gid+'&single=true&output=csv',parse:rows=>historyStocks(rows,f)}))];
+ const results=await Promise.allSettled(jobs.map(async j=>j.parse(parseCSV(await download(j.url,t=>t.includes(',')&&!t.trim().startsWith('<'))))));
+ const failures=results.flatMap((r,i)=>r.status==='rejected'?[jobs[i].name+': '+r.reason.message]:[]),successes=results.filter(r=>r.status==='fulfilled');
+ if(successes.length){stocks=mergeStocks(successes.flatMap(r=>r.value));render();const dates=[...new Set(stocks.map(s=>s.date).filter(Boolean))].sort();$('status').textContent='Fetched '+new Date().toLocaleString()+'. History dates: '+(dates.length?dates[0]+' to '+dates.at(-1):'unavailable')+'. Portfolio quote time not supplied.'+(failures.length?'\nUnavailable feeds: '+failures.join(' · '):'');$('status').classList.toggle('error',!!failures.length);if(!selected&&stocks.length)selectStock(stocks.find(s=>s.owned)?.ticker||stocks[0].ticker);else if(selected)selectStock(selected);}
+ else{$('status').textContent='Could not load stock data. '+failures.join(' · ')+'. Use Refresh data to retry.';$('status').className='notice error';if(!stocks.length)$('cards').innerHTML='<div class="empty">No data available. Check your connection and retry.</div>';}
+ loading=false;$('refresh').disabled=false;
+}
+function render(){
+ const query=$('search').value.trim().toLowerCase(),filter=$('signal').value,source=$('source').value,sort=$('sort').value;
+ let list=stocks.filter(s=>(!query||(s.ticker+' '+s.name).toLowerCase().includes(query))&&(filter==='all'||s.signal===filter)&&(source==='all'||s.sources.includes(source)));
+ list.sort((a,b)=>{if(sort==='ticker')return a.ticker.localeCompare(b.ticker);const ad=a.day??a.portfolioDay,bd=b.day??b.portfolioDay,av=sort==='day'?(ad===null||ad===undefined?null:Math.abs(ad)):a.month,bv=sort==='day'?(bd===null||bd===undefined?null:Math.abs(bd)):b.month;if(av===null)return bv===null?0:1;if(bv===null)return -1;return sort==='weak'?av-bv:bv-av;});
+ $('total').textContent=stocks.length;for(const [id,key] of [['buys','buy'],['holds','hold'],['sells','sell']])$(id).textContent=stocks.filter(s=>s.signal===key).length;
+ $('count').textContent=list.length+' of '+stocks.length+' stocks · '+stocks.filter(s=>s.signal==='unknown').length+' with insufficient data';
+ $('cards').innerHTML=list.map(s=>{const day=s.day??s.portfolioDay,price=s.price??s.portfolioPrice;return `<article class="stock ${selected===s.ticker?'selected':''}"><div class="stock-top"><div><div class="ticker">${escapeHTML(s.ticker)}</div><div class="name">${escapeHTML(s.name)}</div></div><span class="badge ${s.signal}">${labels[s.signal]}</span></div><div class="metrics"><div class="metric"><small>${s.date?'Last close':'Sheet price'}</small><b>${money(price)}</b></div><div class="metric"><small>Daily move</small><b class="${day>0?'buy':day<0?'sell':''}">${percent(day)}</b></div><div class="metric"><small>20-day move</small><b class="${s.month>0?'buy':s.month<0?'sell':''}">${percent(s.month)}</b></div><div class="metric"><small>Position</small><b>${s.owned?'Owned':'Watchlist'}</b></div></div><ul class="reasons">${s.reasons.map(r=>'<li>'+escapeHTML(r)+'</li>').join('')}${s.conflict?'<li>Other feeds disagree on this date. Check the setup.</li>':''}</ul><div class="stock-foot"><small>${escapeHTML(s.sources.join(' · '))}<br>${s.date?'History: '+escapeHTML(s.date):'Quote date unavailable'}</small><button data-ticker="${escapeHTML(s.ticker)}" aria-label="Read briefing for ${escapeHTML(s.ticker)}">Read briefing →</button></div></article>`;}).join('')||'<div class="empty">No stocks match these filters.</div>';
+}
+function safeURL(text){try{const u=new URL(text);return u.protocol==='https:'||u.protocol==='http:'?u.href:null;}catch(e){return null;}}
+async function selectStock(ticker){
+ selected=ticker;render();const sequence=++newsSequence,stock=stocks.find(s=>s.ticker===ticker);if(!stock)return;
+ $('newsTitle').textContent=ticker+' · News';$('newsContext').textContent=labels[stock.signal]+'. '+(stock.signal==='unknown'?'More data needed before judging direction.':'Review earnings, valuation and recent events alongside the momentum setup.');
+ const symbol=encodeURIComponent(ticker);$('research').innerHTML=`<a href="https://finance.yahoo.com/quote/${symbol}/" target="_blank" rel="noopener noreferrer">Quote &amp; financials ↗</a><a href="https://www.sec.gov/edgar/search/#/q=${symbol}" target="_blank" rel="noopener noreferrer">Company filings ↗</a>`;
+ $('articles').innerHTML='<p class="muted loading">Loading headlines…</p>';
+ try{let articles=newsCache.get(ticker);if(!articles){const url='https://feeds.finance.yahoo.com/rss/2.0/headline?s='+symbol+'&region=US&lang=en-US',text=await download(url,t=>t.includes('<item'));const xml=new DOMParser().parseFromString(text,'text/xml');if(xml.querySelector('parsererror'))throw Error('Invalid news feed');articles=[...xml.querySelectorAll('item')].slice(0,8).map(item=>({title:item.querySelector('title')?.textContent||'',url:safeURL(item.querySelector('link')?.textContent||''),date:item.querySelector('pubDate')?.textContent||''})).filter(a=>a.title&&a.url);newsCache.set(ticker,articles);}if(sequence!==newsSequence)return;
+ $('articles').innerHTML=articles.map(a=>{const date=new Date(a.date),host=new URL(a.url).hostname;return `<a class="article" href="${escapeHTML(a.url)}" target="_blank" rel="noopener noreferrer">${escapeHTML(a.title)}<small>${escapeHTML(host)} · ${Number.isFinite(+date)?escapeHTML(date.toLocaleString()):'Publication date unavailable'}</small></a>`;}).join('')||'<p class="muted">No headlines returned for this ticker.</p>';
+ }catch(e){if(sequence!==newsSequence)return;$('articles').innerHTML='<p class="muted">Headlines unavailable. Open Quote &amp; financials above to research this stock.</p><button id="retryNews">Retry headlines</button>';$('retryNews').onclick=()=>{newsCache.delete(ticker);selectStock(ticker);};}
+}
+for(const id of ['search','signal','source','sort'])$(id).addEventListener(id==='search'?'input':'change',render);
+$('cards').addEventListener('click',e=>{const button=e.target.closest('button[data-ticker]');if(button){selectStock(button.dataset.ticker);if(innerWidth<=1050)$('newsPanel').scrollIntoView({behavior:'smooth',block:'start'});}});
+$('refresh').onclick=()=>{newsCache.clear();loadStocks();};
+try{document.documentElement.dataset.theme=localStorage.getItem('theme')||'dark';}catch(e){}
+$('theme').onclick=()=>{const next=document.documentElement.dataset.theme==='dark'?'light':'dark';document.documentElement.dataset.theme=next;try{localStorage.setItem('theme',next);}catch(e){}};
+loadStocks();
+</script>
+</body></html>
