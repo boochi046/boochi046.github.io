@@ -394,7 +394,7 @@ td:first-child{text-align:left;padding-left:1.1rem;}
           <table style="min-width:1100px">
             <thead><tr id="holdingsHead">
               <th onclick="sortHoldings('name')" style="cursor:pointer;user-select:none;position:sticky;left:0;background:var(--surface);z-index:3">Stock <span class="sort-icon" data-col="name">↕</span></th>
-              <th onclick="sortHoldings('days')" title="Calendar days since oldest remaining FIFO purchase; excludes fully sold lots">Holding Days</th><th onclick="sortHoldings('retTotal')" style="cursor:pointer;user-select:none">Holding Gain/Loss % <span class="sort-icon" data-col="retTotal">↕</span></th><th onclick="sortHoldings('weight')">Weight %</th><th onclick="sortHoldings('mkt')">Market Value</th><th onclick="sortHoldings('units')" style="cursor:pointer;user-select:none">Units <span class="sort-icon" data-col="units">↕</span></th>
+              <th onclick="sortHoldings('days')" title="Calendar days since oldest remaining FIFO purchase; excludes fully sold lots">Holding Days</th><th onclick="sortHoldings('retToday')" style="cursor:pointer;user-select:none">Current Day P/L % <span class="sort-icon" data-col="retToday">↕</span></th><th onclick="sortHoldings('weight')">Weight %</th><th onclick="sortHoldings('mkt')">Market Value</th><th onclick="sortHoldings('units')" style="cursor:pointer;user-select:none">Units <span class="sort-icon" data-col="units">↕</span></th>
               <th onclick="sortHoldings('avg')" style="cursor:pointer;user-select:none">Avg Cost <span class="sort-icon" data-col="avg">↕</span></th>
               <th onclick="sortHoldings('live')" style="cursor:pointer;user-select:none">Live <span class="sort-icon" data-col="live">↕</span></th>
               <th onclick="sortHoldings('prevDay')" style="cursor:pointer;user-select:none">Prev Close <span class="sort-icon" data-col="prevDay">↕</span></th>
@@ -949,7 +949,7 @@ function renderHoldings(filter){
  const signed=n=>n==null?'—':(n>=0?'+':'−')+fmt(n);
  document.getElementById('holdingsBody').innerHTML=list.map(h=>{const pnl=h.live===null?null:h.live*h.units-h.cost;return `<tr>
  <td><span class="tkr">${esc(h.ticker)}</span> <span class="stock-name">${esc(h.name)}</span></td>
- <td title="${esc(h.ageNote)}">${h.days===null?'—':(h.ageEstimated?'≈ ':'')+h.days.toLocaleString()+' days'}</td><td title="Gain/loss from sheet average cost; excludes fees and dividends">${pillHtml(h.retTotal)}</td><td>${h.weight===null?'—':h.weight.toFixed(2)+'%'}</td><td>${h.live===null?'—':fmt(h.live*h.units)}</td>
+ <td title="${esc(h.ageNote)}">${h.days===null?'—':(h.ageEstimated?'≈ ':'')+h.days.toLocaleString()+' days'}</td><td title="Current price versus previous close; excludes intraday trades, fees and dividends">${pillHtml(h.retToday)}</td><td>${h.weight===null?'—':h.weight.toFixed(2)+'%'}</td><td>${h.live===null?'—':fmt(h.live*h.units)}</td>
  <td>${h.units.toLocaleString()}</td><td>${fmt(h.avg)}</td><td>${h.live===null?'—':fmt(h.live)}</td><td>${h.prevDay===null?'—':fmt(h.prevDay)}</td>
  <td class="${pillClass(h.todayPnl)}">${signed(h.todayPnl)}</td><td>${pillHtml(h.retToday)}</td><td>${pillHtml(h.ret1m)}</td><td>${pillHtml(h.ret3m)}</td><td>${pillHtml(h.ret6m)}</td><td class="${pillClass(pnl)}">${signed(pnl)}</td></tr>`;}).join('');
  const complete=list.every(h=>h.live!==null),sum=list.reduce((a,h)=>a+(h.live===null?0:h.live*h.units),0),cost=list.reduce((a,h)=>a+h.cost,0);
