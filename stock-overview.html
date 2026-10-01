@@ -40,7 +40,7 @@ function parseCSV(text){
  if(quoted)throw Error('Incomplete CSV');row.push(cell.trim());if(row.some(Boolean))rows.push(row);if(rows.length<2)throw Error('No data rows');rows[0][0]=rows[0][0].replace(/^\uFEFF/,'');return rows;
 }
 async function download(url,validate){
- const routes=[u=>u,u=>'https://api.allorigins.win/raw?url='+encodeURIComponent(u),u=>'https://api.codetabs.com/v1/proxy?quest='+encodeURIComponent(u)];
+ const routes=[u=>u,u=>'https://script.google.com/macros/s/AKfycbx-abu6CxsA4AcaQUoNLiXMoLO8SStapS843H3PGpeRSBTyPcZ75FAwtPSORBJBnSjf/exec?url='+encodeURIComponent(u),u=>'https://api.allorigins.win/raw?url='+encodeURIComponent(u),u=>'https://api.codetabs.com/v1/proxy?quest='+encodeURIComponent(u),u=>'https://corsproxy.io/?'+encodeURIComponent(u)];
  for(const route of routes){const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),10000);try{const res=await fetch(route(url),{signal:controller.signal,cache:'no-store'});if(!res.ok)throw Error('HTTP '+res.status);const text=await res.text();if(!validate(text))throw Error('Unexpected response');return text;}catch(e){}finally{clearTimeout(timer);}}
  throw Error('Download unavailable');
 }
@@ -63,7 +63,7 @@ const percent=v=>Number.isFinite(v)?(v>0?'+':'')+v.toFixed(2)+'%':'—';
 const labels={buy:'Buy watch',hold:'Hold / watch',sell:'Sell review',unknown:'Insufficient data'};
 let stocks=[],selected=null,newsSequence=0,loading=false;const newsCache=new Map();
 function historyStocks(rows,feed){
- const header=rows[0],history=rows.slice(1).filter(r=>/^\d{4}-\d{2}-\d{2}$/.test(r[0]));if(!history.length)throw Error('No dated closing prices');
+ const header=rows[0],history=rows.slice(1).filter(r=>/^\d{4}-\d{2}-\d{2}$/.test(r[0]));
  return header.slice(1).flatMap((t,j)=>{t=t.trim().toUpperCase();if(!/^[A-Z0-9.^=-]{1,20}$/.test(t))return [];return [{ticker:t,name:t,sources:[feed.name],...analyseHistory(history.map(r=>({date:r[0],value:numeric(r[j+1])})))}];});
 }
 function portfolioStocks(rows){
@@ -81,8 +81,8 @@ async function loadStocks(){
  if(loading)return;loading=true;$('refresh').disabled=true;$('status').className='notice';$('status').textContent='Refreshing portfolio and three screener feeds…';
  const jobs=[{name:'Portfolio',url:PORTFOLIO,parse:portfolioStocks},...FEEDS.map(f=>({name:f.name,url:'https://docs.google.com/spreadsheets/d/e/'+f.id+'/pub?gid='+f.gid+'&single=true&output=csv',parse:rows=>historyStocks(rows,f)}))];
  const results=await Promise.allSettled(jobs.map(async j=>j.parse(parseCSV(await download(j.url,t=>t.includes(',')&&!t.trim().startsWith('<'))))));
- const failures=results.flatMap((r,i)=>r.status==='rejected'?[jobs[i].name+': '+r.reason.message]:[]),successes=results.filter(r=>r.status==='fulfilled');
- if(successes.length){stocks=mergeStocks(successes.flatMap(r=>r.value));render();const dates=[...new Set(stocks.map(s=>s.date).filter(Boolean))].sort();$('status').textContent='Fetched '+new Date().toLocaleString()+'. History dates: '+(dates.length?dates[0]+' to '+dates.at(-1):'unavailable')+'. Portfolio quote time not supplied.'+(failures.length?'\nUnavailable feeds: '+failures.join(' · '):'');$('status').classList.toggle('error',!!failures.length);if(!selected&&stocks.length)selectStock(stocks.find(s=>s.owned)?.ticker||stocks[0].ticker);else if(selected)selectStock(selected);}
+ const failures=results.flatMap((r,i)=>r.status==='rejected'?[jobs[i].name+': '+r.reason.message]:i>0&&!r.value.some(s=>s.date)?[jobs[i].name+': closing history is still loading']:[]),successes=results.filter(r=>r.status==='fulfilled');
+ if(successes.length){stocks=mergeStocks(successes.flatMap(r=>r.value));render();const dates=[...new Set(stocks.map(s=>s.date).filter(Boolean))].sort();$('status').textContent='Fetched '+new Date().toLocaleString()+'. History dates: '+(dates.length?dates[0]+' to '+dates.at(-1):'unavailable')+'. Portfolio quote time not supplied.'+(failures.length?'\nFeed warnings: '+failures.join(' · '):'');$('status').classList.toggle('error',!!failures.length);if(!selected&&stocks.length)selectStock(stocks.find(s=>s.owned)?.ticker||stocks[0].ticker);else if(selected)selectStock(selected);}
  else{$('status').textContent='Could not load stock data. '+failures.join(' · ')+'. Use Refresh data to retry.';$('status').className='notice error';if(!stocks.length)$('cards').innerHTML='<div class="empty">No data available. Check your connection and retry.</div>';}
  loading=false;$('refresh').disabled=false;
 }
