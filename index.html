@@ -375,7 +375,6 @@ td:first-child{text-align:left;padding-left:1.1rem;}
       <div class="sharpe-grid" id="sharpeGrid"></div>
     </div>
 
-    <div class="card" style="padding:1rem;margin-bottom:1rem"><div class="card-title">Portfolio performance · time-weighted return</div><div id="periodReturns" class="sharpe-grid"></div><p class="data-note">Requires dated portfolio values, including cash, and external cash flows. Individual stock returns are not portfolio returns.</p><label class="data-note">Load valuation history CSV <input type="file" accept=".csv,text/csv" onchange="importPortfolioHistory(this.files[0])"></label><div id="historyStatus" class="data-note">Columns: Date (dd/MM/YYYY), Portfolio Value, Net Flow. Supply daily closing values; Net Flow is deposits minus withdrawals, assumed at day end. Purchases and sales within the account are not external flows.</div></div>
 <!-- Holdings (full width) -->
     <div style="display:grid;grid-template-columns:1fr;gap:1rem;margin-bottom:1rem" id="holdings">
       <div class="card">
@@ -993,42 +992,6 @@ function renderWL(holdings){
  render(rows.filter(h=>value(h)>0).slice(0,5),'winnersList');render(rows.filter(h=>value(h)<0).reverse().slice(0,5),'losersList');
 }
 
-function calculatePeriodReturns(rows, asOf=new Date()){
- const data=rows.map(r=>({date:ledgerDate(r.Date),value:numberValue(r['Portfolio Value']),flow:numberValue(r['Net Flow'])}));
- if(data.some(r=>!r.date||r.value===null||r.value<=0||r.flow===null))throw new Error('Each history row needs a valid date, positive portfolio value and numeric net flow (0 if none).');
- data.sort((a,b)=>a.date-b.date);
- if(data.some((r,i)=>i&&+r.date===+data[i-1].date))throw new Error('History has duplicate dates.');
- const now=Date.UTC(asOf.getFullYear(),asOf.getMonth(),asOf.getDate());
- if(data.some(r=>+r.date>now))throw new Error('History contains future dates.');
- return [3,6,12].map(months=>{
-  if(!data.length)return {months,reason:'History required'};
-  const last=data.at(-1),cutoff=new Date(last.date);const day=cutoff.getUTCDate();cutoff.setUTCDate(1);cutoff.setUTCMonth(cutoff.getUTCMonth()-months);const maxDay=new Date(Date.UTC(cutoff.getUTCFullYear(),cutoff.getUTCMonth()+1,0)).getUTCDate();cutoff.setUTCDate(Math.min(day,maxDay));
-  let start=-1;data.forEach((r,i)=>{if(r.date<=cutoff)start=i;});
-  if(start<0||cutoff-data[start].date>4*86400000)return {months,reason:'More history required'};
-  let growth=1;
-  for(let i=start+1;i<data.length;i++){
-   if(data[i].date-data[i-1].date>4*86400000)return {months,reason:'Missing daily valuations'};
-   const factor=(data[i].value-data[i].flow)/data[i-1].value;
-   if(factor<=0)return {months,reason:'Check cash flows and valuations'};
-   growth*=factor;
-  }
-  return {months,value:(growth-1)*100,start:data[start].date,end:last.date};
- });
-}
-function showPeriodReturns(results){
- document.getElementById('periodReturns').innerHTML=results.map(r=>'<div class="sharpe-item"><div class="sharpe-val">'+(r.value===undefined?'—':fmtPct(r.value))+'</div><div class="sharpe-lbl">'+(r.months===12?'1 Year':r.months+' Months')+'</div><div class="data-note">'+(r.reason||r.start.toISOString().slice(0,10)+' to '+r.end.toISOString().slice(0,10))+'</div></div>').join('');
-}
-async function importPortfolioHistory(file){
- if(!file)return;
- try{
-  const text=await file.text(),lines=text.trim().split(/\r?\n/),headers=splitLine(lines.shift()).map(h=>h.trim());
-  if(!['Date','Portfolio Value','Net Flow'].every(h=>headers.includes(h)))throw new Error('Expected Date, Portfolio Value and Net Flow columns.');
-  const rows=lines.filter(l=>l.trim()).map(l=>{const values=splitLine(l);return Object.fromEntries(headers.map((h,i)=>[h,values[i]]));});
-  const results=calculatePeriodReturns(rows);showPeriodReturns(results);
-  document.getElementById('historyStatus').textContent='Loaded '+rows.length+' daily valuations for this session. Returns assume external cash flows occur at day end.';
- }catch(e){showPeriodReturns([3,6,12].map(months=>({months,reason:'Invalid history'})));document.getElementById('historyStatus').textContent=e.message;}
-}
-showPeriodReturns([3,6,12].map(months=>({months,reason:'Valuation history required'})));
 
 loadAll();
 setInterval(()=>loadAll(true),5*60*1000);
