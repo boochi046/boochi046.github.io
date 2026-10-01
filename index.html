@@ -954,7 +954,7 @@ function renderHoldings(filter){
  const signed=n=>n==null?'—':(n>=0?'+':'−')+fmt(n);
  document.getElementById('holdingsBody').innerHTML=list.map(h=>{const pnl=h.live===null?null:h.live*h.units-h.cost;return `<tr>
  <td><span class="tkr">${esc(h.ticker)}</span> <span class="stock-name">${esc(h.name)}</span></td>
- <td title="${esc(h.ageNote)}">${h.days===null?'—':(h.ageEstimated?'≈ ':'')+h.days.toLocaleString()+' days'}</td><td title="Current price versus previous close; excludes intraday trades, fees and dividends">${pillHtml(h.retToday)}</td><td>${h.weight===null?'—':h.weight.toFixed(2)+'%'}</td><td>${h.live===null?'—':fmt(h.live*h.units)}</td>
+ <td title="${esc(h.ageNote)}">${h.days===null?'—':(h.ageEstimated?'≈ ':'')+h.days.toLocaleString()}</td><td title="Current price versus previous close; excludes intraday trades, fees and dividends">${pillHtml(h.retToday)}</td><td>${h.weight===null?'—':h.weight.toFixed(2)+'%'}</td><td>${h.live===null?'—':fmt(h.live*h.units)}</td>
  <td>${h.units.toLocaleString()}</td><td>${fmt(h.avg)}</td><td>${h.live===null?'—':fmt(h.live)}</td><td>${h.prevDay===null?'—':fmt(h.prevDay)}</td>
  <td class="${pillClass(h.todayPnl)}">${signed(h.todayPnl)}</td><td>${pillHtml(h.retToday)}</td><td>${pillHtml(h.ret1m)}</td><td>${pillHtml(h.ret3m)}</td><td>${pillHtml(h.ret6m)}</td><td class="${pillClass(pnl)}">${signed(pnl)}</td></tr>`;}).join('');
  const complete=list.every(h=>h.live!==null),sum=list.reduce((a,h)=>a+(h.live===null?0:h.live*h.units),0),cost=list.reduce((a,h)=>a+h.cost,0);
