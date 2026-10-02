@@ -347,44 +347,49 @@ const CSV_ROUTES = [
   ['allorigins', url => 'https://api.allorigins.win/raw?url=' + encodeURIComponent(url)]
 ];
 
+let preferredCsvRoute=0;
+try{preferredCsvRoute=Number(sessionStorage.getItem(CACHE_KEY+'_route'))||0;}catch(e){}
 async function fetchCsv(gid, stepId) {
-  const step = document.getElementById(stepId);
-  const label = stepId.replace('step-', '');
-  if (step) step.className = 'ls active';
-  const errors = [];
-  let incomplete = false;
-  for (const [name, route] of CSV_ROUTES) {
-    const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), 12000);
-    try {
-      logDebug('Fetching ' + label + ' via ' + name);
-      const res = await fetch(route(getCsvUrl(gid) + '&refresh=' + Date.now()), {
-        signal: controller.signal, cache: 'no-store'
-      });
-      if (!res.ok) throw new Error('HTTP ' + res.status);
-      const parsed = parseCsvText(await res.text());
-      if (['close', 'high', 'low', 'volume'].includes(label)) {
-        if (parsed.dates.length < 65 || !Object.values(parsed.data).some(a => a.filter(Number.isFinite).length >= 65)) {
-          incomplete = true;
-          throw new Error('published sheet is still loading or has fewer than 65 usable history rows');
-        }
-      }
-      if (step) step.className = 'ls done';
-      logDebug(label + ': loaded via ' + name + ' (' + parsed.dates.length + ' history rows)');
-      return parsed;
-    } catch (err) {
-      const reason = err.name === 'AbortError' ? 'request timed out' : err.message;
-      errors.push(name + ': ' + reason);
-      logDebug(label + ' / ' + name + ': ' + reason);
-    } finally {
-      clearTimeout(timer);
-    }
-  }
-  if (step) step.className = 'ls fail';
-  throw new Error(label + ': ' + (incomplete
-    ? 'Google Sheets returned incomplete history. Open the source spreadsheet and check its formulas/publication, then Retry.'
-    : 'Unable to download data through the available connections. Check your connection and Retry.')
-    + ' (' + errors.join('; ') + ')');
+  const step=document.getElementById(stepId),label=stepId.replace('step-','');
+  if(step)step.className='ls active';
+  const order=[...new Set([preferredCsvRoute,0,1,2])].filter(i=>CSV_ROUTES[i]);
+  const controllers=order.map(()=>new AbortController()),timers=[],errors=[];
+  const url=getCsvUrl(gid)+'&refresh='+Date.now();
+  try {
+    const parsed=await Promise.any(order.map((routeIndex,i)=>new Promise((resolve,reject)=>{
+      const start=async()=>{
+        const controller=controllers[i], [name,route]=CSV_ROUTES[routeIndex];
+        if(controller.signal.aborted){reject(Error('Cancelled'));return;}
+        const timer=setTimeout(()=>controller.abort(),20000);timers.push(timer);
+        try {
+          logDebug('Fetching '+label+' via '+name);
+          const res=await fetch(route(url),{signal:controller.signal,cache:'no-store'});
+          if(!res.ok)throw Error('HTTP '+res.status);
+          const data=parseCsvText(await res.text());
+          if(['close','high','low','volume'].includes(label)&&
+             (data.dates.length<65||!Object.values(data.data).some(a=>a.filter(Number.isFinite).length>=65)))
+            throw Error('Published history is still loading or has fewer than 65 usable rows');
+          if(label==='main'&&!data.rawLines[0].some(h=>h.toLowerCase()==='ticker'))
+            throw Error('Ticker metadata unavailable');
+          if(label==='pct'&&data.rawLines.length<2)throw Error('Return metadata unavailable');
+          preferredCsvRoute=routeIndex;
+          try{sessionStorage.setItem(CACHE_KEY+'_route',String(routeIndex));}catch(e){}
+          logDebug(label+': loaded via '+name+' ('+data.dates.length+' history rows)');
+          resolve(data);
+        }catch(err){errors.push(name+': '+(err.name==='AbortError'?'timed out':err.message));reject(err);}
+        finally{clearTimeout(timer);}
+      };
+      if(i===0)start();else timers.push(setTimeout(start,i*250));
+    })));
+    if(step)step.className='ls done';
+    return parsed;
+  }catch(e){if(step)step.className='ls fail';throw Error(label+': '+errors.join('; '));}
+  finally{timers.forEach(clearTimeout);controllers.forEach(c=>c.abort());}
+}
+function refreshMessage(text){
+  let el=document.getElementById('refreshNotice');
+  if(!el){el=document.createElement('div');el.id='refreshNotice';el.setAttribute('role','status');el.setAttribute('aria-live','polite');el.style.cssText='margin:12px 0;color:var(--text2);font-size:12px;line-height:1.6';document.getElementById('loadCard').before(el);}
+  el.textContent=text;
 }
 
 function parseCsvText(text) {
@@ -557,54 +562,49 @@ async function runScreener(forceRefresh = false) {
     document.getElementById('warnLocal').style.display = 'block';
   }
 
-  // Fast cache loading
-  if (!forceRefresh) {
-    const cached = localStorage.getItem(CACHE_KEY);
-    if (cached) {
-      try {
-        const { timestamp, signals, tickersCount, barsCount } = JSON.parse(cached);
-        if (Date.now() - timestamp < CACHE_EXPIRY_MS) {
-          allSignals = signals;
-          displayScreenerData(tickersCount, allSignals.length, barsCount, new Date(timestamp));
-          renderTable();
-          return;
-        }
-      } catch (e) {
-        localStorage.removeItem(CACHE_KEY);
-      }
+  // Show verified cached results immediately, but always revalidate the sheet.
+  screenerRunning=true;
+  const started=performance.now();
+  let showingCached=false;
+  try{
+    const cached=JSON.parse(localStorage.getItem(CACHE_KEY));
+    if(cached&&Array.isArray(cached.signals)&&Date.now()-cached.timestamp>=0&&Date.now()-cached.timestamp<CACHE_EXPIRY_MS){
+      allSignals=cached.signals;
+      displayScreenerData(cached.tickersCount,allSignals.length,cached.barsCount,new Date(cached.timestamp));
+      renderTable();showingCached=true;
+      refreshMessage('Showing saved results from '+new Date(cached.timestamp).toLocaleString()+'. Refreshing sheet data…');
     }
-  }
-
-  screenerRunning = true;
+  }catch(e){}
+  if(!showingCached)refreshMessage('Loading fresh sheet history…');
   try {
-    document.getElementById('dbgBody').textContent = 'Initializing screener…';
-    document.getElementById('footNote').style.display = 'none';
-    document.getElementById('loadCard').style.display = 'block';
-    document.getElementById('statusBar').style.display = 'none';
-    document.getElementById('dayTabs').style.display = 'none';
-    document.getElementById('resultsCard').style.display = 'none';
-    document.getElementById('errBox').style.display = 'none';
+    document.getElementById('dbgBody').textContent='Refreshing screener…';
+    document.getElementById('loadCard').style.display=showingCached?'none':'block';
+    if(!showingCached){
+      document.getElementById('footNote').style.display='none';
+      document.getElementById('statusBar').style.display='none';
+      document.getElementById('dayTabs').style.display='none';
+      document.getElementById('resultsCard').style.display='none';
+    }
+    document.getElementById('errBox').style.display='none';
 
     const openStep = document.getElementById('step-open');
     openStep.className = 'ls';
     openStep.textContent = '— Open Prices (not used by this strategy)';
     logDebug('Loading required price and volume history…');
     const requiredKeys = ['close', 'high', 'low', 'volume'];
+    // Metadata runs alongside history and never delays the first results.
+    const optionalTask=Promise.allSettled([
+      fetchCsv(GIDS.pct,'step-pct'),fetchCsv(GIDS.main,'step-main')
+    ]);
     const required = await Promise.allSettled(requiredKeys.map(key => fetchCsv(GIDS[key], 'step-' + key)));
     const failures = required.filter(r => r.status === 'rejected');
     if (failures.length) throw new Error(failures.map(r => r.reason.message).join(' | '));
     const [cRaw, hRaw, lRaw, vRaw] = required.map(r => r.value);
-    // Display-only metadata must not prevent valid history from being screened.
-    const optional = await Promise.allSettled([
-      fetchCsv(GIDS.pct, 'step-pct'), fetchCsv(GIDS.main, 'step-main')
-    ]);
-    const [pctRaw, mainRaw] = optional.map(r => r.status === 'fulfilled' ? r.value : null);
-
     hRaw.data = alignHistory(hRaw, cRaw.dates);
     lRaw.data = alignHistory(lRaw, cRaw.dates);
     vRaw.data = alignHistory(vRaw, cRaw.dates);
     logDebug('History: ' + cRaw.dates[0] + ' to ' + cRaw.dates.at(-1));
-    const meta = parseMetadata(mainRaw, pctRaw);
+    const meta = parseMetadata(null, null);
     const tickers = cRaw.headers;
     const len = cRaw.dates.length;
     const dayGroups = { 0: [], 1: [], 2: [], 3: [] };
@@ -677,19 +677,26 @@ async function runScreener(forceRefresh = false) {
       allSignals.push(...dayGroups[d]);
     }
 
-    localStorage.setItem(CACHE_KEY, JSON.stringify({
-      timestamp: Date.now(),
-      signals: allSignals,
-      tickersCount: tickers.length,
-      barsCount: len
-    }));
-
-    displayScreenerData(tickers.length, allSignals.length, len, new Date());
+    const freshTime=new Date();
+    const save=()=>{try{localStorage.setItem(CACHE_KEY,JSON.stringify({timestamp:freshTime.getTime(),signals:allSignals,tickersCount:tickers.length,barsCount:len}));}catch(e){logDebug('Browser cache unavailable: '+e.message);}};
+    save();
+    displayScreenerData(tickers.length,allSignals.length,len,freshTime);
     renderTable();
+    refreshMessage('Fresh history analysed in '+((performance.now()-started)/1000).toFixed(1)+'s. Updating stock metadata…');
+    const optional=await optionalTask;
+    const [pctRaw,mainRaw]=optional.map(r=>r.status==='fulfilled'?r.value:null);
+    const freshMeta=parseMetadata(mainRaw,pctRaw);
+    allSignals=allSignals.map(signal=>{
+      const m=freshMeta[signal.ticker]||{};
+      return {...signal,ret1m:m.ret1m!==undefined?m.ret1m*100:null,ret3m:m.ret3m!==undefined?m.ret3m*100:null,ret6m:m.ret6m!==undefined?m.ret6m*100:null,target:m.target||null,targetUpside:m.upside??null};
+    });
+    save();renderTable();
+    refreshMessage('Refreshed '+freshTime.toLocaleString()+' in '+((performance.now()-started)/1000).toFixed(1)+'s.'+(optional.some(r=>r.status==='rejected')?' Some optional metadata is unavailable.':''));
   } catch (err) {
     document.getElementById('loadCard').style.display = 'none';
     const eb = document.getElementById('errBox');
     eb.style.display = 'block';
+    refreshMessage(showingCached?'Refresh failed; keeping saved results with their original timestamp.':'Fresh history unavailable. Retry to load the sheet.');
     eb.textContent = 'Error loading screener data: ' + err.message;
     const retry = document.createElement('button');
     retry.className = 'btn'; retry.textContent = 'Retry';
