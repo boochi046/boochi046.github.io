@@ -2,7 +2,7 @@ let outsideData={dates:[],rows:[]},outsideLimit=100;
 const OUTSIDE_VERSION='Core + Outside V1';
 async function loadOutsideSnapshot(){
   try{let data;try{data=JSON.parse(localStorage.getItem('top-score-outside-v1'));}catch(e){}
-    if(!data?.rows?.length){const res=await fetch('top-score-outside.json');if(!res.ok)return null;data=await res.json();}
+    if(!data?.rows?.length||data.dates?.some(date=>[0,6].includes(new Date(date+'T00:00:00Z').getUTCDay()))){const res=await fetch('top-score-outside.json');if(!res.ok)return null;data=await res.json();}
     const age=(Date.now()-Date.parse(data.dates?.[0]+'T00:00:00Z'))/86400000;
     return data.version===OUTSIDE_VERSION&&Array.isArray(data.rows)&&age>=0&&age<8?data:null;
   }catch(e){return null;}
