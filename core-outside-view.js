@@ -8,7 +8,7 @@ async function loadOutsideSnapshot(){
   }catch(e){return null;}
 }
 function setOutsideData(sheets,saved){
-  const dates=sheets?.close?[...sheets.close.dates.keys()].sort().slice(-4).reverse():(saved?.dates||[]);
+  const dates=sheets?.close?[...sheets.close.dates.keys()].filter(date=>![0,6].includes(new Date(date+'T00:00:00Z').getUTCDay())).sort().slice(-4).reverse():(saved?.dates||[]);
   const previous=new Map((saved?.rows||[]).map(r=>[r.ticker,r]));
   const tickers=sheets?.close?.tickers||saved?.rows.map(r=>r.ticker)||[];
   const latestAge=Math.floor((Date.now()-Date.parse(dates[0]+'T00:00:00Z'))/86400000);
