@@ -3,11 +3,11 @@ function createOutsideView(prefix,cacheKey,snapshot){
 let outsideData={dates:[],rows:[]},outsideLimit=100;
 
 async function loadOutsideSnapshot(){
-  try{let data;try{data=JSON.parse(localStorage.getItem(cacheKey));}catch(e){}
-    if(!data?.rows?.some(r=>r.signals?.some(s=>s.available))||data.dates?.some(date=>[0,6].includes(new Date(date+'T00:00:00Z').getUTCDay()))){if(!snapshot)return null;const res=await fetch(snapshot);if(!res.ok)return null;data=await res.json();if(data.encoding==='gzip-base64'){const bytes=Uint8Array.from(atob(data.payload),c=>c.charCodeAt(0));data=await new Response(new Blob([bytes]).stream().pipeThrough(new DecompressionStream('gzip'))).json();}}
-    const age=(Date.now()-Date.parse(data.dates?.[0]+'T00:00:00Z'))/86400000;
-    return data.version===OUTSIDE_VERSION&&Array.isArray(data.rows)&&age>=0&&age<8?data:null;
-  }catch(e){return null;}
+  const valid=data=>{const age=(Date.now()-Date.parse(data?.dates?.[0]+'T00:00:00Z'))/86400000;return data?.version===OUTSIDE_VERSION&&data.rows?.some(r=>r.signals?.some(s=>s.available))&&age>=0&&age<8&&!data.dates.some(d=>[0,6].includes(new Date(d+'T00:00:00Z').getUTCDay()));};
+  let cached;try{cached=JSON.parse(localStorage.getItem(cacheKey));}catch(e){}
+  if(!valid(cached))cached=null;
+  if(snapshot)try{const res=await fetch(snapshot);if(res.ok){let data=await res.json();if(data.encoding==='gzip-base64'){const bytes=Uint8Array.from(atob(data.payload),c=>c.charCodeAt(0));data=await new Response(new Blob([bytes]).stream().pipeThrough(new DecompressionStream('gzip'))).json();}if(valid(data)&&(!cached||data.dates[0]>=cached.dates[0]))return data;}}catch(e){}
+  return cached;
 }
 function setOutsideData(sheets,saved){
   const incomplete=['open','high','low','close','volume'].some(key=>!sheets?.[key]);
