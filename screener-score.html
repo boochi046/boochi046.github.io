@@ -741,6 +741,7 @@ function fmt(val, isPct = true) {
   return `${val >= 0 && isPct ? '+' : ''}${val.toFixed(1)}${isPct ? '%' : ''}`;
 }
 
+const escapeTicker=value=>String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 function renderTable() {
   const tbody = document.getElementById('resBody');
   let filtered = currentDayFilter === -1 ? allSignals : allSignals.filter(s => s.daysAgo === currentDayFilter);
@@ -760,7 +761,7 @@ function renderTable() {
 
   tbody.innerHTML = filtered.map(s => `
     <tr>
-      <td><span class="tkr">${s.ticker}</span></td>
+      <td><span class="tkr">${escapeTicker(s.ticker)}</span></td>
       <td><span class="pill ${s.daysAgo === 0 ? 'pos' : 'neu'}">${s.daysAgo === 0 ? 'Today' : s.daysAgo + 'd ago'}</span></td>
       <td class="pv g" style="font-weight:700;color:var(--accent)">${s.flowSurge.toFixed(3)}</td>
       <td class="pv">$${s.price.toFixed(2)}</td>

@@ -22,7 +22,7 @@ header{border-bottom:1px solid var(--border);background:var(--panel);padding:16p
 <p id="count" class="count"></p><div class="layout"><section id="cards" class="cards" aria-label="Stock summaries"><div class="empty loading">Building your stock briefing…</div></section><aside id="newsPanel" class="news" aria-label="Selected stock news"><div class="eyebrow">News &amp; research</div><h2 id="newsTitle">Select a stock</h2><p id="newsContext" class="muted">Choose “Read briefing” on any card for its latest available headlines.</p><div id="research" class="research"></div><div id="articles" aria-live="polite"></div></aside></div>
 <details><summary>How to read the signals</summary><p>These are transparent momentum screening rules for research, not personalised trade recommendations or a tested return forecast. Buy watch: the latest close is above the 20-day and 50-day simple moving averages, and the 20-trading-day price change is positive. Sell review: the latest close is below both averages and the 20-day change is negative. Otherwise: Hold / watch.</p><p>Signals require 51 consecutive usable closing prices. Missing values, future dates, or a last observation more than seven calendar days old produce Insufficient data. If a ticker appears in several feeds, the newest history is selected; unusable observations suppress the signal. Conflicting source signals are disclosed on its card. Dates identify observations, not a verified live quote time.</p><p>Portfolio-only stocks without screener history show their available portfolio quote and daily move, but no directional signal. Headlines are loaded on demand for the selected ticker and do not affect the signal. This page does not analyse earnings, valuation, debt, filings, or news sentiment; check these before deciding to buy or sell. <a href="https://www.investor.gov/introduction-investing/getting-started/researching-investments" target="_blank" rel="noopener noreferrer">Researching investments · Investor.gov</a></p><p>Feed failures are listed above. Prices and headlines may be delayed. Public proxy services are used when direct downloads fail.</p></details>
 </main>
-<script>
+<script src="data-loader.js"></script><script>
 'use strict';
 const PORTFOLIO='https://docs.google.com/spreadsheets/d/e/2PACX-1vQh_Fl3yAEe2Saea-hIdscgeIdNGc2MFSTm9XiszvRcJC1rRTVtSsMPnoZTDKwDQjoKN-TM_omgn4t2/pub?gid=266612901&single=true&output=csv';
 const FEEDS=[
@@ -41,8 +41,7 @@ function parseCSV(text){
 }
 async function download(url,validate){
  const routes=[u=>u,u=>'https://script.google.com/macros/s/AKfycbx-abu6CxsA4AcaQUoNLiXMoLO8SStapS843H3PGpeRSBTyPcZ75FAwtPSORBJBnSjf/exec?url='+encodeURIComponent(u),u=>'https://api.allorigins.win/raw?url='+encodeURIComponent(u),u=>'https://api.codetabs.com/v1/proxy?quest='+encodeURIComponent(u),u=>'https://corsproxy.io/?'+encodeURIComponent(u)];
- for(const route of routes){const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),10000);try{const res=await fetch(route(url),{signal:controller.signal,cache:'no-store'});if(!res.ok)throw Error('HTTP '+res.status);const text=await res.text();if(!validate(text))throw Error('Unexpected response');return text;}catch(e){}finally{clearTimeout(timer);}}
- throw Error('Download unavailable');
+ return DashboardData.download(url,routes,validate,10000);
 }
 function analyseHistory(observations,now=new Date()){
  const dates=observations.filter(r=>/^\d{4}-\d{2}-\d{2}$/.test(r.date)).sort((a,b)=>a.date.localeCompare(b.date));

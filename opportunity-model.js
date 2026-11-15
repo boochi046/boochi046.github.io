@@ -53,7 +53,8 @@ const OpportunityModel = (() => {
       if (i && (date <= Date.parse(bars[i - 1].date) || date - Date.parse(bars[i - 1].date) > 7 * 86400000)) return none('Duplicate dates, wrong date order, or a history gap over 7 days.');
     }
     const series = indicators(bars), i = bars.length - 1, x = series[i], prev = series[i - 1], back = series[i - 5], c = last.close, d20 = c / x.ema20 - 1, d50 = c / x.sma50 - 1;
-    if (series.slice(-10).some(s => Object.values(s).some(v => !Number.isFinite(v)))) return none('Insufficient usable volume or indicator history.');
+    if (series.slice(-10).some(s => Object.entries(s).some(([key,v]) => key !== 'ret126' && !Number.isFinite(v)))) return none('Insufficient usable volume or indicator history.');
+    if (!Number.isFinite(x.ret126)) return none('Insufficient six-month return history.');
     const vmiMax = Math.max(...series.slice(i - 4, i + 1).map(s => s.vmi));
     const crossingAge = fn => { for (let a = 0; a <= 4; a++) if (fn(i - a)) return a; return null; };
     const rocAge = crossingAge(j => series[j].roc > 0 && series[j - 1].roc <= 0), reclaimAge = crossingAge(j => bars[j].close > series[j].ema20 && bars[j - 1].close <= series[j - 1].ema20);

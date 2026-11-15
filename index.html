@@ -317,6 +317,7 @@ td:first-child{text-align:left;padding-left:1.1rem;}
       <div class="sb-section">Pages</div>
     <a href="index.html" class="sb-link active">📊 Dashboard</a>
     <a href="stock-overview.html" class="sb-link">📰 Stock Briefing</a>
+    <a href="loss-analysis.html" class="sb-link">📉 Loss Analysis</a>
     <a href="opportunity-rank.html" class="sb-link">🎯 Opportunity Rank</a>
     <a href="futures.html" class="sb-link">📈 Futures</a>
     <a href="screener-analyst.html" class="sb-link">🏅 Top Analyst</a>
@@ -507,6 +508,7 @@ td:first-child{text-align:left;padding-left:1.1rem;}
   </div>
 </div>
 
+<script src="data-loader.js"></script>
 <script>
 // ── URLS ──────────────────────────────────────────────────────────────────────
 const URL_PRICES='https://docs.google.com/spreadsheets/d/e/2PACX-1vQh_Fl3yAEe2Saea-hIdscgeIdNGc2MFSTm9XiszvRcJC1rRTVtSsMPnoZTDKwDQjoKN-TM_omgn4t2/pub?gid=266612901&single=true&output=csv';
@@ -560,11 +562,7 @@ function updateSbTime(t){const el=document.getElementById('sbTime');if(el)el.tex
 
 async function fetchRaw(url){
  const routes=[u=>u,u=>'https://corsproxy.io/?'+encodeURIComponent(u),u=>'https://api.allorigins.win/raw?url='+encodeURIComponent(u),u=>'https://api.codetabs.com/v1/proxy?quest='+encodeURIComponent(u)];
- for(const route of routes){const controller=new AbortController();const timer=setTimeout(()=>controller.abort(),12000);try{
- const response=await fetch(route(url),{cache:'no-store',signal:controller.signal});if(!response.ok)continue;const text=await response.text();
- if(!text||text.trim().startsWith('<')||!text.includes(','))continue;return text;
- }catch(error){}finally{clearTimeout(timer);}}
- throw new Error('Data download failed. Check the published Google Sheet and try again.');
+ return DashboardData.download(url,routes,text=>{try{parseCSV(text);return true;}catch(e){return false;}});
 }
 async function fetchCSV(url,stepId){
   const el=document.getElementById(stepId);
@@ -585,7 +583,7 @@ async function fetchCSV(url,stepId){
 // Computed from available period returns across holdings
 // ── FORMAT ────────────────────────────────────────────────────────────────────
 const esc=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
-const fmt=n=>'$'+Math.abs(n).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
+const fmt=n=>!Number.isFinite(n)?'—':'$'+Math.abs(n).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
 const fmtPct=n=>(n>=0?'+':'')+n.toFixed(2)+'%';
 const fmtK=n=>Math.abs(n)>=1000?'$'+(Math.abs(n)/1000).toFixed(1)+'k':'$'+Math.abs(n).toFixed(0);
 function getCC(){
@@ -607,7 +605,7 @@ function renderTimeline(buyRows){
   const ev=buyRows.map(r=>{
     const raw=(r.DATE||r.Date||'').trim();let d=ledgerDate(raw)||new Date(NaN);
 
-    return{date:d,cost:parseFloat(r.UNITS||r.Units||0)*parseFloat(r.PRICES||r.Price||0)};
+    return{date:d,cost:numberValue(r.UNITS??r.Units)*numberValue(r.PRICES??r.Price)};
   }).filter(e=>e.date&&!isNaN(e.date)&&e.date<=new Date()&&e.cost>0).sort((a,b)=>a.date-b.date);
   let cum=0;const mo={};
   ev.forEach(e=>{cum+=e.cost;mo[e.date.toISOString().slice(0,7)]=cum;});
@@ -628,7 +626,7 @@ function renderPerfChart(buyRows,view){
   const ev=buyRows.map(r=>{
     const raw=(r.DATE||r.Date||'').trim();let d=ledgerDate(raw)||new Date(NaN);
 
-    return{date:d,cost:parseFloat(r.UNITS||r.Units||0)*parseFloat(r.PRICES||r.Price||0),count:1};
+    return{date:d,cost:numberValue(r.UNITS??r.Units)*numberValue(r.PRICES??r.Price),count:1};
   }).filter(e=>e.date&&!isNaN(e.date)&&e.date<=new Date()&&e.cost>0).sort((a,b)=>a.date-b.date);
   let cum=0,cc2=0;const mo={};
   ev.forEach(e=>{cum+=e.cost;cc2+=e.count;const k=e.date.toISOString().slice(0,7);mo[k]={cost:cum,count:cc2};});
@@ -690,8 +688,8 @@ function renderPnlBars(realized){
 // ── LEDGER TABLES ─────────────────────────────────────────────────────────────
 function renderLedgers(buyRows,sellRows){
   const gT=r=>(r.Ticker||r.TICKER||'').trim();
-  const gU=r=>parseFloat(r.UNITS||r.Units||0);
-  const gP=r=>parseFloat(r.PRICES||r.Price||0);
+  const gU=r=>numberValue(r.UNITS??r.Units);
+  const gP=r=>numberValue(r.PRICES??r.Price);
   const gD=r=>(r.DATE||r.Date||'').trim();
   const sb=document.getElementById('sellBody');sb.innerHTML='';
   [...sellRows].reverse().forEach(r=>{
@@ -717,16 +715,8 @@ async function loadNews(tickers){
     u=>`https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(u)}`,
     u=>`https://thingproxy.freeboard.io/fetch/${u}`,
   ];
-  const tout=ms=>new Promise((_,r)=>setTimeout(()=>r(new Error('timeout')),ms));
   let text=null;
-  for(const p of proxies){
-    try{
-      const res=await Promise.race([fetch(p(rss),{cache:'no-store'}),tout(10000)]);
-      if(!res.ok) continue;
-      const t=await res.text();
-      if(t&&t.includes('<item')){text=t;break;}
-    }catch(e){continue;}
-  }
+  try{text=await DashboardData.download(rss,proxies,t=>t.includes('<item'),10000);}catch(e){}
   if(!text){nl.innerHTML='<div style="padding:1.5rem;text-align:center;color:var(--muted);font-size:.75rem">News unavailable.</div>';document.getElementById('newsBadge').textContent='—';return;}
   try{
     const xml=new DOMParser().parseFromString(text,'text/xml');
@@ -735,7 +725,8 @@ async function loadNews(tickers){
     nl.innerHTML='';
     items.forEach(item=>{
       const title=item.querySelector('title')?.textContent||'';
-      const link=item.querySelector('link')?.textContent||'#';
+      const link=DashboardData.safeURL(item.querySelector('link')?.textContent||'');
+      if(!link)return;
       const pd=item.querySelector('pubDate')?.textContent||'';
       const mentioned=tickers.filter(t=>title.toUpperCase().includes(t));
       const date=pd?new Date(pd).toLocaleDateString('en-US',{month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'}):'';
@@ -747,7 +738,7 @@ async function loadNews(tickers){
           <div class="news-meta"><span>${date}</span>${mentioned.map(t=>`<span class="news-tag">${esc(t)}</span>`).join('')}</div>
         </div></a>`;
     });
-    document.getElementById('newsBadge').textContent=items.length+' articles';
+    document.getElementById('newsBadge').textContent=nl.children.length+' articles';
   }catch(e){nl.innerHTML='<div style="padding:1.5rem;text-align:center;color:var(--muted);font-size:.75rem">News unavailable.</div>';}
 }
 
@@ -789,9 +780,10 @@ async function loadAll(silent=false){
       .map(r=>{
         const ticker=r.Ticker.trim().toUpperCase();
         const live=numberValue(r.Price??r['Live Price']);
-        const avg=numberValue(r['Average Price']??r['Avg Price'])??0;
+        const parsedAvg=numberValue(r['Average Price']??r['Avg Price']);
+        const avg=parsedAvg!==null&&parsedAvg>=0?parsedAvg:null;
         const units=numberValue(r['Remaining Qty']??r.Qty)??0;
-        const cost=avg*units;
+        const cost=avg===null?null:avg*units;
 
         // Exact column names from Wishsheet export
         const prevDay = numberValue(r['Previous Day']);
@@ -951,16 +943,16 @@ function enrichHoldings(holdings){
 function renderHoldings(filter){
  curFilter=filter;const q=(document.getElementById('holdingSearch').value||'').toLowerCase();
  let list=allHoldings.filter(h=>(filter==='all'||h.sector===filter)&&(!q||(h.ticker+' '+h.name).toLowerCase().includes(q)));
- const val=h=>({name:h.ticker,mkt:h.live===null?null:h.live*h.units,pnl:h.live===null?null:h.live*h.units-h.cost}[sortCol]??h[sortCol]);
+ const val=h=>({name:h.ticker,mkt:h.live===null?null:h.live*h.units,pnl:h.live===null||h.cost===null?null:h.live*h.units-h.cost}[sortCol]??h[sortCol]);
  list.sort((a,b)=>{const x=val(a),y=val(b);if(x==null)return y==null?0:1;if(y==null)return -1;return sortDir*(typeof x==='string'?x.localeCompare(y):x-y);});
  const signed=n=>n==null?'—':(n>=0?'+':'−')+fmt(n);
- document.getElementById('holdingsBody').innerHTML=list.map(h=>{const pnl=h.live===null?null:h.live*h.units-h.cost;return `<tr>
+ document.getElementById('holdingsBody').innerHTML=list.map(h=>{const pnl=h.live===null||h.cost===null?null:h.live*h.units-h.cost;return `<tr>
  <td><span class="tkr">${esc(h.ticker)}</span> <span class="stock-name">${esc(h.name)}</span></td>
  <td title="${esc(h.ageNote)}">${h.days===null?'—':(h.ageEstimated?'≈ ':'')+h.days.toLocaleString()}</td><td title="Current price versus previous close; excludes intraday trades, fees and dividends">${pillHtml(h.retToday)}</td><td>${h.weight===null?'—':h.weight.toFixed(2)+'%'}</td><td>${h.live===null?'—':fmt(h.live*h.units)}</td>
  <td>${h.units.toLocaleString()}</td><td>${fmt(h.avg)}</td><td>${h.live===null?'—':fmt(h.live)}</td><td>${h.prevDay===null?'—':fmt(h.prevDay)}</td>
  <td class="${pillClass(h.todayPnl)}">${signed(h.todayPnl)}</td><td>${pillHtml(h.retToday)}</td><td>${pillHtml(h.ret1m)}</td><td>${pillHtml(h.ret3m)}</td><td>${pillHtml(h.ret6m)}</td><td class="${pillClass(pnl)}">${signed(pnl)}</td></tr>`;}).join('');
- const complete=list.every(h=>h.live!==null),sum=list.reduce((a,h)=>a+(h.live===null?0:h.live*h.units),0),cost=list.reduce((a,h)=>a+h.cost,0);
- document.getElementById('holdingsTotals').innerHTML=`<tr><td colspan="3">Filtered total · ${list.length} holdings</td><td>${complete&&cost>0?fmtPct((sum-cost)/cost*100):'—'}</td><td></td><td>${complete?fmt(sum):'Incomplete'}</td><td colspan="8"></td><td>${complete?signed(sum-cost):'—'}</td></tr>`;
+ const costComplete=list.every(h=>h.cost!==null),complete=list.every(h=>h.live!==null),sum=list.reduce((a,h)=>a+(h.live===null?0:h.live*h.units),0),cost=list.reduce((a,h)=>a+h.cost,0);
+ document.getElementById('holdingsTotals').innerHTML=`<tr><td colspan="3">Filtered total · ${list.length} holdings</td><td>${complete?list.reduce((a,h)=>a+(h.weight??0),0).toFixed(2)+'%':'—'}</td><td>${complete?fmt(sum):'Incomplete'}</td><td colspan="9"></td><td>${complete&&costComplete?signed(sum-cost):'—'}</td></tr>`;
 }
 function renderSharpe(holdings,totalCost,totalMkt,unreal,totalRealized){
  const known=holdings.filter(h=>h.live!==null),complete=known.length===holdings.length;
@@ -982,6 +974,14 @@ function renderSharpe(holdings,totalCost,totalMkt,unreal,totalRealized){
    setKpi('k-total',display);setKpi('sb-total',display);
  }
  if(!complete)setKpi('totalPnlNote','Unavailable: one or more current prices are missing.');
+ const missingCosts=holdings.filter(h=>h.cost===null);
+ if(missingCosts.length){
+   ['k-cost','sb-cost'].forEach(id=>setKpi(id,'Incomplete'));
+   ['k-unreal','sb-unreal','k-total','sb-total'].forEach(id=>setKpi(id,'—'));
+   ['k-unreal-sub','sb-unreal-sub'].forEach(id=>setKpi(id,'Missing cost basis'));
+   setKpi('k-value-sub','Cost basis incomplete');setKpi('sb-value-sub','Cost basis incomplete');
+   setKpi('totalPnlNote','Unavailable: missing cost basis for '+missingCosts.map(h=>h.ticker).join(', '));
+ }
  const gains=ledgerState.sales.filter(x=>x.pnl>0),losses=ledgerState.sales.filter(x=>x.pnl<0),grossWin=gains.reduce((a,x)=>a+x.pnl,0),grossLoss=-losses.reduce((a,x)=>a+x.pnl,0),n=ledgerState.sales.length;
  document.getElementById('tradeMetrics').textContent=`Matched sale rows: ${n} · Win rate: ${n?(gains.length/n*100).toFixed(1)+'%':'—'} · Expectancy per sale: ${n?((totalRealized/n>=0?'+':'−')+fmt(totalRealized/n)):'—'} · Profit factor: ${grossLoss>0?(grossWin/grossLoss).toFixed(2):'— (no losses)'} · Before fees; excludes invalid tickers.`;
  document.getElementById('ledgerWarnings').textContent='FIFO: dates use dd/MM/YYYY. Legacy unambiguous US dates are accepted while the published feed updates. Same-day buys precede sells; corporate actions must already be reflected in ledger quantities/prices. '+(ledgerState.issues.length?ledgerState.issues.join(' · '):'Ledger quantities reconciled.');
@@ -993,7 +993,7 @@ function renderSectorChart(holdings){
  document.getElementById('sectorLegend').innerHTML=lbs.map((l,i)=>`<div class="leg-item"><span class="leg-dot" style="background:${COLORS[i%COLORS.length]}"></span>${esc(l)} <span class="leg-pct">${total?(vs[i]/total*100).toFixed(1):'0'}%</span></div>`).join('');
 }
 function renderWL(holdings){
- const mode=document.getElementById('rankMode').value;const value=h=>mode==='daily'?h.todayPnl:mode==='dollars'?(h.live===null?null:h.live*h.units-h.cost):h.retTotal;
+ const mode=document.getElementById('rankMode').value;const value=h=>mode==='daily'?h.todayPnl:mode==='dollars'?(h.live===null||h.cost===null?null:h.live*h.units-h.cost):h.retTotal;
  const rows=holdings.filter(h=>Number.isFinite(value(h))).sort((a,b)=>value(b)-value(a));
  const render=(rows,id)=>document.getElementById(id).innerHTML=rows.map(h=>`<div class="wl-item"><span class="wl-ticker">${esc(h.ticker)}</span><span class="wl-name">${esc(h.name)}</span><span class="${value(h)>=0?'pos':'neg'}">${mode==='return'?fmtPct(value(h)):(value(h)>=0?'+':'−')+fmt(value(h))}</span></div>`).join('')||'<div class="data-note">No matching holdings</div>';
  render(rows.filter(h=>value(h)>0).slice(0,5),'winnersList');render(rows.filter(h=>value(h)<0).reverse().slice(0,5),'losersList');
